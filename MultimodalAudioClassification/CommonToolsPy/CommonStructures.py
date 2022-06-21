@@ -1,11 +1,11 @@
 """
-Repository:     Buell-Senior-Thesis
-Solution:       SignalClassifierPrototype
-Project:        CommonUtilities
-File:           Structures.py
+Repository:     MultimodalAudioClassification
+Solution:       MultimodalAudioClassification
+Project:        CommonToolsPy
+File:           CommonStructures.py
  
 Author:         Landon Buell
-Date:           December 2021
+Date:           June 2022
 """
 
         #### IMPORTS ####
@@ -15,93 +15,10 @@ import sys
 
 import numpy as np
 
+import CommonIO
+
 
         #### CLASS DEFINITIONS ####
-
-class Serializer:
-    """ Abstract Base Class for all Serializer Classes """
-
-    def __init__(self,data,path):
-        """ Constructor for Serializer Abstract Class """
-        self._data              = data
-        self._outputPath        = path
-        self._outFileStream     = None
-        self._outFmtStr         = lambda key,val :  "{0:<32}\t{1:<128}\n".format(key,val)
-
-    def __del__(self):
-        """ Destructor for Serializer Abstract Class """
-        if (self._outFileStream is not None):
-            self._outFileStream.close()
-        return
-
-    def call(self):
-        """ Write Object to OutputStream """
-        return False
-
-    def listToString(self,inputList,delimiter=","):
-        """ Convert Elements of list to string w/ delimiter """
-        outputString = ""
-        if len(inputList) == 0:
-            # No Items in the Input List
-            outputString += "-1,"
-        else:
-            # Items in the Input List
-            for item in inputList:
-                outputString += str(item) + delimiter
-        return outputString.strip()
-
-    def writeHeader(self):
-        """ Add Header To Output """
-        self._outFileStream.write(self.__repr__() + "\n")
-        self._outFileStream.write("-"*64 + "\n")
-        return self
-
-    def writeFooter(self):
-        """ Add Header To Output """
-        self._outFileStream.write("-"*64 + "\n")
-        self._outFileStream.write(self.__repr__() + "\n")
-        return self
-
-    def __repr__(self):
-        """ Debugger Representation of Instance """
-        return str(self.__class__) + " @ " + str(hex(id(self)))
-
-class Deserializer:
-    """ Abstract Base Class for all Deserializer Classes """
-
-    def __init__(self,path):
-        """ Constructor for Deserializer Abstract Class """
-        self._data              = None
-        self._inputPath         = path
-        self._inFileStream      = None
-
-    def __del__(self):
-        """ Destructor for Deserializer Abstract Class """
-        self._data = None
-        if (self._inFileStream is not None):
-            self._inFileStream.close()
-        return
-
-    def call(self):
-        """ Read Object From inputStream """
-
-        return False
-
-    def stringToList(self,inputString,delimiter=" ",outType=None):
-        """ Convert string to list of type """
-        outputList = inputString.split(delimiter)
-        if outType is not None:
-            outputList = [outType(x) for x in outputList]
-        return outputList
-
-    def stringToIntList(self,inputString,delimiter):
-        """ Convert string to list of type """
-        outputList = []
-        return outputList
-
-    def __repr__(self):
-        """ Debugger Representation of Instance """
-        return str(self.__class__) + " @ " + str(hex(id(self)))
 
 class FeatureVector:
     """ Class to Hold Feature Data for a single Sample """
@@ -249,120 +166,6 @@ class DesignMatrix:
 
     # public Interface
 
-    def splitIntoBatches(self,batchSize,eraseData=True):
-        """ Split this Design Matrix into smaller batches """
-        batches = []
-        totalSamples = self.getNumSamples()
-        sampleIndex = 0
-        currentBatchSize = batchSize
-        leftOver = lambda : totalSamples - sampleIndex
-
-        while (sampleIndex < totalSamples):
-            
-            # Create Sub-batch
-            batchMatrix = DesignMatrix(currentBatchSize,self.getSampleShape())
-            for row in range(currentBatchSize):
-                np.copyto(batchMatrix._data[row],self._data[sampleIndex])
-                batchMatrix._tgts[row] = self._tgts[sampleIndex]
-                sampleIndex += 1
-            batches.append(batchMatrix)
-            
-            # Check Size of Next Batch
-            if (leftOver() < batchSize):
-                currentBatchSize = leftOver();
-
-        # Done w/ All SubBatches
-        if eraseData == True:
-            self._data = None
-            self._tgts = None
-        return batches
-
-    def applyMask(self,maskArray):
-        """ Apply A Mask Array to samples in the desing Matrix """
-        assert(maskArray.shape[0] == self._data.shape[0])
-        maskArray = maskArray.astype(np.bool8)
-        numSurvivingSamples = np.sum(maskArray)
-        newDesignMatrix = DesignMatrix( numSurvivingSamples,self.getSampleShape() )
-        sampleIndex = 0
-
-        # Iterate Through Data
-        for idx,item in enumerate(maskArray):
-            if (item == True):
-                newDesignMatrix._data[sampleIndex] = self._data[idx]
-                newDesignMatrix._tgts[sampleIndex] = self._tgts[idx]
-                sampleIndex += 1
-
-        # Switch Features around
-        self.setNumSamples(numSurvivingSamples)
-        self._data = newDesignMatrix._data;
-        self._tgts = newDesignMatrix._data;
-        newDesignMatrix = None
-        return self
-
-    def getMaskForNaNsAndInfs(self):
-        """ Drop All Rows with NaNs in them """
-        sumOfRows = np.sum(self._data,axis=1)
-        mask = np.zeros(shape=(self._numSamples,),dtype=np.bool8)
-        for idx,item in enumerate(sumOfRows):
-            if np.isnan(item) == True:
-                continue
-            if np.isinf(item) == True:
-                continue
-            mask[idx] = True
-        # When applied, the returned masks will
-        # Remove samples w/ NaN or Inf Features
-        return mask
-        
-    def concat(self,otherMatrix):
-        """ Concatenate Another Design Matrix to the End of this One (SLOW) """
-        if (otherMatrix.getSampleShape() != self.getSampleShape()):
-            # Shapes Not Equal
-            raise ValueError("Shape Mismatch!")
-        totalNumSamples = self.getNumSamples() + otherMatrix.getNumSamples()
-        shapeNewMatrix = [totalNumSamples] + [x for x in self.getSampleShape()]
-        newFeatureArr = np.empty(shape=shapeNewMatrix,dtype=np.float32)
-        # Copy Features to New Array
-        sampleIndex = 0
-        for smpl in self._data:
-            newFeatureArr[sampleIndex] = smpl
-            sampleIndex += 1
-        for smpl in otherMatrix._data:
-            newFeatureArr[sampleIndex] = smpl
-            sampleIndex += 1
-        # Add to New Design Matrix + Append Target Vector
-        self.setFeatures(newFeatureArr)
-        self.setLabels(np.append(self._tgts,otherMatrix._tgts))
-        return self
-
-    def samplesInClass(self,classIndex):
-        """ Create New Design Matrix of Samples that all belong to one class """
-        if (classIndex not in self.getUniqueClasses()):
-            # Not a Valid Class
-            return DesignMatrix(1,self.getSampleShape())
-        # Find where targets matches index
-        mask = np.where(self._tgts == classIndex)[0]
-        newTgts = self._tgts[mask]
-        newData = self._data[mask]
-        # Create the new Design Matrix, attach values + Return
-        result = DesignMatrix(len(mask),self.getSampleShape())
-        result.setLabels(newTgts)
-        result.setFeatures(newData)
-        return result
-
-    def averageOfFeatures(self,mask=None):
-        """ Compute the Average of the Design Matrix Along each Feature """
-        means = np.mean(self._data,axis=0,dtype=np.float32)
-        if (mask is not None):
-            means = means[mask]
-        return means
-
-    def varianceOfFeatures(self,mask=None):
-        """ Compute the Variance of the Design Matrix Along each Feature """
-        varis = np.var(self._data,axis=0,dtype=np.float32)
-        if (mask is not None):
-            varis = varis[mask]
-        return varis
-
     def serialize(self,pathX=None,pathY=None):
         """ Write this design matrix out to a file """   
         writer = DesignMatrix.DesignMatrixSerializer(self,pathX,pathY)
@@ -400,7 +203,7 @@ class DesignMatrix:
 
     # Private Interface
 
-    class DesignMatrixSerializer(Serializer):
+    class DesignMatrixSerializer(CommonIO.Serializer):
         """ Class to Serialize a DesignMatrixInstance """
         
         def __init__(self,matrix,pathX=None,pathY=None):
@@ -460,7 +263,7 @@ class DesignMatrix:
             else:
                 return self
 
-    class DesignMatrixDeserializer(Deserializer):
+    class DesignMatrixDeserializer(CommonIO.Deserializer):
         """ Class to Deserialize a DesignMatrix Instance """
 
         def __init__(self,pathX,pathY,numSamples,sampleShape):
@@ -566,7 +369,7 @@ class RunInformation:
 
     def getRunInfoPath(self):
         """ Get the Path to the RunInfo Metadata """
-        return os.path.join(self._pathOutput,"runInformation.txt")
+        return os.path.join(self._pathOutput,"runInfo.txt")
 
     def getInputPaths(self) -> set:
         """ Return List of Input Paths """
@@ -590,17 +393,14 @@ class RunInformation:
     
     # Public Interface 
 
-    def serialize(self,path=None,batchLimit=-1):
+    def serialize(self,path):
         """ Serialize this Instance to specified Path """
-        if (path is None):
-            path = self.getRunInfoPath()
-        writer = RunInformation.RunInformationSerializer(self,path,batchLimit)
-        success = True
+        writer = RunInformation.RunInformationSerializer(self,path)
+        success = False
         try:
-            writer.call()
-        except Exception as err:
-            print("\t\tRunInformation.serialize()" + str(err))
-            success = False
+            success = writer.call()
+        except Exception as expt:
+            print(expt)
         return success
 
     @staticmethod
@@ -618,13 +418,12 @@ class RunInformation:
 
     # Private Interface
 
-    class RunInformationSerializer(Serializer):
+    class RunInformationSerializer(CommonIO.Serializer):
         """ Class to Serialize Run Information to a Local Path """
 
-        def __init__(self,runInfo,path,batchLimit=-1):
+        def __init__(self,runInfo,path):
             """ Constructor for RunInformationSerializer Instance """
             super().__init__(runInfo,path)
-            self._batchLimit = batchLimit
 
         def __del__(self):
             """ Destructor for DesignMatrixSerializer Instance """
@@ -642,25 +441,7 @@ class RunInformation:
             self._outFileStream = open(self._outputPath,"w")
             self.writeHeader()
 
-            # Write Paths
-            for i,path in enumerate(self._data.getInputPaths()):
-                self._outFileStream.write( self._outFmtStr("InputPath_" + str(i),path ) )
-            self._outFileStream.write( self._outFmtStr("OutputPath",self._data.getOutputPath() ) )
-
-            # Write Sample Details
-            self._outFileStream.write( self._outFmtStr("TotalNumSamples",self._data.getExpectedNumSamples() ) )
-            self._outFileStream.write( self._outFmtStr("ProcessedSamples",self._data.getActualNumSamples() ) )
-
-            # Write Sample Shape Detials
-            shapeSampleA = self.listToString(self._data.getShapeSampleA(),",")
-            shapeSampleB = self.listToString(self._data.getShapeSampleB(),",")
-            self._outFileStream.write( self._outFmtStr("ShapeSampleA",shapeSampleA ) )
-            self._outFileStream.write( self._outFmtStr("ShapeSampleB",shapeSampleB ) )
-
-            # Write Batch Details
-            usedBatchSizes = self._data.getBatchSizes()[:self._batchLimit]
-            batchSizes = self.listToString(usedBatchSizes,",")
-            self._outFileStream.write( self._outFmtStr("BatchSizes",batchSizes ) )
+            
 
             # Close + Return
             self.writeFooter()
@@ -682,8 +463,7 @@ class RunInformation:
             self._outFileStream.close()
             return True
 
-
-    class RunInformationDeserializer(Deserializer):
+    class RunInformationDeserializer(CommonIO.Deserializer):
         """ Class to Deserialize Run Information from a Local Path """
 
         def __init__(self,path):
@@ -801,7 +581,6 @@ class RunInformation:
             result = [int(x) for x in result if x != '']
             return result
         
-
     # Magic Methods
 
     def __repr__(self):

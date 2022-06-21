@@ -4,7 +4,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>7db5e4c8-9e79-41fc-ae9a-67c72be60bd4</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>CommonToolsPy.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CommonToolsPy.py" />
+    <Compile Include="CommonIO.py" />
+    <Compile Include="CommonPlotting.py" />
+    <Compile Include="CommonStructures.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
