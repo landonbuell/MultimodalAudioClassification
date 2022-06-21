@@ -35,9 +35,10 @@ class FeatureCollectionApp:
         self._settings          = appSettings 
         self._logger            = Logger()
         
-        self._sampleManager     = None
-        self._collectionManager = None
+        self._sampleManager     = Managers.SampleManager()
         self._rundataManager    = None
+
+        self._pipelines         = [0,0]
 
         
     def __del__(self):
@@ -85,53 +86,41 @@ class FeatureCollectionApp:
         """ Return the Sample Manager """
         return self._sampleManager
 
-    def getCollectionManager(self):
-        """ Return the Collection Manager """
-        return self._collectionManager
-
     def getRundataManager(self):
         """ Return the Data Manager """
         return self._rundataManager
-
-    def getCurrentDirectory(self):
-        """ Return the Current Working Directory """
-        return os.getcwd()
 
     # Public Interface
 
     def startup(self):
         """ Run Application Startup Sequence """
         
-        # Init the Managers
-        self._sampleManager         = Managers.SampleManager()
-        self._collectionManager     = Managers.CollectionManager()
-        self._rundataManager        = Managers.RundataManager()
-
-        # Run Each Build Method
         self._sampleManager.build()
-        self._collectionManager.build()
         self._rundataManager.build()
-        
-        
+
+        # Emplace Feature Pipelines
+        self._pipelines[0] = Managers.FeatureCollectionPipeline.initDefaultPipelineAlpha()
+        self._pipelines[1] = Managers.FeatureCollectionPipeline.initDefaultPipelineBeta()
+
+        # Initialize the Pipelines
+        self._pipelines[0].initialize()
+        self._pipelines[1].initialize()
+
         return self
 
     def execute(self):
         """ Run Application Execution Sequence """
         
-        batchLimit = self.getSettings().getBatchLimit()
-        if (batchLimit < 0):
-            batchLimit = self.getSampleManager().getNumBatches() - batchLimit
-            
-        # Visit Each Applicaable Batch
-        for idx,size in enumerate(self._sampleManager.getBatchSizes()):
-          
-            if (idx >= batchLimit):
-                # Maximum number of batches reached
-                break  
+        batchCounter = 0
+        MAX_BATCHES = 100000
 
-            # Run the Collection Manager on this Batch
-            self._collectionManager.call(idx,size)             
-            self._rundataManager.call()
+        while (batchCounter > MAX_BATCHES):
+
+            # Get the Next Batch
+            batch = self._sampleManager.getNextBatch()
+            self._rundataManager.lo
+            
+
 
         return self
 
@@ -139,8 +128,8 @@ class FeatureCollectionApp:
         """ Run Application Shutdown Sequence """
 
         self._sampleManager.clean()
-        self._collectionManager.clean()
         self._rundataManager.clean()
+
 
         return self
     
@@ -150,6 +139,9 @@ class FeatureCollectionApp:
         """ Log Message To User """
         self._logger.logMessage(message,timeStamp)
         return self
+
+    def checkIterationConditions(self):
+        """ Return T/F - if """
 
     @staticmethod
     def getDateTime() -> str:

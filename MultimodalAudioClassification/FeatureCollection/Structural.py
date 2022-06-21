@@ -68,7 +68,6 @@ class SampleIO:
             errMsg = "File extension: " + ext + " is not yet supported"
             raise RuntimeError(errMsg)
 
-
     # Private Interface
 
     def readFileWav(self):
