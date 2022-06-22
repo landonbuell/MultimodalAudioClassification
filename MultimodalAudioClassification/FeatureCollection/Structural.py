@@ -102,10 +102,10 @@ class SampleIO:
 class SignalData:
     """ Contain all signal Data (NOT ENCAPSULATED) """
 
-    def __init__(self,sampleRate,samples=None,className="-1"):
+    def __init__(self,sampleRate,samples=None,classLabel=-1):
         """ Constructor for SignalData Instance """
         self._sampleRate            = sampleRate
-        self._className             = className
+        self._classLabel            = classLabel
         self.Waveform               = samples
         self.AnalysisFramesTime     = None
         self.AnalysisFramesFreq     = None
@@ -129,6 +129,10 @@ class SignalData:
         """ Set the Sample Rate """
         self._sampleRate = rate
         return self
+
+    def getClassLabel(self):
+        """ Get Class Label """
+        return self._classLabel
 
     def getWaveform(self):
         """ Get the Signal Samples """
@@ -572,76 +576,6 @@ class MelFrequnecyCepstrumCoeffsConstructor:
         filters = CollectionMethods.MelFilterBankEnergies.melFilters(
             self._numCoeffs,self._sampleRate)
         return filters
-
-class BatchData:
-    """ Class To Hold Data for Each Batch of Samples """
-        
-    def __init__(self,batchIndex,designMatrix,exptMeans=False,exptVaris=False):
-        """ Constructor for BatchDataInstance """
-        self._batchIndex        = batchIndex
-        self._designMatrix      = designMatrix
-        self._means             = None
-        self._varis             = None
-        self._exportMeans       = exptMeans
-        self._exportVaris       = exptVaris
-
-        self.initMeans()
-        self.initVaris()
-
-    def __del__(self):
-        """ Destructor for BatchData Instance """
-        self._designMatrix = None
-
-    # Getters and Setters
-
-    def getBatchIndex(self) -> int:
-        """ Get the Index of this Batch """
-        return self._batchIndex
-
-    def getNumSamples(self) -> int:
-        """ Get the Number of Samples in this Design Matrix """
-        return self._designMatrix.getNumSamples()
-
-    def getNumFeatures(self) -> int:
-        """ Get the number of features in this Design Matrix """
-        return self._designMatrix.getNumFeatures()
-    
-    def getMeans(self):
-        """ Get the Average of Each Feature """
-        return self._means
-
-    def getVariances(self):
-        """ Get the Variance of each Feature """
-        return self._varis
-
-    def incrementNumSamplesRead(self,amount):
-        """ Increment the Number of Samples Read in this Batch """
-        self._numSamplesRead += amount
-        return self
-
-    # Public Interface
-
-    def export(self,path):
-        """ Write out the Batch's Data to a specified file """
-        return self
-
-    # Private Interface
-
-    def initMeans(self):
-        """ Initialize the Means Array """
-        if (self._exportMeans == True):
-            # Store the Average of Each Feature
-            numFeatures = self._designMatrix.getNumFeatures()
-            self._means = np.zeros(shape=(numFeatures,),dtype=np.float32)
-        return self
-
-    def initVaris(self):
-        """ Initialize the Means Array """
-        if (self._exportVaris == True):
-            # Store the Average of Each Feature
-            numFeatures = self._designMatrix.getNumFeatures()
-            self._varis = np.zeros(shape=(numFeatures,),dtype=np.float32)
-        return self
 
 class WindowFunctions:
     """ Static Class to Hold All Window Functions """

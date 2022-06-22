@@ -22,9 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CommonIO.py" />
-    <Compile Include="CommonPlotting.py" />
-    <Compile Include="CommonStructures.py" />
+    <Compile Include="PyToolsIO.py" />
+    <Compile Include="PyToolsPlotting.py" />
+    <Compile Include="PyToolsStructures.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
