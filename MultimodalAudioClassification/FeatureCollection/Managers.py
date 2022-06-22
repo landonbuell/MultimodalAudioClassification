@@ -18,8 +18,7 @@ import pandas as pd
 
 from scipy import signal
 
-import CommonPlotting
-import CommonStructures
+import PyToolsStructures
 
 import Administrative
 import CollectionMethods
@@ -60,14 +59,9 @@ class Manager:
 
     # Public Interface
 
-    def build(self):
+    def init(self):
         """ Initialize all Paramters for this Manager """
         self.logBuild()
-        return self
-
-    def call(self):
-        """ Run the Execution of this Manager """
-        self.logExecution()
         return self
 
     def clean(self):
@@ -94,15 +88,9 @@ class Manager:
         self.logMessageInterface(msg)
         return None
 
-    def logBuild(self):
+    def logInit(self):
         """ Log the Initialization of the instance """
         msg = "Initializing " + str(self.__class__) + " Instance..."
-        self.logMessageInterface(msg)
-        return None
-
-    def logExecution(self):
-        """ Log the Initialization of the instance """
-        msg = "Executing " + str(self.__class__) + " Instance..."
         self.logMessageInterface(msg)
         return None
 
@@ -165,6 +153,10 @@ class SampleManager (Manager):
         # Batch is populated now
         return batch
 
+    def samplesRemaining(self):
+        """ Return T/F If there are no More samples to process """
+        return (len(self._database) - self._counter)
+
     def registerFileParserCallback(self,callback):
         """ Register the method that will read a File into a list of samples """
         self._fileParserCallback = callback
@@ -172,9 +164,9 @@ class SampleManager (Manager):
 
     # Public Interface
 
-    def build(self):
+    def init(self):
         """ Prepare the Sample Manager for Usage """
-        super().build()
+        super().init()
 
         # Register the callback to read the files
         self.registerFileParserCallback(
@@ -211,8 +203,6 @@ class SampleManager (Manager):
 
         # Finished Parsing all Samples
         return self
-
-
           
     def shuffle(self):
         """ Shuffle Samples in Place According to Seed """
@@ -265,7 +255,6 @@ class RundataManager (Manager):
         super().__init__()
         self._runInfo           = None
 
-
     def __del__(self):
         """ Destructor for MetadataManager Instance """
         super().__del__()
@@ -278,37 +267,66 @@ class RundataManager (Manager):
 
     # Public Interface
 
-    def build(self):
+    def init(self):
         """ Build the Data Manager Instance """
-        super().build()
+        super().init()
         self.getSettings().serialize()
              
 
         self.describe()      
         return self
 
-    def call(self):
-        """ Run this Manager's Execution Method """
+    def processBatch(self,batchSamples,batchIndex):
+        """ Process a batch of Samples """
+        msg = "\tProcessing Batch {0}...".format(batchIndex)
+        self.logMessageInterface(msg)
 
-        super().call()
-        
+        # For each Sample in the Batch
+        batchSize = len(batchSamples)
+        for idx,sample in batchSamples:
+            msg = "\t\tSample ({0:<4}/{1:<4})".format(idx,batchSize)
+            self.logMessageInterface(msg)
 
-        return self
+            # Evaliate Feature Pipeline
+            self.evaluatePipelines(sample,idx)
+
+         
+        # Update Run information
+        self._runInfo.addBatchSize(batchSize)
+
+        # All Done!
+        return True
+
 
     def clean(self):
         """ Run Cleaning method on Instance """
-        runOutputFolder = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()    
-        runInfoOutputPath = os.path.join(runOutputFolder,"runInfo.txt")
-        self._runInfo.serialize(runInfoOutputPath)
         super().clean()
+        
+        # Serialize the run info 
+        runInfoOutputPath = os.path.join(self.getSettings().getOutputPath() ,"runInfo.txt")
+        self._runInfo.serialize(runInfoOutputPath)
+        
         return self
 
     # Private Interface
 
+    def evaluatePipelines(self,sample,sampleIndex):
+        """ Evaluate Sample Against Each Feature Pipeline """
+
+        pipelines = Administrative.FeatureCollectionApp.getPipelines()
+        for pipeline in pipelines:
+
+            features = pipeline.evaluate(sample)
+
+
+
+        return 
+
+
 class FeatureCollectionPipeline:
     """ Holds a Queue of Methods and Design Matrix """
 
-    MAX_QUEUE_SIZE = 64
+    MAX_QUEUE_SIZE = 32
 
     def __init__(self,pipelineIdentifier):
         """ FeatureCollectionPipeline Constructor """
@@ -316,6 +334,7 @@ class FeatureCollectionPipeline:
         self._initalized    = False
         self._queue         = np.array(size=(FeatureCollectionPipeline.MAX_QUEUE_SIZE,),dtype=object)  
         self._designMatrix  = None
+        self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
 
     def __del__(self):
@@ -338,6 +357,15 @@ class FeatureCollectionPipeline:
             result += item.getReturnSize()
         return result
 
+    def getAnalysisFrameParams(self):
+        """ Get the analysis frame parameters for this pipeline """
+        return self._frameParams
+
+    def setAnalysisFrameParams(self,params):
+        """ Set the analysis frame parameters for this pipeline """
+        self._frameParams = params
+        return self
+
     def __getitem__(self,key):
         """ Return Item at Index """
         return self._queue[key]
@@ -357,7 +385,7 @@ class FeatureCollectionPipeline:
     def initialize(self):
         """ Prepare the pipeline for processing """
 
-    def evaluate(self,signal):
+    def evaluate(self,signal,sampleIndex):
         """ Evaluate Input signal against the queue of features """
         
         if(self._initalized == False):
@@ -367,8 +395,11 @@ class FeatureCollectionPipeline:
                                                                                         
         # Prepare to Evaluate the Queue
         indexCounter = 0
+        returnSize = self.getReturnSize()
         self.evaluateSignalPreprocessCallbacks(signal)
-        featureVector = Structural.FeatureVector()
+        featureVector = PyToolsStructures.FeatureVector(
+            returnSize,
+            signal.getClassLabel() )
 
         # Evaluate Queue
         for item in self:
@@ -379,10 +410,8 @@ class FeatureCollectionPipeline:
                 featureVector[indexCounter] = result[j]
                 indexCounter += 1
 
-        # Use the Feature Vector 
-
-        # All done!
-        return self
+        # Return the Feature Vector from this Samples
+        return featureVector
             
     def __iter__(self):
         """ Define Forward iterator """
@@ -402,7 +431,7 @@ class FeatureCollectionPipeline:
     # Static Interface
 
     @staticmethod
-    def initDefaultPipelineAlpha():
+    def getDefaultPipelineAlpha():
         """ Default Pipeline Alpha """
         pipeline = FeatureCollectionPipeline("A")      
 
@@ -440,7 +469,7 @@ class FeatureCollectionPipeline:
         return pipeline
 
     @staticmethod
-    def initDefaultPipelineBeta():
+    def getDefaultPipelineBeta():
         """ Defulat Pipeline Alpha """
         pipeline = FeatureCollectionPipeline("B")
 

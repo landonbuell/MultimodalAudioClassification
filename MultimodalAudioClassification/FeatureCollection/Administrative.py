@@ -11,12 +11,12 @@ Date:           December 2021
         #### IMPORTS ####
 
 import os
-import sys
 import datetime
+
+import PyToolsIO
 
 import Managers
 
-import CommonStructures
 
         #### CLASS DEFINITIONS ####
 
@@ -36,9 +36,9 @@ class FeatureCollectionApp:
         self._logger            = Logger()
         
         self._sampleManager     = Managers.SampleManager()
-        self._rundataManager    = None
+        self._rundataManager    = Managers.RundataManager()
 
-        self._pipelines         = [0,0]
+        self._pipelines         = [None,None]
 
         
     def __del__(self):
@@ -71,8 +71,7 @@ class FeatureCollectionApp:
             # App Does not Exist
             errMsg = "ERROR: FeatureCollectionApp has not been instantiated"
             raise RuntimeError(errMsg)
-        else:
-            return FeatureCollectionApp._appInstance
+        return FeatureCollectionApp._appInstance
 
     def getSettings(self):
         """ Return the Settings Instance """
@@ -90,17 +89,21 @@ class FeatureCollectionApp:
         """ Return the Data Manager """
         return self._rundataManager
 
+    def getPipelines(self):
+        """ Get Feature Pipeline at Index """
+        return self._pipelines
+
     # Public Interface
 
     def startup(self):
         """ Run Application Startup Sequence """
         
-        self._sampleManager.build()
-        self._rundataManager.build()
+        self._sampleManager.init()
+        self._rundataManager.init()
 
         # Emplace Feature Pipelines
-        self._pipelines[0] = Managers.FeatureCollectionPipeline.initDefaultPipelineAlpha()
-        self._pipelines[1] = Managers.FeatureCollectionPipeline.initDefaultPipelineBeta()
+        self._pipelines[0] = Managers.FeatureCollectionPipeline.getDefaultPipelineAlpha()
+        self._pipelines[1] = Managers.FeatureCollectionPipeline.getDefaultPipelineBeta()
 
         # Initialize the Pipelines
         self._pipelines[0].initialize()
@@ -113,15 +116,24 @@ class FeatureCollectionApp:
         
         batchCounter = 0
         MAX_BATCHES = 100000
+        loop = True
 
-        while (batchCounter > MAX_BATCHES):
+        while (batchCounter > MAX_BATCHES and loop == True):
 
             # Get the Next Batch
-            batch = self._sampleManager.getNextBatch()
-            self._rundataManager.lo
+            batch = self.getSampleManager().getNextBatch()
+            loop = self.getRundataManager().processBatch(batch,batchCounter)
             
+            if (self.getSampleManager().samplesRemaining() <= 0):
+                # Not more samples to process
+                loop = False
 
-
+            # Otherwise....
+            # TODO: This
+            
+        # All Done!
+        msg = "\t Last batch Processed!"
+        self.logMessage(msg)
         return self
 
     def shutdown(self):
@@ -246,7 +258,7 @@ class AppSettings:
 
     def serialize(self)-> bool:
         """ Write the Settings Instance out to a text file """
-        writer = AppSettings.AppSettingsSerializer(self,None)
+        writer = CommonToolsPyIO.AppSettingsSerializer(self,None)
         success = True
         try:
             writer.call()
@@ -259,15 +271,15 @@ class AppSettings:
     def developmentSettingsInstance():
         """ Build an instance of runtime settings for development """
         result = AppSettings(
-            #pathsInput=["..\\lib\\DemoTargetData\\Y4.csv",
-            #            "..\\lib\\DemoTargetData\\Y3.csv",
-            #            "..\\lib\\DemoTargetData\\Y2.csv",
-            #            "..\\lib\\DemoTargetData\\Y1.csv",],
-            pathsInput=["..\\lib\\DemoTargetData\\Y4.csv"],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV2",
+            pathsInput=[],
+            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV0",
             batchSize=64,
             batchLimit=-1,
             shuffleSeed=-1)
+        #result.addInputPath("..\\lib\\DemoTargetData\\Y1.csv")
+        #result.addInputPath("..\\lib\\DemoTargetData\\Y2.csv")
+        #result.addInputPath("..\\lib\\DemoTargetData\\Y3.csv")
+        result.addInputPath("..\\lib\\DemoTargetData\\Y4.csv")
         return result
 
     # Private Interface
@@ -289,46 +301,6 @@ class AppSettings:
             os.makedirs(fullOutput)
         self._pathOutput = fullOutput
         return self
-
-    class AppSettingsSerializer(CommonStructures.Serializer):
-        """ Class to Serialize AppSettings Instance """
-
-        def __init__(self,settings,path=None):
-            """ Constructor for AppSettingsSerializer Instance """
-            super().__init__(settings,path)
-            if (path is None):
-                self._outputPath = os.path.join(self._data.getOutputPath(),"runtimeSettings.txt")
-
-        def __del__(self):
-            """ Destructor for AppSettingsSerializer Instance """
-            super().__del__()
-
-        def call(self):
-            """ Serialize the Chosen Instance """
-
-            self._outFileStream = open(self._outputPath,"w")
-            self.writeHeader()
-            # Write In/Out P    aths
-            
-            self._outFileStream.write( self._outFmtStr("startupPath",self._data.getStartupPath() ) )
-            for i,path in enumerate(self._data.getInputPaths()):
-                self._outFileStream.write( self._outFmtStr("InputPath_" + str(i),path ) )
-            self._outFileStream.write( self._outFmtStr("outputPath",self._data.getOutputPath() ) )
-
-            # Write Collection Settings
-            self._outFileStream.write( self._outFmtStr("BatchSize",self._data.getBatchSize() ) )
-            self._outFileStream.write( self._outFmtStr("BatchLimit",self._data.getBatchLimit() ) )
-            self._outFileStream.write( self._outFmtStr("ShuffleSeed",self._data.getShuffleSeed() ) )
-            self._outFileStream.write( self._outFmtStr("Verbose",self._data.getVerbose() ) )
-
-            # Write Log Levels
-            self._outFileStream.write( self._outFmtStr("LogConsole",self._data.getLogToConsole() ) )
-            self._outFileStream.write( self._outFmtStr("LogFile",self._data.getLogToFile() ) )
-
-            # Close Output + Return
-            self.writeFooter()
-            self._outFileStream.close()
-            return self
 
     # Magic Methods
 
