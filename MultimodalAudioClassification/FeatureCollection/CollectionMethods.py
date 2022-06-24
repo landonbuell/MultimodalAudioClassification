@@ -31,6 +31,7 @@ class CollectionMethod:
         """ Constructor for CollectionMethod Base Class """
         self._methodName    = name
         self._parameter     = param
+        self._owner         = None
         self._result        = np.empty(shape=(param,),dtype=np.float32)
        
     def __del__(self):
@@ -47,6 +48,10 @@ class CollectionMethod:
         """ Get the Number of Features that we expect to Return """
         return self._parameter
 
+    def getOwnerPipeline(self):
+        """ Get the Pipeline that owns this method """
+        return self._owner
+
     # Public Interface
 
     def invoke(self,signalData,*args):
@@ -60,6 +65,11 @@ class CollectionMethod:
     def featureNames(self):
         """ Get List of Names for Each element in Result Array """
         return [self._methodName + str(i) for i in range(self.getReturnSize())]
+
+    def registerWithPipeline(self,pipeline):
+        """ Register the pipeline that owns this collection method (optional) """
+        self._owner = pipeline
+        return self
     
     # Protected Interface
 
@@ -725,7 +735,8 @@ class MelFilterBankEnergies(CollectionMethod):
 
         # Check if We have MFCC's - Create if we don't
         if (signalData.MelFilterBankEnergies is None):
-            signalData.makeMelFilterBankEnergies(self._parameter)
+            signalData.makeMelFilterBankEnergies(
+                self._owner.getAnalysisFrameParams(),self._parameter)
         avgMFBEs = np.mean(signalData.MelFilterBankEnergies,axis=0)
 
         # Copy to result + return
@@ -760,9 +771,8 @@ class MelFilterBankEnergies(CollectionMethod):
         return 2595 * np.log10(1 + freqHz / 700)
 
     @staticmethod
-    def melFilters(numFilters,sampleRate=44100):
+    def melFilters(frameParams,numFilters,sampleRate=44100):
         """ Build the Mel-Filter Bank Arrays """
-        frameParams = Administrative.FeatureCollectionApp._appInstance.getRundataManager().getFrameParams()
         freqBoundsHz = frameParams.getFreqBoundHz()
         freqBoundsMels = MelFilterBankEnergies.hertzToMels(freqBoundsHz)
         numSamplesTime = frameParams.getTotalTimeFrameSize()       

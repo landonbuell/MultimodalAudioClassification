@@ -2,7 +2,7 @@
 Repository:     MultimodalAudioClassification
 Solution:       MultimodalAudioClassification
 Project:        CommonToolsPy
-File:           CommonStructures.py
+File:           PyToolsStructures.py
  
 Author:         Landon Buell
 Date:           June 2022
@@ -15,7 +15,7 @@ import sys
 
 import numpy as np
 
-import CommonIO
+import PyToolsIO
 
 
         #### CLASS DEFINITIONS ####
@@ -65,8 +65,9 @@ class FeatureVector:
 
     def clearData(self):
         """ Clear All Entries in this Array """
+        dataShape = self._data.shape
         self._label         = -1
-        self._data          = np.zeros(shape=self._sampleShape,dtype=np.float32)
+        self._data          = np.zeros(shape=dataShape,dtype=np.float32)
         return self
 
     # Magic Method
@@ -100,7 +101,7 @@ class DesignMatrix:
         """ Constructor for DesignMatrix Instance """
         self._numSamples    = numSamples 
         self._sampleShape   = sampleShape
-        self._data          = np.zeros(shape=self.getShape(),dtype=np.float32)
+        self._data          = np.zeros(shape=self.getMatrixShape(),dtype=np.float32)
         self._tgts          = np.zeros(shape=numSamples,dtype=np.int16)
 
     def __del__(self):
@@ -111,7 +112,7 @@ class DesignMatrix:
 
     def getMatrixShape(self):
         """ Get Total Shape of Design Matrix """
-        shape = [self._numSamples] + [x for x in self._sampleShape.shape]
+        shape = [self._numSamples] + [x for x in self._sampleShape]
         return tuple(shape)
 
     def getSampleShape(self):
@@ -166,12 +167,14 @@ class DesignMatrix:
 
     # public Interface
 
-    def serialize(self,pathX=None,pathY=None):
+    def serialize(self,pathX,pathY):
         """ Write this design matrix out to a file """   
-        writerX = DesignMatrix.DesignMatrixSerializer(self,pathX)
+        writerX = PyToolsIO.DesignMatrixDataSerializer(self,pathX)
+        writerY = PyToolsIO.DesignMatrixLabelSerializer(self,pathY)
         success = True
         try:          
             success = writerX.call()
+            success = writerY.call()
         except Exception as err:
             print("\t\tDesignMatrix.serialize()" + err)
             success = False
@@ -232,7 +235,7 @@ class DesignMatrix:
         self._tgts[key] = value.getLabel()
         self._data[key] = value.getData()
         return self
-a
+
 class RunInfo:
     """
     Class to Hold and Use all Metadata related to a feature collection Run
@@ -287,7 +290,7 @@ class RunInfo:
 
     def serialize(self,path):
         """ Serialize this Instance to specified Path """
-        writer = CommonIO.RunInformationSerializer(self,path)
+        writer = PyToolsIO.RunInfoSerializer(self,path)
         success = False
         try:
             success = writer.call()

@@ -77,7 +77,7 @@ class SampleIO:
         waveform -= np.mean(waveform)
         waveform /= np.max(np.abs(waveform))       
         waveform = self.padWaveform(waveform)    
-        return SignalData(sampleRate,waveform,self._targetStr)
+        return SignalData(waveform,self._targetInt,self._targetStr,sampleRate)
 
     def padWaveform(self,waveform):
         """ Pad or Crop Waveform if too long or too short """
@@ -102,11 +102,12 @@ class SampleIO:
 class SignalData:
     """ Contain all signal Data (NOT ENCAPSULATED) """
 
-    def __init__(self,sampleRate,samples=None,classLabel=-1):
+    def __init__(self,waveform,targetInt,targetStr,sampleRate=44100):
         """ Constructor for SignalData Instance """
         self._sampleRate            = sampleRate
-        self._classLabel            = classLabel
-        self.Waveform               = samples
+        self._targetInt             = targetInt
+        self._targetStr             = targetStr
+        self.Waveform               = waveform
         self.AnalysisFramesTime     = None
         self.AnalysisFramesFreq     = None
         self.MelFilterBankEnergies  = None
@@ -130,13 +131,17 @@ class SignalData:
         self._sampleRate = rate
         return self
 
-    def getClassLabel(self):
-        """ Get Class Label """
-        return self._classLabel
+    def getTargetInt(self) -> int:
+        """ Return Target Label as Int """
+        return self._targetInt
+
+    def getTargetStr(self) -> str:
+        """ Return Target Label as Str """
+        return self._targetStr
 
     def getWaveform(self):
         """ Get the Signal Samples """
-        return self._waveform
+        return self.Waveform
 
     def setWaveform(self,data):
         """ Set the Signal Samples """
@@ -200,10 +205,9 @@ class SignalData:
         # Apply window Function + Fourier Transform
         constructor = AnalysisFramesFreqConstructor(frameParams)
         constructor.call(self)
-        constructor = None
         return self
 
-    def makeMelFilterBankEnergies(self,numCoeffs):
+    def makeMelFilterBankEnergies(self,frameParams,numCoeffs):
         """ Make All Mel-Cepstrum Frequency Coefficients """
         if (self.AnalysisFramesFreq is None):
             # No Waveform - Cannot make MFCC's
@@ -211,9 +215,9 @@ class SignalData:
             raise RuntimeError(errMsg)
 
         # Create + Call the MFCC builder
-        constructor = MelFrequnecyCepstrumCoeffsConstructor(numCoeffs)
+        constructor = MelFrequnecyCepstrumCoeffsConstructor(
+            frameParams,numCoeffs)
         constructor.call(self)
-        constructor = None
         return self
 
     def makeAutoCorrelationCoeffs(self,numCoeffs):
@@ -543,13 +547,13 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
 class MelFrequnecyCepstrumCoeffsConstructor:
     """ Class the Handle the Creation of all Mel-Frequency-Cepstrum Coeffs """
 
-    def __init__(self,numCoeffs,freqLowHz=0,freqHighHz=22050,sampleRate=44100):
+    def __init__(self,frameParams,numCoeffs,freqLowHz=0,freqHighHz=22050,sampleRate=44100):
         """ Constructor for MelFrequnecyCepstrumCoeffsConstructor Instance """
         self._numCoeffs = numCoeffs
         self._freqLowHz = freqLowHz
         self._freqHighHz = freqHighHz
         self._sampleRate = sampleRate
-        self._melFilterBanks = self.buildMelFilterBanks()
+        self._melFilterBanks = self.buildMelFilterBanks(frameParams)
        
 
     def __del__(self):
@@ -571,10 +575,10 @@ class MelFrequnecyCepstrumCoeffsConstructor:
 
     # Private Interface
 
-    def buildMelFilterBanks(self):
+    def buildMelFilterBanks(self,frameParams):
         """ Construct the Mel Filter Bank Envelopes """
         filters = CollectionMethods.MelFilterBankEnergies.melFilters(
-            self._numCoeffs,self._sampleRate)
+            frameParams,self._numCoeffs,self._sampleRate)
         return filters
 
 class WindowFunctions:

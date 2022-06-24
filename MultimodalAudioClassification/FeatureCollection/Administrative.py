@@ -118,7 +118,7 @@ class FeatureCollectionApp:
         MAX_BATCHES = 100000
         loop = True
 
-        while (batchCounter > MAX_BATCHES and loop == True):
+        while (batchCounter < MAX_BATCHES and loop == True):
 
             # Get the Next Batch
             batch = self.getSampleManager().getNextBatch()
@@ -130,6 +130,7 @@ class FeatureCollectionApp:
 
             # Otherwise....
             # TODO: This
+            batchCounter += 1
             
         # All Done!
         msg = "\t Last batch Processed!"
@@ -256,9 +257,11 @@ class AppSettings:
         self._pathsInput.add(fullPath)
         return self
 
-    def serialize(self)-> bool:
+    def serialize(self,outputPath=None)-> bool:
         """ Write the Settings Instance out to a text file """
-        writer = CommonToolsPyIO.AppSettingsSerializer(self,None)
+        if (outputPath is None):
+            outputPath = os.path.join(self.getOutputPath(),"settings.txt")
+        writer = PyToolsIO.AppSettingsSerializer(self,outputPath)
         success = True
         try:
             writer.call()
@@ -276,10 +279,10 @@ class AppSettings:
             batchSize=64,
             batchLimit=-1,
             shuffleSeed=-1)
-        #result.addInputPath("..\\lib\\DemoTargetData\\Y1.csv")
-        #result.addInputPath("..\\lib\\DemoTargetData\\Y2.csv")
-        #result.addInputPath("..\\lib\\DemoTargetData\\Y3.csv")
-        result.addInputPath("..\\lib\\DemoTargetData\\Y4.csv")
+        #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
+        #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
+        #result.addInputPath("..\\..\\InputFiles\\Y3.csv")
+        result.addInputPath("..\\..\\InputFiles\\Y4.csv")
         return result
 
     # Private Interface

@@ -16,8 +16,6 @@ import os
 import numpy as np
 import pandas as pd
 
-from scipy import signal
-
 import PyToolsStructures
 
 import Administrative
@@ -61,7 +59,7 @@ class Manager:
 
     def init(self):
         """ Initialize all Paramters for this Manager """
-        self.logBuild()
+        self.logInit()
         return self
 
     def clean(self):
@@ -136,7 +134,7 @@ class SampleManager (Manager):
     def getNextBatch(self):
         """ Get the next Batch of Samples """
         batchSize = self.getSettings().getBatchSize()
-        batch = np.array(size=(batchSize,),dtype=object)
+        batch = np.array([],dtype=object)
         
         # Get the next few items
         for i in range(0,batchSize):
@@ -147,7 +145,7 @@ class SampleManager (Manager):
                 return batch
 
             # Otherwise....
-            batch[i] = self._database[self._counter]
+            batch = np.append(batch, self._database[self._counter])
             self._counter += 1;
 
         # Batch is populated now
@@ -281,14 +279,18 @@ class RundataManager (Manager):
         msg = "\tProcessing Batch {0}...".format(batchIndex)
         self.logMessageInterface(msg)
 
-        # For each Sample in the Batch
+        # Realloc for Batch Size
         batchSize = len(batchSamples)
-        for idx,sample in batchSamples:
-            msg = "\t\tSample ({0:<4}/{1:<4})".format(idx,batchSize)
+        self.reallocDesignMatrices(batchSize)
+
+        # For each Sample in the Batch
+        for i in range(batchSamples.shape[0]):
+            msg = "\t\tSample ({0:<2}/{1:<2})".format(i,batchSize)
             self.logMessageInterface(msg)
 
             # Evaliate Feature Pipeline
-            self.evaluatePipelines(sample,idx)
+            signal = batchSamples[i].readSignal()
+            self.evaluatePipelines(signal,i)
 
          
         # Update Run information
@@ -310,18 +312,27 @@ class RundataManager (Manager):
 
     # Private Interface
 
-    def evaluatePipelines(self,sample,sampleIndex):
+    def evaluatePipelines(self,signal,sampleIndex):
         """ Evaluate Sample Against Each Feature Pipeline """
 
-        pipelines = Administrative.FeatureCollectionApp.getPipelines()
+        pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         for pipeline in pipelines:
-
-            features = pipeline.evaluate(sample)
-
-
-
+            features = pipeline.evaluate(signal)
+            pipeline.getDesignMatrix().__setitem__(sampleIndex,features)
+       
+        # Done!
         return 
 
+    def reallocDesignMatrices(self,batchSize):
+        """ Reallocate Design Matrices if different batch Size """
+        pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
+        for pipeline in pipelines:
+            numSamples = pipeline.getDesignMatrix().getNumSamples()
+            # check if different size
+            if (numSamples != batchSize):
+                pipeline.getDesignMatrix().setNumSamples(batchSize)
+        # Done reallocatinging all 
+        return self
 
 class FeatureCollectionPipeline:
     """ Holds a Queue of Methods and Design Matrix """
@@ -332,7 +343,7 @@ class FeatureCollectionPipeline:
         """ FeatureCollectionPipeline Constructor """
         self._identfier     = pipelineIdentifier
         self._initalized    = False
-        self._queue         = np.array(size=(FeatureCollectionPipeline.MAX_QUEUE_SIZE,),dtype=object)  
+        self._queue         = np.zeros(shape=(FeatureCollectionPipeline.MAX_QUEUE_SIZE,),dtype=object)  
         self._designMatrix  = None
         self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
@@ -385,7 +396,19 @@ class FeatureCollectionPipeline:
     def initialize(self):
         """ Prepare the pipeline for processing """
 
-    def evaluate(self,signal,sampleIndex):
+        returnSize = (self.getReturnSize(),)
+        batchSize = Administrative.FeatureCollectionApp.getInstance().getSettings().getBatchSize()
+        self._designMatrix = PyToolsStructures.DesignMatrix(batchSize,returnSize)
+
+        # Register this pipeline instance as the 'owner' of each method
+        for item in self:
+            item.registerWithPipeline(self)
+
+        # Mark Initialization Finished
+        self._initalized = True
+        return self
+
+    def evaluate(self,signal):
         """ Evaluate Input signal against the queue of features """
         
         if(self._initalized == False):
@@ -399,7 +422,7 @@ class FeatureCollectionPipeline:
         self.evaluateSignalPreprocessCallbacks(signal)
         featureVector = PyToolsStructures.FeatureVector(
             returnSize,
-            signal.getClassLabel() )
+            signal.getTargetInt() )
 
         # Evaluate Queue
         for item in self:
@@ -425,7 +448,7 @@ class FeatureCollectionPipeline:
     def evaluateSignalPreprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPreprocessCallbacks:
-            callback(signal)
+            callback(signal,self.getAnalysisFrameParams())
         return self
 
     # Static Interface
@@ -466,6 +489,9 @@ class FeatureCollectionPipeline:
         pipeline[27] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
 
         # Return the resulting pipeline
+        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesTime )
+        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesFreq )
+
         return pipeline
 
     @staticmethod
