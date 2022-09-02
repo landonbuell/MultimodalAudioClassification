@@ -177,7 +177,7 @@ class SignalData:
         """ Clear all Fields of the Instance """
         self.AnalysisFramesTime     = None
         self.AnalysisFramesFreq     = None
-        self.MelFilterBankEnergies         = None
+        self.MelFilterBankEnergies   = None
         self.AutoCorrelationCoeffs  = None
         self.FrameZeroCrossings     = None
         self.FrameEnergyTime        = None
@@ -191,6 +191,9 @@ class SignalData:
             raise RuntimeError(errMsg)
 
         # Create the Frames Constructor with Params
+        if (frameParams is None):
+            msg = "Cannot make TimeSeriesAnalysisFrames w/ NONE frame params"
+            raise RuntimeError(msg)
         constructor = AnalysisFramesTimeConstructor(frameParams)
         constructor.call(self)
         constructor = None
@@ -199,9 +202,8 @@ class SignalData:
     def makeAnalysisFramesFreq(self,frameParams=None):
         """ Make Frequncy-Series Analysis Frames """
         if (self.AnalysisFramesTime is None):
-            # No Analysis Frames - Cannot Make Energies
-            errMsg = "ERROR: need analysis frames time to make analysis frames frequency"
-            raise RuntimeError(errMsg)
+            # No Time  Analysis Frames - Make them
+            self.makeAnalysisFramesTime(frameParams)
         # Apply window Function + Fourier Transform
         constructor = AnalysisFramesFreqConstructor(frameParams)
         constructor.call(self)

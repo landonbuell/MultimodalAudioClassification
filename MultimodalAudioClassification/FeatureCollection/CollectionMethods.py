@@ -59,7 +59,7 @@ class CollectionMethod:
         if (Administrative.FeatureCollectionApp._appInstance.getSettings().getVerbose() > 1):
             msg = "\t\tInvoking " + self.getMethodName()
             Administrative.FeatureCollectionApp.logMessage(msg)
-        self._result = np.zeros(shape=(self.getReturnSize(),),dtype=np.float32)
+        #self._result = np.zeros(shape=(self.getReturnSize(),),dtype=np.float32)
         return self
 
     def featureNames(self):
@@ -964,3 +964,35 @@ class MelFrequencyCepstrumCoefficients(CollectionMethod):
         """ Validate that Parameter Values Makes Sense """
         super().validateParameter()
         return True
+
+class Spectrogram(CollectionMethod):
+    """ Compute the Spectrogram Representation of an Waveform """
+
+    def __init__(self,frameParams):
+        """ Constructor for Spectrogram instance """
+        returnSize = frameParams.getTotalFreqFrameSize() * getMaxNumFrames()
+        super().__init__("Spectrogram",returnSize)
+        self._framesParams = frameParams
+
+    def __del__(self):
+        """ Destructor for Spectrogram instance """
+        super().__del__()
+
+    # Public Interface 
+
+    def invoke(self,signalData,*args):
+        """ Invoke this collection method """
+        self.validateInputSignal(signalData)
+        super().invoke(signalData);
+        # Build spectrogram
+        if (signalData.AnalysisFramesFreq is None):
+            # Spect does not exist
+            signalData.makeAnalysisFramesFreq(self._framesParams)
+
+
+        return self._result
+
+
+    # Protected Interface
+
+    # 

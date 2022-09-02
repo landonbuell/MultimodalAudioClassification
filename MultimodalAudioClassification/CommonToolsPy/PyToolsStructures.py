@@ -65,7 +65,7 @@ class FeatureVector:
 
     def clearData(self):
         """ Clear All Entries in this Array """
-        dataShape = self._data.shape
+        dataShape           = self._data.shape
         self._label         = -1
         self._data          = np.zeros(shape=dataShape,dtype=np.float32)
         return self
@@ -241,8 +241,7 @@ class RunInfo:
     Class to Hold and Use all Metadata related to a feature collection Run
     """
 
-    def __init__(self,inputPaths,outputPath,
-                 numSamplesExpected=0,numSamplesRead=0):
+    def __init__(self,inputPaths,outputPath):
         """ Constructor for RunInformation Instance """
         self._pathsInput        = inputPaths
         self._pathOutput        = outputPath

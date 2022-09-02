@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 import PyToolsStructures
+import PyToolsIO
 
 import Administrative
 import CollectionMethods
@@ -251,7 +252,9 @@ class RundataManager (Manager):
     def __init__(self):
         """ Constructor for MetadataManager Instance """
         super().__init__()
-        self._runInfo           = None
+        inputPaths = Administrative.FeatureCollectionApp.getInstance().getSettings().getInputPaths()
+        outputPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
+        self._runInfo           = PyToolsStructures.RunInfo(inputPaths,outputPath)
 
     def __del__(self):
         """ Destructor for MetadataManager Instance """
@@ -295,6 +298,7 @@ class RundataManager (Manager):
          
         # Update Run information
         self._runInfo.addBatchSize(batchSize)
+        self.exportDesignMatrices(batchIndex)
 
         # All Done!
         return True
@@ -334,6 +338,16 @@ class RundataManager (Manager):
         # Done reallocatinging all 
         return self
 
+    def exportDesignMatrices(self,batchIndex):
+        """ Export design Matrices """
+        pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
+        
+        # Export X + Y for pipeline 0 and Export only X for pipline 1
+        pipelines[0].exportDesignMatrix(True,True)
+        pipelines[1].exportDesignMatrix(True,False)
+       
+        return self
+
 class FeatureCollectionPipeline:
     """ Holds a Queue of Methods and Design Matrix """
 
@@ -343,6 +357,7 @@ class FeatureCollectionPipeline:
         """ FeatureCollectionPipeline Constructor """
         self._identfier     = pipelineIdentifier
         self._initalized    = False
+        self._size          = 0
         self._queue         = np.zeros(shape=(FeatureCollectionPipeline.MAX_QUEUE_SIZE,),dtype=object)  
         self._designMatrix  = None
         self._frameParams   = Structural.AnalysisFramesParameters()
@@ -379,18 +394,45 @@ class FeatureCollectionPipeline:
 
     def __getitem__(self,key):
         """ Return Item at Index """
+        if (key >= self._size or key < 0):
+            msg = "Index: {0} is out of range for FeatureCollectionPipeline w/ size {1}".format(
+                key,self._size)
+            raise RuntimeError(msg)
         return self._queue[key]
 
     def __setitem__(self,key,val):
         """ Set Item at Index """
+        if (key >= self._size or key < 0):
+            msg = "Index: {0} is out of range for FeatureCollectionPipeline w/ size {1}".format(
+                key,self._size)
+            raise RuntimeError(msg)
         self._queue[key] = val
         return self
 
     # Public Interface
 
+    def registerCollectionMethod(self,method):
+        """ Register a Feature Collection method with this pipeline """
+        if (self._size >= FeatureCollectionPipeline.MAX_QUEUE_SIZE):
+            msg = "FeatureCollectionPipeline has reached max capactity. Cannot subscribe new methods."
+            RuntimeError(msg)
+        # Add the methof to the queue
+        self._queue[self._size] = method
+        self._size += 1
+        return self
+
     def registerSignalPreprocessCallback(self,callback):
         """ Register a Callback for preprocessing a signal """
         self._signalPreprocessCallbacks.append(callback)
+        return self
+
+    def resize(self,newSize):
+        """ Resize the Queue to fit specific size """
+        if (newSize < 1 or newSize > FeatureCollectionPipeline.MAX_QUEUE_SIZE):
+            msg = "New size of {0} is invalid, but be between (1,32)".format(newSize)
+            raise RuntimeError(msg)
+        # Resize
+        self._size = newSize
         return self
 
     def initialize(self):
@@ -435,13 +477,27 @@ class FeatureCollectionPipeline:
 
         # Return the Feature Vector from this Samples
         return featureVector
+
+    def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
+        """ Export the Design Matrices to Disk """
+        exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
+        fileName = lambda t : "batch{0}{1}.bin".format(batchIndex,t)
+        if (exportX == True):
+            # Export the Data
+            path = os.path.join(exportPath, fileName("X"))
+            writer = PyToolsIO.DesignMatrixDataSerializer(self,path)
+            writer.call()
+        if (exportY == True):
+            # Export the Labels
+            path = os.path.join(exportPath, fileName("Y"))
+            writer = PyToolsIO.DesignMatrixLabelsSerializer(self,path)
+            writer.call()
+        return self
             
     def __iter__(self):
         """ Define Forward iterator """
-        for i in range(FeatureCollectionPipeline.MAX_QUEUE_SIZE):
-            if (self[i] == 0):
-                continue
-            yield self[i]
+        for i in range(self._size):
+            yield self._queue[i]
 
     # Private Interface
 
@@ -457,6 +513,7 @@ class FeatureCollectionPipeline:
     def getDefaultPipelineAlpha():
         """ Default Pipeline Alpha """
         pipeline = FeatureCollectionPipeline("A")      
+        pipeline.resize( 28 )
 
         # Register the CollectionMethods
         pipeline[0] = CollectionMethods.TimeDomainEnvelopPartitions(8)
@@ -496,10 +553,12 @@ class FeatureCollectionPipeline:
 
     @staticmethod
     def getDefaultPipelineBeta():
-        """ Defulat Pipeline Alpha """
+        """ Defualt Pipeline Beta """
         pipeline = FeatureCollectionPipeline("B")
-
+        pipline.resize( 1 )
         # Register the CollectionMethods
+        
+        pipeline[0] = CollectionMethods.Spectrogram()
 
         # Return the resulting pipeline
         return pipeline
