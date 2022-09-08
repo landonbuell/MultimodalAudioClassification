@@ -12,13 +12,14 @@ Date:           December 2021
 
 import os
 import sys
+from typing import Collection
 import numpy as np
 import scipy.fftpack as fftpack
 
 import Administrative
 import Structural
 
-EPSILON = np.array([1e-6],dtype=np.float32)
+EPSILON = np.array([1e-12],dtype=np.float32)
 
             #### CLASS DEFINIIONS ####
 
@@ -33,6 +34,11 @@ class CollectionMethod:
         self._parameter     = param
         self._owner         = None
         self._result        = np.empty(shape=(param,),dtype=np.float32)
+        self._preprocessCallbacks = []
+        self._postprocessCallbacks = []
+
+        # Register a callback to log Execution
+        #self.registerPreprocessCallback( CollectionMethod.logExecutionTimestamp )
        
     def __del__(self):
         """ Destructor for CollectionMethod Base Class """
@@ -60,6 +66,7 @@ class CollectionMethod:
             msg = "\t\tInvoking " + self.getMethodName()
             Administrative.FeatureCollectionApp.logMessage(msg)
         #self._result = np.zeros(shape=(self.getReturnSize(),),dtype=np.float32)
+        self.evaluatePreprocessCallbacks(signalData)
         return self
 
     def featureNames(self):
@@ -69,6 +76,16 @@ class CollectionMethod:
     def registerWithPipeline(self,pipeline):
         """ Register the pipeline that owns this collection method (optional) """
         self._owner = pipeline
+        return self
+
+    def registerPreprocessCallback(self,callback):
+        """ Register a preprocess Callback """
+        self._preprocessCallbacks.append(callback)
+        return self
+
+    def registerPostprocessCallback(self,callback):
+        """ Register a postprocess callback """
+        self._postprocessCallbacks.append(callback)
         return self
     
     # Protected Interface
@@ -91,12 +108,33 @@ class CollectionMethod:
         if np.isnan(sumOfResult):
             # Result contains NaN's
             msg = "\t\tMethod: {0} got result w/ NaN value(s)".format(self.getMethodName())
-            Administrative.FeatureCollectionApp.logMessage(msg)
+            Administrative.FeatureCollectionApp.getInstance().logMessage(msg)
         if np.isinf(sumOfResult):
             # Result contains NaN's
             msg = "\t\tMethod: {0} got result w/ Inf value(s)".format(self.getMethodName())
-            Administrative.FeatureCollectionApp.logMessage(msg)        
+            Administrative.FeatureCollectionApp.getInstance().logMessage(msg)        
         return self
+
+    def evaluatePreprocessCallbacks(self,signalData):
+        """ Evalate the preprocess callbacks """
+        for item in self._preprocessCallbacks:
+            item(self,signalData)
+        return self
+
+    def evaluatePostProcessCallbacks(self,signalData):
+        """ Evaluate the post process callbacks """
+        for item in self._postprocessCallbacks:
+            item(self,signalData)
+        return self
+
+    # Static Method
+
+    @staticmethod
+    def logExecutionTimestamp(collector,signalData):
+        """ Log the Execution of this Method """
+        msg = "\t\t\tRunning {0} ...".format(collector)
+        Administrative.FeatureCollectionApp.getInstance().logMessage(msg)
+        return None
 
     # Magic Methods
 
@@ -279,12 +317,14 @@ class ZeroCrossingsPerTime(CollectionMethod):
         super().invoke(signalData)  
         
         numSamples = signalData.getNumSamples()
-        sign = np.sign(signalData.Waveform)
+        signA = np.sign(signalData.Waveform[0:-2])
+        signB = np.sign(signalData.Waveform[1:-1])
+        outArr = np.empty(shape=signA.shape,dtype=np.float32)
         ZXR = 0
 
         # Iterate through Sampeles
-        for i in range(1,numSamples):
-            ZXR += np.abs(sign[i] - sign[i-1])
+        np.abs(signB - signA,out=outArr)
+        ZXR = np.sum(outArr)
         self._result[0] = ZXR / 2
         self.checkForNaNsAndInfs()
         return self._result
@@ -423,9 +463,10 @@ class TemporalCenterOfMass(CollectionMethod):
     Compute the Temporal Center of Mass, weighted Quadratically
     """
 
-    def __init__(self,param):
+    def __init__(self,kernelType="linear"):
         """ Constructor for TemporalCenterOfMass Instance """
-        super().__init__("TemporalCenterOfMass",param)
+        super().__init__("TemporalCenterOfMass",1)
+        self._kernelType = kernelType.upper()
         self.validateParameter()
 
     def __del__(self):
@@ -434,9 +475,9 @@ class TemporalCenterOfMass(CollectionMethod):
 
     # Getters and Setters
 
-    def getReturnSize(self) -> int:
-        """ Get the Number of Features that we expect to Return """
-        return 1
+    def getKernelType(self):
+        """ Return the Type of Weighting used in the COM Calculation """
+        return self._kernelType
 
     # Public Interface
 
@@ -446,10 +487,11 @@ class TemporalCenterOfMass(CollectionMethod):
         super().invoke(signalData)   
 
         # Compute Total Mass + Weights
-        massTotal = np.sum(np.abs(signalData.Waveform))
+        waveformAbs = np.abs(signalData.Waveform)
+        massTotal = np.sum(waveformAbs)
         weights = self.kernelFunction(signalData.getNumSamples())
         # Compute Center of Mass (By Weights)
-        massCenter = np.dot(weights,signalData.Waveform);
+        massCenter = np.dot(weights,waveformAbs);
         massCenter /= massTotal
         massCenter /= signalData.getNumSamples()
 
@@ -467,11 +509,11 @@ class TemporalCenterOfMass(CollectionMethod):
     def kernelFunction(self,numSamples):
         """ Set the Kernel Function based on the parameter """
         kernel = np.arange(0,numSamples,1)
-        if (self._parameter == 1):
+        if (self._kernelType == "LINEAR"):
             pass                    # Linear Kernel
-        elif (self._parameter == 2):
+        elif (self._kernelType == "QUADRATIC"):
             kernel = kernel ** 2    # Quadratic
-        elif (self._parameter == 3):
+        elif (self._kernelType == "NATURAL_LOG"):
             kernel = np.log(kernel + EPSILON[0]) # Nat log
         else:
             pass
@@ -970,7 +1012,7 @@ class Spectrogram(CollectionMethod):
 
     def __init__(self,frameParams):
         """ Constructor for Spectrogram instance """
-        returnSize = frameParams.getTotalFreqFrameSize() * getMaxNumFrames()
+        returnSize = frameParams.getTotalFreqFrameSize() * frameParams.getMaxNumFrames()
         super().__init__("Spectrogram",returnSize)
         self._framesParams = frameParams
 

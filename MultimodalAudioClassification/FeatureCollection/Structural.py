@@ -278,6 +278,8 @@ class SignalData:
         self.FrameEnergyTime = result
         return self
 
+    # Plotting Helpers
+
     # Private Interface
 
     # Magic Methods

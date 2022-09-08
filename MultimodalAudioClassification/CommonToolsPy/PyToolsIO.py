@@ -163,6 +163,7 @@ class AppSettingsSerializer(Serializer):
         # Write Collection Settings
         self._outFileStream.write( self._outFmtStr("BatchSize",self._data.getBatchSize() ) )
         self._outFileStream.write( self._outFmtStr("BatchLimit",self._data.getBatchLimit() ) )
+        self._outFileStream.write( self._outFmtStr("SampleLimit",self._data.getSampleLimit() ) )
         self._outFileStream.write( self._outFmtStr("ShuffleSeed",self._data.getShuffleSeed() ) )
         self._outFileStream.write( self._outFmtStr("Verbose",self._data.getVerbose() ) )
 
@@ -252,6 +253,8 @@ class RunInfoSerializer(Serializer):
         # Write Input/OutputPaths
         self._outFileStream.write( self._outFmtStr("OutputPath",self._data.getOutputPath() ))
         self.writeListAsRows( "InputPath", self._data.getInputPaths() )
+        self._outFileStream.write( "BatchSizes" ,
+            self.listToString(self._data.getBatchSizes()) )
 
         # Write Pipeline Data
 
@@ -266,8 +269,8 @@ class RunInfoSerializer(Serializer):
     def writeListAsRows(self,listName,listContents):
         """ Write Each Element of the List to the output Buffer """
         for idx,item in enumerate(listContents):
-            lhs = listName + "[" + idx + "]"
-            rhs = str(listContents)
+            lhs = listName + "[" + str(idx) + "]"
+            rhs = str(item)
             row = self._outFmtStr(lhs,rhs)
             self._outFileStream.write( row )
         return self

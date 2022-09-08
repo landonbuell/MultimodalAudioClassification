@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 import CommonStructures
 
+    #### PLOTTING METHODS ####
+
 def scatterPlot(matrix,featureIndex):
     """ Scatter Plot Feature over each class """
     numClasses = matrix.getNumClasses()
@@ -18,7 +20,7 @@ def scatterPlot(matrix,featureIndex):
     return None
 
 def plotSpectrum(x,y):
-    """ Plot a 2D Spectrum """
+    """ Plot a 1D Spectrum """
     plt.figure(figsize=(16,12))
     plt.title("")
     plt.xlabel("Amplitude",size=16,weight='bold')
@@ -62,6 +64,8 @@ def plotBoxAndWhisker(boxPlotData,title,xlabels,save=None):
 
     plt.close()
     return None
+
+    #### PLOTTING CLASSES ####
 
 class BoxPlotGenerator:
     """ Generate Box Plots for Features """

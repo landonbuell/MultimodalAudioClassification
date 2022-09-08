@@ -278,7 +278,7 @@ class RunInfo:
 
     def addBatchSize(self,batchSize):
         """ Append to the list of batch sizes """
-        self._batchSizes.append(batch_size)
+        self._batchSizes.append(batchSize)
         return self
 
     def getNumSamplesProcessed(self):

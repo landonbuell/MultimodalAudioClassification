@@ -287,7 +287,7 @@ class RundataManager (Manager):
         self.reallocDesignMatrices(batchSize)
 
         # For each Sample in the Batch
-        for i in range(batchSamples.shape[0]):
+        for i in range(batchSize):
             msg = "\t\tSample ({0:<2}/{1:<2})".format(i,batchSize)
             self.logMessageInterface(msg)
 
@@ -343,8 +343,8 @@ class RundataManager (Manager):
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         
         # Export X + Y for pipeline 0 and Export only X for pipline 1
-        pipelines[0].exportDesignMatrix(True,True)
-        pipelines[1].exportDesignMatrix(True,False)
+        pipelines[0].exportDesignMatrix(batchIndex,True,True)
+        pipelines[1].exportDesignMatrix(batchIndex,True,False)
        
         return self
 
@@ -362,6 +362,7 @@ class FeatureCollectionPipeline:
         self._designMatrix  = None
         self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
+        self._signalPostprocessCallbacks = []
 
     def __del__(self):
         """ FeatureCollectionPipeline Destructor """
@@ -426,6 +427,11 @@ class FeatureCollectionPipeline:
         self._signalPreprocessCallbacks.append(callback)
         return self
 
+    def registerSignalPostprocessCallback(self,callback):
+        """ Register a Callback for post processing a signal """
+        self._signalPostprocessCallbacks.append(callback)
+        return self
+
     def resize(self,newSize):
         """ Resize the Queue to fit specific size """
         if (newSize < 1 or newSize > FeatureCollectionPipeline.MAX_QUEUE_SIZE):
@@ -465,14 +471,23 @@ class FeatureCollectionPipeline:
         featureVector = PyToolsStructures.FeatureVector(
             returnSize,
             signal.getTargetInt() )
+        expectedSize = 1
 
         # Evaluate Queue
         for item in self:
-            result = item.invoke(signal)
+            expectedSize    = item.getReturnSize()
+            result          = item.invoke(signal)
+
+            if (result.shape[0] != expectedSize):
+                # Shape Mismatch
+                msg = "Expected retrun size {0} but got {1} from {2}".format(
+                    expectedSize,result.shape[0],item)
+                Administrative.FeatureCollectionApp.getInstance().logMessage(msg)
+                raise RuntimeError(msg)
 
             # Put result into feature vector
-            for j in range(result.shape[0]):
-                featureVector[indexCounter] = result[j]
+            for item in result:
+                featureVector[indexCounter] = item
                 indexCounter += 1
 
         # Return the Feature Vector from this Samples
@@ -481,22 +496,26 @@ class FeatureCollectionPipeline:
     def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
         """ Export the Design Matrices to Disk """
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
-        fileName = lambda t : "batch{0}{1}.bin".format(batchIndex,t)
+        designMatrix = self.getDesignMatrix()
+        fileName = lambda t : "batch{0}{1}{2}.bin".format(
+            self.getPipelineIdentifier(),batchIndex,t)
         if (exportX == True):
             # Export the Data
             path = os.path.join(exportPath, fileName("X"))
-            writer = PyToolsIO.DesignMatrixDataSerializer(self,path)
+            writer = PyToolsIO.DesignMatrixDataSerializer(designMatrix,path)
             writer.call()
         if (exportY == True):
             # Export the Labels
             path = os.path.join(exportPath, fileName("Y"))
-            writer = PyToolsIO.DesignMatrixLabelsSerializer(self,path)
+            writer = PyToolsIO.DesignMatrixLabelSerializer(designMatrix,path)
             writer.call()
         return self
             
     def __iter__(self):
         """ Define Forward iterator """
         for i in range(self._size):
+            if (self._queue[i] == 0):
+                continue        # Skip if nothing there
             yield self._queue[i]
 
     # Private Interface
@@ -504,6 +523,13 @@ class FeatureCollectionPipeline:
     def evaluateSignalPreprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPreprocessCallbacks:
+            callback(signal,self.getAnalysisFrameParams())
+        return self
+
+    
+    def evaluateSignalPostprocessCallbacks(self,signal):
+        """ Pass the signal through each callback """
+        for callback in self._signalPostprocessCallbacks:
             callback(signal,self.getAnalysisFrameParams())
         return self
 
@@ -527,12 +553,12 @@ class FeatureCollectionPipeline:
         pipeline[8] = CollectionMethods.PercentFramesAboveEnergyThreshold(0.7)
         pipeline[9] = CollectionMethods.PercentFramesAboveEnergyThreshold(0.8)
         pipeline[10] = CollectionMethods.PercentFramesAboveEnergyThreshold(0.9)
-        pipeline[11] = CollectionMethods.ZeroCrossingsPerTime(1)
-        pipeline[12] = CollectionMethods.ZeroCrossingsFramesMean(1)
-        pipeline[13] = CollectionMethods.ZeroCrossingsFramesVariance(1)
-        pipeline[14] = CollectionMethods.ZeroCrossingsFramesDiffMinMax(1)
-        pipeline[15] = CollectionMethods.TemporalCenterOfMass(1)
-        pipeline[16] = CollectionMethods.TemporalCenterOfMass(3)
+        #pipeline[11] = CollectionMethods.ZeroCrossingsPerTime(1)
+        #pipeline[12] = CollectionMethods.ZeroCrossingsFramesMean(1)
+        #pipeline[13] = CollectionMethods.ZeroCrossingsFramesVariance(1)
+        #pipeline[14] = CollectionMethods.ZeroCrossingsFramesDiffMinMax(1)
+        pipeline[15] = CollectionMethods.TemporalCenterOfMass("linear")
+        pipeline[16] = CollectionMethods.TemporalCenterOfMass("natural_log")
         pipeline[17] = CollectionMethods.AutoCorrelationCoefficients(12)
         pipeline[18] = CollectionMethods.AutoCorrelationCoefficientsMean(1)
         pipeline[19] = CollectionMethods.AutoCorrelationCoefficientsVariance(1)
@@ -555,10 +581,11 @@ class FeatureCollectionPipeline:
     def getDefaultPipelineBeta():
         """ Defualt Pipeline Beta """
         pipeline = FeatureCollectionPipeline("B")
-        pipline.resize( 1 )
+        pipeline.resize( 1 )
         # Register the CollectionMethods
         
-        pipeline[0] = CollectionMethods.Spectrogram()
+        pipeline[0] = CollectionMethods.Spectrogram(
+            pipeline.getAnalysisFrameParams() )
 
         # Return the resulting pipeline
         return pipeline

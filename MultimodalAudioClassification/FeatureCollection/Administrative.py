@@ -33,7 +33,7 @@ class FeatureCollectionApp:
         FeatureCollectionApp._appInstance = self
 
         self._settings          = appSettings 
-        self._logger            = Logger()
+        self._logger            = Logger(appSettings.getOutputPath())
         
         self._sampleManager     = Managers.SampleManager()
         self._rundataManager    = Managers.RundataManager()
@@ -44,6 +44,11 @@ class FeatureCollectionApp:
     def __del__(self):
         """ Destructor for CollectionApplication Instance """
         self.logDestruction()
+        self._logger            = None
+        self._sampleManager     = None
+        self._rundataManager    = None
+        self._pipelines         = [None,None]
+        
 
     @staticmethod
     def constructApp(settings):
@@ -115,10 +120,11 @@ class FeatureCollectionApp:
         """ Run Application Execution Sequence """
         
         batchCounter = 0
+        batchLimit = self.getSettings().getBatchLimit()
         MAX_BATCHES = 100000
         loop = True
 
-        while (batchCounter < MAX_BATCHES and loop == True):
+        while (loop == True):
 
             # Get the Next Batch
             batch = self.getSampleManager().getNextBatch()
@@ -126,10 +132,23 @@ class FeatureCollectionApp:
             
             if (self.getSampleManager().samplesRemaining() <= 0):
                 # Not more samples to process
+                msg = "Processed all Samples ..."
+                self.logMessage(msg)
                 loop = False
 
-            # Otherwise....
-            # TODO: This
+            if (batchCounter >= MAX_BATCHES):
+                # Max Number of batches reached
+                msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(MAX_BATCHES)
+                self.logMessage(msg)
+                loop = False
+
+            if (batchCounter >= batchLimit):
+                # Max Number of batches reached
+                msg = "batchCounter exceeded batchLimit of {0} ...".format(batchLimit)
+                self.logMessage(msg)
+                loop = False
+
+            # Otherwise, incremenet + procceed
             batchCounter += 1
             
         # All Done!
@@ -155,6 +174,7 @@ class FeatureCollectionApp:
 
     def checkIterationConditions(self):
         """ Return T/F - if """
+        return True
 
     @staticmethod
     def getDateTime() -> str:
@@ -174,7 +194,7 @@ class FeatureCollectionApp:
     def logDestruction(self):
         """ Log Construction of Sample Manager """
         msg = "Destroying FeatureCollectionApp Instance ..."
-        FeatureCollectionApp._appInstance.logMessage(msg)
+        self.logMessage(msg)
         return None
 
     # Magic Methods
@@ -192,13 +212,14 @@ class AppSettings:
     """
     Contains all runtime settings for duration of application
     """
-    def __init__(self,pathsInput,pathOutput,batchSize=32,batchLimit=-1,shuffleSeed=-1):
+    def __init__(self,pathsInput,pathOutput,batchSize=32,batchLimit=-1,sampleLimit=100000,shuffleSeed=-1):
         """ Constructor for AppSettings Instance """
         self._pathStartup   = os.getcwd()
         self._pathsInput    = set()
         self._pathOutput    = None
         self._batchSize     = batchSize
         self._batchLimit    = batchLimit
+        self._sampleLimit   = sampleLimit
         self._shuffleSeed   = shuffleSeed
         self._verbose       = 1
         self._logToConsole  = True
@@ -232,6 +253,10 @@ class AppSettings:
     def getBatchLimit(self) -> int:
         """ Return the batch counter limit """
         return self._batchLimit
+
+    def getSampleLimit(self) -> int:
+        """ Return the sample processing limit """
+        return self._sampleLimit
 
     def getShuffleSeed(self) -> int:
         """ Return the Sufffle Seed """
@@ -275,9 +300,9 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV0",
-            batchSize=64,
-            batchLimit=-1,
+            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV1",
+            batchSize=2,
+            batchLimit=2,
             shuffleSeed=-1)
         #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
@@ -317,10 +342,10 @@ class Logger:
     Handles all runtime Logging 
     """
 
-    def __init__(self):
-        """ Constructor for Logger Instance """      
+    def __init__(self,outpath):
+        """ Constructor for Logger Instance """ 
         self._path          = None
-        self._outFile       = None
+        self._outFile       = os.path.join(outpath,"logger.txt")
         self._toConsole     = FeatureCollectionApp._appInstance.getSettings().getLogToConsole()
         self._toFile        = FeatureCollectionApp._appInstance.getSettings().getLogToFile()
         
@@ -340,8 +365,7 @@ class Logger:
 
     def getLoggerPath(self):
         """ Return the Path to the logger text output file """
-        outpath = FeatureCollectionApp._appInstance.getSettings().getOutputPath()
-        return os.path.join(outpath,"logger.txt")
+        return self._outFile
 
     # Public Interface
 
@@ -391,7 +415,7 @@ class Logger:
             ]
         # Log Each Line of the Header
         for msg in footer:
-            self.logWithoutTimeStamp(msg)
+            self.logMessage(msg,False)
         return self
 
     def spacer(self,numChars=64):
