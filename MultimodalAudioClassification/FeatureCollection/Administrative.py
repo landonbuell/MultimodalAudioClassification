@@ -44,12 +44,7 @@ class FeatureCollectionApp:
     def __del__(self):
         """ Destructor for CollectionApplication Instance """
         self.logDestruction()
-        self._logger            = None
-        self._sampleManager     = None
-        self._rundataManager    = None
-        self._pipelines         = [None,None]
         
-
     @staticmethod
     def constructApp(settings):
         """ Construct the Application """
@@ -59,13 +54,6 @@ class FeatureCollectionApp:
             errMsg = "Can only have one instance of FeatureCollectionApp at runtime"
             raise RuntimeError(errMsg)
         return FeatureCollectionApp._appInstance
-
-    @staticmethod
-    def destroyApp():
-        """ Destroy the Aplication """
-        if (FeatureCollectionApp._appInstance is not None):
-            FeatureCollectionApp._appInstance = None
-        return True
      
     # Getters and Setters
 
@@ -137,7 +125,7 @@ class FeatureCollectionApp:
                 self.logMessage(msg)
                 loop = False
 
-            if (batchCounter >= MAX_BATCHES):
+            if (batchCounter >= MAX_BATCHES - 1):
                 # Max Number of batches reached
                 msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(MAX_BATCHES)
                 self.logMessage(msg)

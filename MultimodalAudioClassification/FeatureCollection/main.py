@@ -29,5 +29,4 @@ if __name__ == "__main__":
     app.shutdown()
 
     # Destroy the app + Exit
-    Administrative.FeatureCollectionApp.destroyApp()
     sys.exit(0)

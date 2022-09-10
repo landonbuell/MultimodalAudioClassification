@@ -26,7 +26,7 @@ class Serializer:
         self._outputPath        = path
 
         if (os.path.exists(path) == True):
-            msg = "\tWARNING - Overwriting object at {0}".format(path)
+            msg = "\t\t\tWARNING - Overwriting object at {0}".format(path)
             print(msg)
 
         self._outFileStream     = None
@@ -50,7 +50,7 @@ class Serializer:
     @staticmethod
     def listToString(inputList,delimiter=","):
         """ Convert Elements of list to string w/ delimiter """
-        outputString = ""
+        outputString = "["
         if len(inputList) == 0:
             # No Items in the Input List
             outputString += "-1,"
@@ -58,6 +58,7 @@ class Serializer:
             # Items in the Input List
             for item in inputList:
                 outputString += str(item) + delimiter
+        outputString += "]"
         return outputString.strip()
 
     def findAndParseStrs(self,keyword):
@@ -251,19 +252,17 @@ class RunInfoSerializer(Serializer):
         self.writeHeader()
 
         # Write Input/OutputPaths
-        self._outFileStream.write( self._outFmtStr("OutputPath",self._data.getOutputPath() ))
-        self.writeListAsRows( "InputPath", self._data.getInputPaths() )
-        self._outFileStream.write( "BatchSizes" ,
-            self.listToString(self._data.getBatchSizes()) )
+        self._outFileStream.write( 
+            self._outFmtStr("BatchSizes",
+                            Serializer.listToString(self._data.getBatchSizes())) ) ,
 
         # Write Pipeline Data
         self.writePipelineSampleShapes()
-
+        
         # Close and Return
         self.writeFooter()
         self._outFileStream.close()
         return True
-
 
     # Private Interface
 
@@ -273,7 +272,8 @@ class RunInfoSerializer(Serializer):
             pipelineIdentifier = "pipeline{0}".format(i)
             pipelineShape = self._data.getMatrixShape(i)
             shapeString = Serializer.listToString(pipelineShape)
-            self._outFmtStr(pipelineIdentifier,shapeString)
+            outStr = self._outFmtStr(pipelineIdentifier,shapeString)
+            self._outFileStream.write(outStr)
         # Finished Writing to buffer
         return self
 

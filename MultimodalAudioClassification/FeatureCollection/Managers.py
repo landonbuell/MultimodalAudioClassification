@@ -278,7 +278,7 @@ class RundataManager (Manager):
 
     def processBatch(self,batchSamples,batchIndex):
         """ Process a batch of Samples """
-        msg = "\tProcessing Batch {0}...".format(batchIndex)
+        msg = "Processing Batch {0}...".format(batchIndex)
         self.logMessageInterface(msg)
 
         # Realloc for Batch Size
@@ -287,7 +287,7 @@ class RundataManager (Manager):
 
         # For each Sample in the Batch
         for i in range(batchSize):
-            msg = "\t\tSample ({0:<2}/{1:<2})".format(i,batchSize)
+            msg = "\tSample ({0:<2}/{1:<2})".format(i,batchSize)
             self.logMessageInterface(msg)
 
             # Evaliate Feature Pipeline
@@ -504,7 +504,7 @@ class FeatureCollectionPipeline:
         """ Export the Design Matrices to Disk """
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
         designMatrix = self.getDesignMatrix()
-        fileName = lambda t : "batch{0}{1}{2}.bin".format(
+        fileName = lambda t : "pipeline{0}-batch{1}{2}.bin".format(
             self.getPipelineIdentifier(),batchIndex,t)
         if (exportX == True):
             # Export the Data
@@ -595,27 +595,3 @@ class FeatureCollectionPipeline:
 
         # Return the resulting pipeline
         return pipeline
-
-
-"""
-    SANDBOX
-
-        def invoke(self, signalData, *args):
-           
-            self.validateInputSignal(signalData)
-            super().invoke(signalData)   
-
-            # Compute Total Mass + Weights
-            waveformAbs = np.abs(signalData.Waveform)
-            massTotal = np.sum(waveformAbs)
-            weights = self.kernelFunction(signalData.getNumSamples())
-            # Compute Center of Mass (By Weights)
-            massCenter = np.dot(weights,waveformAbs);
-            massCenter /= massTotal
-            massCenter /= signalData.getNumSamples()
-
-            # Apply Result + Return 
-            self._result[0] = massCenter
-            self.checkForNaNsAndInfs()
-            return self._result
-"""
