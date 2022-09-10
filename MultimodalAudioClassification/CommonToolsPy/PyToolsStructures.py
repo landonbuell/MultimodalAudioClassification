@@ -12,7 +12,6 @@ Date:           June 2022
 
 import os
 import sys
-import json
 
 import numpy as np
 
@@ -187,6 +186,8 @@ class DesignMatrix:
         msg = "{0}.deserialize is not implement".format("DesignMatrix")
         raise RuntimeError(msg)
 
+
+
     def clearData(self):
         """ Clear All Entries in this Array """
         self._data = np.zeros(shape=self.getShape(),dtype=np.float32)
@@ -318,8 +319,15 @@ class RunInfo:
     @staticmethod
     def deserialize(path):
         """ Deserialize this instance from specified path """
-        msg = "{0}.deserialize is not implement".format("RunInfo")
-        raise RuntimeError(msg)
+        reader = PyToolsIO.RunInfoDeserializer(path)
+        runInfo = reader.call()
+        return runInfo
+
+
+    def loadBatch(self,index):
+        """ Load of Samples Based from output Directory """
+        matrices = [None] * self.getNumPipelines()
+        fileTag = lambda x,y,z : ""
 
     # Private Interface
 

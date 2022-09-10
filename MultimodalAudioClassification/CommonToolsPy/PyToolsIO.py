@@ -15,6 +15,8 @@ import sys
 
 import numpy as np
 
+import PyToolsStructures
+
         #### CLASS DEFINITIONS ####
 
 class Serializer:
@@ -105,10 +107,10 @@ class Deserializer:
         self._inputPath         = path
 
         if (os.path.exists(path) == False):
-            msg = "\tWARNING - No readable object at {0}".format(path)
+            msg = "\t\t\tWARNING - No readable object at {0}".format(path)
             raise FileNotFoundError(msg)
 
-        self._inFileStream      = None
+        self._inFileStream      = open(self._inputPath,"r")
 
     def __del__(self):
         """ Destructor for Deserializer Abstract Class """
@@ -121,16 +123,31 @@ class Deserializer:
 
     def call(self):
         """ Read Object From inputStream """
-
         return False
 
     @staticmethod
-    def stringToList(inputString,delimiter=" ",outType=None):
+    def stringToList(inputString,delimiter=" ",outType=None,brackets="[]"):
         """ Convert string to list of type """
+        for token in brackets:
+            inputString = inputString.replace(token,"")
         outputList = inputString.split(delimiter)
+        if (outputList[-1] == ""):
+            outputList.pop()
         if outType is not None:
             outputList = [outType(x) for x in outputList]
         return outputList
+
+    # Protected Interface
+
+    def find(self,keyword,inputBuffer):
+        """ Find the Items corresponding to the keyword in the buffer """
+        result = ""
+        for item in inputBuffer:
+            tokens = item.split()
+            if (tokens[0] == keyword):
+                result = tokens[-1].strip()
+                break
+        return result
 
     # Magic Methods
 
@@ -286,7 +303,31 @@ class RunInfoSerializer(Serializer):
             self._outFileStream.write( row )
         return self
 
+class RunInfoDeserializer(Deserializer):
+    """ Class to Deserialize RunInfo Instance """
 
-    
+    def __init__(self,path):
+        """ Constructor """
+        super().__init__(os.path.join(path,"runInfo.txt"))
+        self._data = PyToolsStructures.RunInfo("-1",path)
 
+    def __del__(self):
+        """ Destructor """
+        self._data = None
+
+    def call(self):
+        """ Read Object From inputStream """
+        inputFileContents = self._inFileStream.readlines()
+        batchSizes = self.find("BatchSizes",inputFileContents)
+        pipeline0 = self.find("pipeline0",inputFileContents)
+        pipeline1 = self.find("pipeline1",inputFileContents)
+
+        # Populate Data
+        self._data._matrixShapes    = [None,None]
+        self._data._batchSizes      = Deserializer.stringToList(batchSizes,",",int)
+        self._data._matrixShapes[0] = Deserializer.stringToList(pipeline0,",",int)
+        self._data._matrixShapes[1] = Deserializer.stringToList(pipeline1,",",int)
+
+        return self._data
+        
 
