@@ -595,3 +595,27 @@ class FeatureCollectionPipeline:
 
         # Return the resulting pipeline
         return pipeline
+
+
+"""
+    SANDBOX
+
+        def invoke(self, signalData, *args):
+           
+            self.validateInputSignal(signalData)
+            super().invoke(signalData)   
+
+            # Compute Total Mass + Weights
+            waveformAbs = np.abs(signalData.Waveform)
+            massTotal = np.sum(waveformAbs)
+            weights = self.kernelFunction(signalData.getNumSamples())
+            # Compute Center of Mass (By Weights)
+            massCenter = np.dot(weights,waveformAbs);
+            massCenter /= massTotal
+            massCenter /= signalData.getNumSamples()
+
+            # Apply Result + Return 
+            self._result[0] = massCenter
+            self.checkForNaNsAndInfs()
+            return self._result
+"""

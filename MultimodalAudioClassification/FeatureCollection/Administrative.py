@@ -143,7 +143,7 @@ class FeatureCollectionApp:
                 self.logMessage(msg)
                 loop = False
 
-            if (batchCounter >= batchLimit):
+            if (batchCounter >= batchLimit - 1):
                 # Max Number of batches reached
                 msg = "batchCounter exceeded batchLimit of {0} ...".format(batchLimit)
                 self.logMessage(msg)
@@ -153,7 +153,7 @@ class FeatureCollectionApp:
             batchCounter += 1
             
         # All Done!
-        msg = "\t Last batch Processed!"
+        msg = "\tLast batch Processed!"
         self.logMessage(msg)
         return self
 

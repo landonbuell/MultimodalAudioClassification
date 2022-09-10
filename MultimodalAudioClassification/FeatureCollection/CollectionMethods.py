@@ -519,17 +519,6 @@ class TemporalCenterOfMass(CollectionMethod):
             pass
         return kernel
 
-    def kernelName(self):
-        """ Set the Kernel Function based on the parameter """
-        if (self._parameter == 1):
-            return "Linear"                    # Linear Kernel
-        elif (self._parameter == 2):
-           return "Quadratic"
-        elif (self._parameter == 3):
-            return "NaturalLog"
-        else:
-            return "Linear"
-
     def validateInputSignal(self,signalData):
         """ Validate Input Signal Everything that we need """
         if (signalData.Waveform is None):
@@ -712,9 +701,10 @@ class FrequencyCenterOfMass(CollectionMethod):
     Compute the Frequency Center of Mass over all frames weighted linearly
     """
 
-    def __init__(self,param):
-        """ Constructor for FrequencyCenterOfMassLinear Instance """
-        super().__init__("FrequencyCenterOfMassLinear",1)
+    def __init__(self,kernelType="linear"):
+        """ Constructor for FrequencyCenterOfMass Instance """
+        super().__init__(FrequencyCenterOfMass,1)
+        self._kernelType = kernelType.upper()
         self.validateParameter()
 
     def __del__(self):
@@ -728,19 +718,35 @@ class FrequencyCenterOfMass(CollectionMethod):
         self.validateInputSignal(signalData)
         super().invoke(signalData)   
 
-        # Compute Mass of Each Frame
+        # Compute Total Mass + Weights
         sizeOfFrame = signalData.AnalysisFramesFreq.shape[1]
         massTotal = np.sum(signalData.AnalysisFramesFreq,axis=-1) + EPSILON
-        weights = np.arange(0,sizeOfFrame,1,dtype=np.float32)**(self._parameter)
-        centerOfMasses = np.matmul(signalData.AnalysisFramesFreq,weights)
-        centerOfMasses /= massTotal
+        weights = self.kernelFunction(sizeOfFrame)
+       
+        # Compute Center of Mass (by Weights)
+        massCenter = np.matmul(signalData.AnalysisFramesFreq,weights)
+        massCenter /= massTotal
+        massCenter /= sizeOfFrame
 
         # Add the Average of all frames, and put into result
-        self._result[0] = np.mean(centerOfMasses)
+        self._result[0] = np.mean(massCenter)
         self.checkForNaNsAndInfs()
         return self._result
 
     # Protected Interface
+
+    def kernelFunction(self,numSamples):
+        """ Set the Kernel Function based on the parameter """
+        kernel = np.arange(0,numSamples,1)
+        if (self._kernelType == "LINEAR"):
+            pass                    # Linear Kernel
+        elif (self._kernelType == "QUADRATIC"):
+            kernel = kernel ** 2    # Quadratic
+        elif (self._kernelType == "NATURAL_LOG"):
+            kernel = np.log(kernel + EPSILON[0]) # Nat log
+        else:
+            pass
+        return kernel
 
     def validateInputSignal(self,signalData):
         """ Validate Input Signal Everything that we need """
