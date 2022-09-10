@@ -186,8 +186,6 @@ class DesignMatrix:
         msg = "{0}.deserialize is not implement".format("DesignMatrix")
         raise RuntimeError(msg)
 
-
-
     def clearData(self):
         """ Clear All Entries in this Array """
         self._data = np.zeros(shape=self.getShape(),dtype=np.float32)
@@ -323,11 +321,31 @@ class RunInfo:
         runInfo = reader.call()
         return runInfo
 
-
-    def loadBatch(self,index):
+    def loadBatch(self,batchIndex):
         """ Load of Samples Based from output Directory """
+
+        if (batchIndex >= self.getNumBatches() - 1 ):
+            errMsg = "ERROR: Batch Index {0} exceeds max batch of {1}".format(
+                batchIndex,self.getNumBatches())
+            raise RuntimeError(errMsg)
+
+        # Preset some Data
         matrices = [None] * self.getNumPipelines()
-        fileTag = lambda x,y,z : ""
+        numSamples = self._batchSizes[batchIndex]
+
+        # Load in all Modes
+        for pipelineIndex in range(len(matrices)):
+            sampleShape = self._matrixShapes[pipelineIndex]
+            tagX = "pipeline{0}-batch{1}X.bin".format(pipelineIndex,batchIndex)
+            tagY = "pipeline{0}-batch{1}Y.bin".format(pipelineIndex,batchIndex)
+            try:
+                matrix = DesignMatrix.deserialize(tagX,tagY,numSamples,sampleShape)
+                matrices[pipelineIndex] = matrix
+            except:
+                errMsg = "\tERROR: Could not load matrix {0} from batch {1}".format(
+                    pipelineIndex,batchIndex)
+            return matrices
+
 
     # Private Interface
 
