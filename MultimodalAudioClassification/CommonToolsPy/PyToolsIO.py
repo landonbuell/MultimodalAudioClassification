@@ -233,7 +233,7 @@ class DesignMatrixLabelSerializer(Serializer):
         return True
 
 class RunInfoSerializer(Serializer):
-    """ Clas to Serialize RunInfo Structure """
+    """ Class to Serialize RunInfo Structure """
 
     def __init__(self,data,path):
         """ Constructor for RunInfoSerializer """
@@ -257,14 +257,25 @@ class RunInfoSerializer(Serializer):
             self.listToString(self._data.getBatchSizes()) )
 
         # Write Pipeline Data
+        self.writePipelineSampleShapes()
 
         # Close and Return
         self.writeFooter()
         self._outFileStream.close()
-        return
+        return True
 
 
     # Private Interface
+
+    def writePipelineSampleShapes(self):
+        """ Write out the Shape of each sample """
+        for i in range(self._data.getNumPipelines()):
+            pipelineIdentifier = "pipeline{0}".format(i)
+            pipelineShape = self._data.getMatrixShape(i)
+            shapeString = Serializer.listToString(pipelineShape)
+            self._outFmtStr(pipelineIdentifier,shapeString)
+        # Finished Writing to buffer
+        return self
 
     def writeListAsRows(self,listName,listContents):
         """ Write Each Element of the List to the output Buffer """

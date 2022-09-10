@@ -272,8 +272,7 @@ class RundataManager (Manager):
         """ Build the Data Manager Instance """
         super().init()
         self.getSettings().serialize()
-             
-
+        self.registerPipelines()
         self.describe()      
         return self
 
@@ -307,7 +306,8 @@ class RundataManager (Manager):
     def clean(self):
         """ Run Cleaning method on Instance """
         super().clean()
-        
+
+     
         # Serialize the run info 
         runInfoOutputPath = os.path.join(self.getSettings().getOutputPath() ,"runInfo.txt")
         self._runInfo.serialize(runInfoOutputPath)
@@ -315,6 +315,13 @@ class RundataManager (Manager):
         return self
 
     # Private Interface
+
+    def registerPipelines(self):
+        """ Register Each Pipeline w/ the Run Info """
+        pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
+        for pipeline in pipelines:
+            self._runInfo.registerPipeline(pipeline)
+        return self
 
     def evaluatePipelines(self,signal,sampleIndex):
         """ Evaluate Sample Against Each Feature Pipeline """
@@ -335,7 +342,7 @@ class RundataManager (Manager):
             # check if different size
             if (numSamples != batchSize):
                 pipeline.getDesignMatrix().setNumSamples(batchSize)
-        # Done reallocatinging all 
+        # Done reallocatinging all design Matrices
         return self
 
     def exportDesignMatrices(self,batchIndex):
@@ -473,15 +480,15 @@ class FeatureCollectionPipeline:
             signal.getTargetInt() )
         expectedSize = 1
 
-        # Evaluate Queue
-        for item in self:
-            expectedSize    = item.getReturnSize()
-            result          = item.invoke(signal)
+        # Evaluate Queue (Iterate through collection methods)
+        for collector in self:
+            expectedSize    = collector.getReturnSize()
+            result          = collector.invoke(signal)
 
             if (result.shape[0] != expectedSize):
                 # Shape Mismatch
                 msg = "Expected retrun size {0} but got {1} from {2}".format(
-                    expectedSize,result.shape[0],item)
+                    expectedSize,result.shape[0],collector)
                 Administrative.FeatureCollectionApp.getInstance().logMessage(msg)
                 raise RuntimeError(msg)
 
@@ -525,7 +532,6 @@ class FeatureCollectionPipeline:
         for callback in self._signalPreprocessCallbacks:
             callback(signal,self.getAnalysisFrameParams())
         return self
-
     
     def evaluateSignalPostprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
@@ -563,8 +569,8 @@ class FeatureCollectionPipeline:
         pipeline[18] = CollectionMethods.AutoCorrelationCoefficientsMean(1)
         pipeline[19] = CollectionMethods.AutoCorrelationCoefficientsVariance(1)
         pipeline[20] = CollectionMethods.AutoCorrelationCoefficientsDiffMinMax(1)
-        pipeline[21] = CollectionMethods.FrequencyCenterOfMass(1)
-        pipeline[22] = CollectionMethods.FrequencyCenterOfMass(2)
+        pipeline[21] = CollectionMethods.FrequencyCenterOfMass("linear")
+        pipeline[22] = CollectionMethods.FrequencyCenterOfMass("natural_log")
         pipeline[23] = CollectionMethods.MelFilterBankEnergies(12)
         pipeline[24] = CollectionMethods.MelFilterBankEnergiesMean(1)
         pipeline[25] = CollectionMethods.MelFilterBankEnergiesVariance(1)

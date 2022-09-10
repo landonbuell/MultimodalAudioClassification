@@ -12,6 +12,7 @@ Date:           June 2022
 
 import os
 import sys
+import json
 
 import numpy as np
 
@@ -247,7 +248,7 @@ class RunInfo:
         self._pathOutput        = outputPath
 
         self._batchSizes        = []
-        self._pipelineInfo      = []
+        self._matrixShapes      = []
 
 
     def __del__(self):
@@ -272,6 +273,14 @@ class RunInfo:
         """ Get a list with the size of each batch """
         return self._batchSizes
 
+    def getMatrixShape(self,matrixIndex):
+        """ Get the Pipeline ino for an index """
+        return self._matrixShapes[matrixIndex]
+
+    def getNumPipelines(self):
+        """ Get the Number of registered pipelines """
+        return len(self._matrixShapes)
+
     def getNumBatches(self):
         """ Get the Number of Batches in the run """
         return len(self._batchSizes)
@@ -286,6 +295,15 @@ class RunInfo:
         return sum(self._batchSizes)
     
     # Public Interface 
+
+    def registerPipeline(self,pipeline,index=-1):
+        """ Register A Pipeline w/ the RunInfo Struct """
+        featureVectorShape = pipeline.getDesignMatrix().getSampleShape()
+        if (index == -1):
+            self._matrixShapes.append(featureVectorShape)
+        else:
+            self._matrixShapes[index] = featureVectorShape
+        return self
 
     def serialize(self,path):
         """ Serialize this Instance to specified Path """
@@ -304,7 +322,7 @@ class RunInfo:
         raise RuntimeError(msg)
 
     # Private Interface
-        
+
     # Magic Methods
 
     def __repr__(self):

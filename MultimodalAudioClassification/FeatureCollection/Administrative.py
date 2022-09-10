@@ -103,9 +103,6 @@ class FeatureCollectionApp:
     def startup(self):
         """ Run Application Startup Sequence """
         
-        self._sampleManager.init()
-        self._rundataManager.init()
-
         # Emplace Feature Pipelines
         self._pipelines[0] = Managers.FeatureCollectionPipeline.getDefaultPipelineAlpha()
         self._pipelines[1] = Managers.FeatureCollectionPipeline.getDefaultPipelineBeta()
@@ -113,6 +110,10 @@ class FeatureCollectionApp:
         # Initialize the Pipelines
         self._pipelines[0].initialize()
         self._pipelines[1].initialize()
+
+        # Initialize the Collection Managers
+        self._sampleManager.init()
+        self._rundataManager.init()
 
         return self
 
@@ -161,7 +162,6 @@ class FeatureCollectionApp:
 
         self._sampleManager.clean()
         self._rundataManager.clean()
-
 
         return self
     
@@ -344,13 +344,13 @@ class Logger:
 
     def __init__(self,outpath):
         """ Constructor for Logger Instance """ 
-        self._path          = None
-        self._outFile       = os.path.join(outpath,"logger.txt")
+        self._outPath       = os.path.join(outpath,"logger.txt")
+        self._outFile       = None
         self._toConsole     = FeatureCollectionApp._appInstance.getSettings().getLogToConsole()
         self._toFile        = FeatureCollectionApp._appInstance.getSettings().getLogToFile()
         
         if (self._toFile):
-            self._outFile = open("logger.txt","w")
+            self._outFile = open(self._outPath,"w")
         self.writeHeader()
 
     def __del__(self):
@@ -365,7 +365,7 @@ class Logger:
 
     def getLoggerPath(self):
         """ Return the Path to the logger text output file """
-        return self._outFile
+        return self._outPath
 
     # Public Interface
 
