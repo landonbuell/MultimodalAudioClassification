@@ -504,16 +504,18 @@ class FeatureCollectionPipeline:
         """ Export the Design Matrices to Disk """
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
         designMatrix = self.getDesignMatrix()
-        fileName = lambda t : "pipeline{0}-batch{1}{2}.bin".format(
+        fileNameX = lambda t : "pipeline{0}-batch{1}{2}.bin".format(
             self.getPipelineIdentifier(),batchIndex,t)
+        fileNameY = lambda t : "batch{0}{1}.bin".format(
+            batchIndex,t)
         if (exportX == True):
             # Export the Data
-            path = os.path.join(exportPath, fileName("X"))
+            path = os.path.join(exportPath, fileNameX("X"))
             writer = PyToolsIO.DesignMatrixDataSerializer(designMatrix,path)
             writer.call()
         if (exportY == True):
             # Export the Labels
-            path = os.path.join(exportPath, fileName("Y"))
+            path = os.path.join(exportPath, fileNameY("Y"))
             writer = PyToolsIO.DesignMatrixLabelSerializer(designMatrix,path)
             writer.call()
         return self

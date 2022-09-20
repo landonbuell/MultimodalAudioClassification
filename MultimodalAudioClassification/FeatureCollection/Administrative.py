@@ -289,8 +289,8 @@ class AppSettings:
         result = AppSettings(
             pathsInput=[],
             pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV1",
-            batchSize=2,
-            batchLimit=2,
+            batchSize=16,
+            batchLimit=4,
             shuffleSeed=-1)
         #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         #result.addInputPath("..\\..\\InputFiles\\Y2.csv")

@@ -12,11 +12,16 @@ Date:           June 2022
 
 import os
 import sys
+import string
 
 import numpy as np
 
 import PyToolsIO
 
+        #### CONSTANTS ####
+
+UPPER_CASE_LETTERS = list(string.ascii_uppercase)
+    
 
         #### CLASS DEFINITIONS ####
 
@@ -183,12 +188,24 @@ class DesignMatrix:
     @staticmethod
     def deserialize(pathX,pathY,numSamples,shape):
         """ Read a design matrix from a file """
-        msg = "{0}.deserialize is not implement".format("DesignMatrix")
-        raise RuntimeError(msg)
+        matrix = DesignMatrix(numSamples,shape)
+        
+        # Read and Store Feature Array
+        shapeX = [numSamples] + [x for x in shape]
+        arr = np.fromfile(pathX,dtype=np.float32).reshape(shapeX)
+        matrix.setFeatures(arr)
+
+        # Read and Store Labels Array
+        shapeY = [numSamples,]
+        arr = np.fromfile(pathY,dtype=np.int16).reshape(shapeY)
+        matrix.setLabels(arr)
+        
+        # Return the populated matrix
+        return matrix
 
     def clearData(self):
         """ Clear All Entries in this Array """
-        self._data = np.zeros(shape=self.getShape(),dtype=np.float32)
+        self._data = np.zeros(shape=self.getMatrixShape(),dtype=np.float32)
         self._tgts = np.zeros(shape=self.getNumSamples(),dtype=np.int16)
         return self
 
@@ -332,19 +349,24 @@ class RunInfo:
         # Preset some Data
         matrices = [None] * self.getNumPipelines()
         numSamples = self._batchSizes[batchIndex]
+        
 
         # Load in all Modes
         for pipelineIndex in range(len(matrices)):
             sampleShape = self._matrixShapes[pipelineIndex]
-            tagX = "pipeline{0}-batch{1}X.bin".format(pipelineIndex,batchIndex)
-            tagY = "pipeline{0}-batch{1}Y.bin".format(pipelineIndex,batchIndex)
+
+            pathX = os.path.join(self._pathOutput,"pipeline{0}-batch{1}X.bin".format(UPPER_CASE_LETTERS[pipelineIndex],batchIndex))
+            pathY = os.path.join(self._pathOutput,"batch{0}Y.bin".format(batchIndex))
             try:
-                matrix = DesignMatrix.deserialize(tagX,tagY,numSamples,sampleShape)
+                matrix = DesignMatrix.deserialize(pathX,pathY,numSamples,sampleShape)
                 matrices[pipelineIndex] = matrix
-            except:
+            except Exception as err:
                 errMsg = "\tERROR: Could not load matrix {0} from batch {1}".format(
                     pipelineIndex,batchIndex)
-            return matrices
+                print(errMsg)
+                raise Exception(err)
+            # 
+        return matrices
 
 
     # Private Interface

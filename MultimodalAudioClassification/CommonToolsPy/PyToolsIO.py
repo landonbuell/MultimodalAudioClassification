@@ -239,7 +239,7 @@ class DesignMatrixLabelSerializer(Serializer):
         """ Write Object to Output Stream """
 
         # Get the Number of Samples + Raw Feature Data
-        Y = self._data.getFeatures()
+        Y = self._data.getLabels()
         Y = Y.flatten().tobytes()
 
         # Open the Output Stream (write bytes)

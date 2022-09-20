@@ -1,6 +1,6 @@
 """
-Repo:       MultiModalAudioClassification
-Solution:   MultiModalAudioClassification
+Repo:       MultimodalAudioClassification
+Solution:   MultimodalAudioClassification
 Project:    FeautureEngineering
 File:       main.py
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     shapePipelineA  = runInfo.getMatrixShape(0)
     shapePipelineB  = runInfo.getMatrixShape(1)
 
-
+    batchData       = runInfo.loadBatch(1)
 
     # Exit App
     sys.exit(0)
