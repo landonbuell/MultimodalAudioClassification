@@ -13,6 +13,7 @@ Date:           June 2022
 import os
 import sys
 import string
+from typing_extensions import runtime
 
 import numpy as np
 
@@ -219,6 +220,27 @@ class DesignMatrix:
             result[i,tgt] = 1
         return result
 
+    @staticmethod
+    def concatenate(matrixA,matrixB):
+        """ Concatentate 2 matrices """
+        if (matrixA.getSampleShape() != matrixB.getSampleShape()):
+            errMsg = "Error: Cannot concatenate DesignMatrices due to shape mismatch"
+            raise RuntimeError(errMsg)
+        totalSamples = matrixA.getNumSamples() + matrixB.getNumSamples()
+        result = DesignMatrix(totalSamples,matrixA.getSampleShape())
+        # Concatenate and Store Features
+        a = matrixA.getFeatures()
+        b = matrixB.getFeatures()
+        X = np.concatenate([a,b],axis=0)
+        result.setFeatures(X)
+        # Concatenate and Store Labels
+        a = matrixA.getLabels()
+        b = matrixB.getLabels()
+        X = np.concatenate([a,b],axis=0)
+        result.setLabels(X)
+        # Return the new Matrix
+        return result
+
     # Private Interface
  
     # Magic Methods 
@@ -338,7 +360,7 @@ class RunInfo:
         runInfo = reader.call()
         return runInfo
 
-    def loadBatch(self,batchIndex):
+    def loadBatch(self,batchIndex,loadA=True,loadB=True):
         """ Load of Samples Based from output Directory """
 
         if (batchIndex >= self.getNumBatches() - 1 ):
@@ -353,10 +375,19 @@ class RunInfo:
 
         # Load in all Modes
         for pipelineIndex in range(len(matrices)):
-            sampleShape = self._matrixShapes[pipelineIndex]
+            
+            # Check which modes to load
+            if (pipelineIndex == 0 and loadA == False):
+                continue
+            if (pipelineIndex == 1 and loadB == False): 
+                contine
 
+            # Set shapes + paths
+            sampleShape = self._matrixShapes[pipelineIndex]
             pathX = os.path.join(self._pathOutput,"pipeline{0}-batch{1}X.bin".format(UPPER_CASE_LETTERS[pipelineIndex],batchIndex))
             pathY = os.path.join(self._pathOutput,"batch{0}Y.bin".format(batchIndex))
+
+            # Load the Matrix
             try:
                 matrix = DesignMatrix.deserialize(pathX,pathY,numSamples,sampleShape)
                 matrices[pipelineIndex] = matrix
@@ -365,9 +396,22 @@ class RunInfo:
                     pipelineIndex,batchIndex)
                 print(errMsg)
                 raise Exception(err)
-            # 
+
+        # Return the List of Design matrices
         return matrices
 
+    def loadAllBatches(self,loadA=True,loadB=True):
+        """ Load all Batches in Dataset """ 
+        numBatches = len(self._batchSizes)
+        matrices = self.loadBatch(0,loadA,loadB)    # Load Batch 0 to start
+        for i in range(1,numBatches):
+            newMatrix = self.loadBatch(i,loadA,loadB)
+            if (loadA == True):
+                matrices[0] = DesignMatrix.concatenate(matrices[0],newMatrix[0])
+            if (loadB == True):
+                matrices[1] = DesignMatrix.concatenate(matrices[1],newMatrix[1])
+        # All Data loaded
+        return matrices
 
     # Private Interface
 

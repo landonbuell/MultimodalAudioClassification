@@ -26,7 +26,9 @@ if __name__ == "__main__":
     shapePipelineA  = runInfo.getMatrixShape(0)
     shapePipelineB  = runInfo.getMatrixShape(1)
 
-    batchData       = runInfo.loadBatch(1)
+    # Load Batches
+    batchData1       = runInfo.loadBatch(1)
+    batchData2       = runInfo.loadBatch(2)
 
     # Exit App
     sys.exit(0)
