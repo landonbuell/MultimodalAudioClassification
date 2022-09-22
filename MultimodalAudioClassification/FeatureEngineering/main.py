@@ -27,8 +27,11 @@ if __name__ == "__main__":
     shapePipelineB  = runInfo.getMatrixShape(1)
 
     # Load Batches
-    batchData1       = runInfo.loadBatch(1)
-    batchData2       = runInfo.loadBatch(2)
+    allBatchesA = runInfo.loadAllBatches(True,False)
+    varis = allBatchesA[0].variances()
+    means = allBatchesA[0].means()
+
+
 
     # Exit App
     sys.exit(0)

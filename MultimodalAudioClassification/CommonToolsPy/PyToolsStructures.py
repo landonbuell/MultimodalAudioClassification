@@ -173,6 +173,14 @@ class DesignMatrix:
 
     # public Interface
 
+    def variances(self):
+        """ Return the variance of each Feature """
+        return np.var(self._data,axis=0)
+
+    def means(self):
+        """ Return the mean of each Feature """
+        return np.mean(self._data,axis=0)
+
     def serialize(self,pathX,pathY):
         """ Write this design matrix out to a file """   
         writerX = PyToolsIO.DesignMatrixDataSerializer(self,pathX)
@@ -363,7 +371,7 @@ class RunInfo:
     def loadBatch(self,batchIndex,loadA=True,loadB=True):
         """ Load of Samples Based from output Directory """
 
-        if (batchIndex >= self.getNumBatches() - 1 ):
+        if (batchIndex >= self.getNumBatches()):
             errMsg = "ERROR: Batch Index {0} exceeds max batch of {1}".format(
                 batchIndex,self.getNumBatches())
             raise RuntimeError(errMsg)
@@ -380,7 +388,7 @@ class RunInfo:
             if (pipelineIndex == 0 and loadA == False):
                 continue
             if (pipelineIndex == 1 and loadB == False): 
-                contine
+                continue
 
             # Set shapes + paths
             sampleShape = self._matrixShapes[pipelineIndex]
