@@ -419,9 +419,29 @@ class RunInfo:
             if (loadB == True):
                 matrices[1] = DesignMatrix.concatenate(matrices[1],newMatrix[1])
         # All Data loaded
+
+        for pipelineIndex in range(len(matrices)):
+            matrices[pipelineIndex] = self.loadBatchHelper(pipelineIndex,batchIndex)
         return matrices
 
     # Private Interface
+
+    def loadBatchHelper(self,pipelineIndex,batchIndex):
+        """ Private Helper to load a batch from RAM """
+        matrix      = None
+        numSamples  = self._batchSizes[batchIndex]
+        sampleShape = self._matrixShapes[pipelineIndex]
+        tagX        = "pipeline{0}-batch{1}X.bin".format(pipelineIndex,batchIndex)
+        tagY        = "pipeline{0}-batch{1}Y.bin".format(pipelineIndex,batchIndex)
+        try:
+            matrix  = DesignMatrix.deserialize(tagX,tagY,numSamples,sampleShape)
+        except Exception as err:
+            errMsg  = "\tERROR: Could not load matrix {0} from batch {1}".format(
+                pipelineIndex,batchIndex)
+            print(err)
+            print(errMsg)
+        return matrix
+
 
     # Magic Methods
 

@@ -22,9 +22,8 @@ if __name__ == "__main__":
     RUN_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     runInfo = PyToolsStructures.RunInfo.deserialize(RUN_PATH)
 
-    batchSizes      = runInfo.getBatchSizes()
-    shapePipelineA  = runInfo.getMatrixShape(0)
-    shapePipelineB  = runInfo.getMatrixShape(1)
+    # Load a batch into RAM
+    matrices = runInfo.loadBatch(0)
 
     # Load Batches
     allBatchesA = runInfo.loadAllBatches(True,False)
