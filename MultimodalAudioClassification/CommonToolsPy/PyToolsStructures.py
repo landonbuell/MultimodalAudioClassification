@@ -13,7 +13,6 @@ Date:           June 2022
 import os
 import sys
 import string
-from typing_extensions import runtime
 
 import numpy as np
 
@@ -218,6 +217,13 @@ class DesignMatrix:
         self._tgts = np.zeros(shape=self.getNumSamples(),dtype=np.int16)
         return self
 
+    def deepCopy(self):
+        """ Make a deep copy of the design matrix """
+        result = DesignMatrix(self.getNumSamples(),self.getSampleShape())
+        result.setFeatures(np.copy(self._data))
+        result.setLabels(np.copy(self._tgts))
+        return result
+
     @staticmethod
     def encodeOneHot(targets,numClasses):
         """ Get a One-Hot-Encoded Array of targets """
@@ -418,10 +424,8 @@ class RunInfo:
                 matrices[0] = DesignMatrix.concatenate(matrices[0],newMatrix[0])
             if (loadB == True):
                 matrices[1] = DesignMatrix.concatenate(matrices[1],newMatrix[1])
-        # All Data loaded
-
-        for pipelineIndex in range(len(matrices)):
-            matrices[pipelineIndex] = self.loadBatchHelper(pipelineIndex,batchIndex)
+        #for pipelineIndex in range(len(matrices)):
+        #    matrices[pipelineIndex] = self.loadBatchHelper(pipelineIndex,batchIndex)
         return matrices
 
     # Private Interface

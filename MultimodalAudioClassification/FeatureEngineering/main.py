@@ -13,6 +13,10 @@ Date:       Sept 2022
 import sys
 
 import PyToolsStructures
+import Preprocessors
+
+import numpy as np
+from sklearn.preprocessing import StandardScaler
 
     #### MAIN EXECUTABLE ####
 
@@ -22,15 +26,30 @@ if __name__ == "__main__":
     RUN_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     runInfo = PyToolsStructures.RunInfo.deserialize(RUN_PATH)
 
-    # Load a batch into RAM
-    matrices = runInfo.loadBatch(0)
-
     # Load Batches
     allBatchesA = runInfo.loadAllBatches(True,False)
-    varis = allBatchesA[0].variances()
-    means = allBatchesA[0].means()
+    numFeatures = allBatchesA[0].getNumFeatures()
 
+    data1 = allBatchesA[0].deepCopy()
+    data2 = allBatchesA[0].deepCopy()
 
+    # Create the Scaler
+    scaler1 = StandardScaler(copy=False)
+    scaler1.fit(data1.getFeatures())
+    scaler1.transform(data1.getFeatures())
+
+    # Check that it worked
+    means1 = data1.means()
+    varis1 = data1.variances()
+
+    # Create the other standard scaler
+    scaler2 = Preprocessors.StandardScaler(numFeatures)
+    scaler2.fit(data2)
+    scaler2.call(data2)
+
+    # Check that it worked
+    means2 = data2.means()
+    varis2 = data2.variances()
 
     # Exit App
     sys.exit(0)
