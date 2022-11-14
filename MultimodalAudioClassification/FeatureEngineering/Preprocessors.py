@@ -12,6 +12,8 @@ Date:           June 2022
 
 import os
 import numpy as np
+import sklearn.preprocessing as preprocessing
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
 
 import PyToolsStructures
 import PyToolsIO
@@ -23,10 +25,8 @@ class StandardScaler:
 
     def __init__(self,numFeatures):
         """ Constructor """
-        self._samplesSeen   = 0
-        self._numFeatures   = numFeatures
-        self._means         = np.zeros(shape=(numFeatures,),dtype=np.float32)
-        self._varis         = np.ones(shape=(numFeatures,),dtype=np.float32)
+        self._scaler = preprocessing.StandardScaler(copy=False)
+
 
     def __del__(self):
         """ Destructor """
@@ -36,51 +36,36 @@ class StandardScaler:
 
     def getNumSampleSeen(self):
         """ Return the number of samples seen """
-        return self._samplesSeen
+        return self._scaler.n_samples_seen_
 
     def getIsFit(self):
         """ Return T/F if scaler has been fit """
-        return bool(self._samplesSeen)
+        return bool(self._scaler.n_samples_seen_)
 
     def getNumFeatures(self):
         """ Retutn the number of features seen """
-        return self._numFeatures
+        return len(self._scaler.n_features_in_)
 
     def getMeans(self):
         """ Get the Means for each feature """
-        return self._means
+        return self._scaler.mean_
 
     def getVaris(self):
         """ Get the variances for each feature """
-        return self._varis
+        return self._scaler.var_
 
-    # Public Interface
+    # Public InterfaceZ
 
     def fit(self,designMatrix):
-        """ Fit the Design matrix """
-        numSamples = designMatrix.getNumSamples()
-        numFeatures = designMatrix.getNumFeatures()
-        if (self._numFeatures != numFeatures):
-            msg = "WARNING: StandardScaler expected {0} features but got {1}".format(self._numFeatures,numFeatures)
-            raise RuntimeError(msg)
-        self._means = ((self._samplesSeen * self._means) + (numSamples * designMatrix.means())) / 2.0
-        self._varis = ((self._samplesSeen * self._varis) + (numSamples * designMatrix.variances())) / 2.0;
-        self._samplesSeen += numSamples
+        """ Fit the Design matrix """   
+        self._scaler.fit(designMatrix.getFeatures())
         return self
 
     def call(self,designMatrix):
         """ Apply Scale factor to design matrix """
-        if (self.getIsFit() == False):
-            msg = "WARNING: StandardScaler not fit - returning unchanged design matrix"
-            print(msg)
-            return designMatrix
-        # Is Fit
-        X = designMatrix.getFeatures()
-        X = (X - self._means) / np.sqrt(self._varis)
+        X = self._scaler.transform(designMatrix.getFeatures())
         designMatrix.setFeatures(X)
-        means = designMatrix.means()
-        varis = designMatrix.variances()
-        return designMatrix
+        return X
 
     def serialize(self,exportPath):
         """ Write Params to Text File """

@@ -16,7 +16,7 @@ import PyToolsStructures
 import Preprocessors
 
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+
 
     #### MAIN EXECUTABLE ####
 
@@ -34,22 +34,12 @@ if __name__ == "__main__":
     data2 = allBatchesA[0].deepCopy()
 
     # Create the Scaler
-    scaler1 = StandardScaler(copy=False)
-    scaler1.fit(data1.getFeatures())
-    scaler1.transform(data1.getFeatures())
+    scaler = Preprocessors.StandardScaler(numFeatures)
+    scaler.fit(data1)
+    scaler.call(data1)
 
-    # Check that it worked
-    means1 = data1.means()
-    varis1 = data1.variances()
+    means = np.mean(data1.getFeatures(),axis=0)
+    varis = np.var(data1.getFeatures(),axis=0)
 
-    # Create the other standard scaler
-    scaler2 = Preprocessors.StandardScaler(numFeatures)
-    scaler2.fit(data2)
-    scaler2.call(data2)
 
-    # Check that it worked
-    means2 = data2.means()
-    varis2 = data2.variances()
-
-    # Exit App
     sys.exit(0)
