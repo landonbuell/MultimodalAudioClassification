@@ -9,6 +9,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "CommonToolsPy", "CommonTool
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "FeatureEngineering", "FeatureEngineering\FeatureEngineering.pyproj", "{7265B8E0-1DC5-4FE0-A654-E9C4523B7A8D}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Models", "Models\Models.pyproj", "{97232773-19C7-4ADD-9362-9269985A84CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,8 @@ Global
 		{7DB5E4C8-9E79-41FC-AE9A-67C72BE60BD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7265B8E0-1DC5-4FE0-A654-E9C4523B7A8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7265B8E0-1DC5-4FE0-A654-E9C4523B7A8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97232773-19C7-4ADD-9362-9269985A84CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97232773-19C7-4ADD-9362-9269985A84CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
