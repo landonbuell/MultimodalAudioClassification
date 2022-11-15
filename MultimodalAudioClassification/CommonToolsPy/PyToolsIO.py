@@ -101,6 +101,8 @@ class Serializer:
 class Deserializer:
     """ Abstract Base Class for all Deserializer Classes """
 
+    WHITE_SPACE_TOKENS = [""," ", "\t", "\n"]
+
     def __init__(self,path):
         """ Constructor for Deserializer Abstract Class """
         self._data              = None
@@ -131,7 +133,7 @@ class Deserializer:
         for token in brackets:
             inputString = inputString.replace(token,"")
         outputList = inputString.split(delimiter)
-        if (outputList[-1] == ""):
+        if outputList[-1] in Deserializer.WHITE_SPACE_TOKENS:
             outputList.pop()
         if outType is not None:
             outputList = [outType(x) for x in outputList]
