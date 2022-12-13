@@ -15,7 +15,12 @@
       "ProjectGuid": "7db5e4c8-9e79-41fc-ae9a-67c72be60bd4",
       "DisplayName": "CommonToolsPy",
       "ColorIndex": 1
+    },
+    "97232773-19c7-4add-9362-9269985a84cc": {
+      "ProjectGuid": "97232773-19c7-4add-9362-9269985a84cc",
+      "DisplayName": "Models",
+      "ColorIndex": 2
     }
   },
-  "NextColorIndex": 2
+  "NextColorIndex": 3
 }

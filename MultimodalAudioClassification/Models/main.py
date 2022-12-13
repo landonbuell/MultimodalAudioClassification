@@ -25,10 +25,13 @@ if __name__ == "__main__":
 
     # Set some constants + Load Run Info
     FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
-    PROCESSED = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1_processed"
+    PROCESSED = os.path.join(FEATURES,"preprocessedV1")
     runInfo = PyToolsStructures.RunInfo.deserialize(FEATURES)
 
-    # Load in The Standard Scaler
-    allBatches = runInfo.loadAllBatches(True,False)
-    scaler = Preprocessors.StandardScaler.deserialize( os.path.join(PROCESSED,"paramsStandardScaler.txt") )
+    # Multilayer Perceptron Experiment
+
+    # Convolutional Neural Network Experiment
+
+    # Multimodal Nueral Network Experiment
+
 

@@ -22,7 +22,7 @@ class NullLayer(tf.keras.layers.Layer):
 
     def __init__(self,name):
         """ Constructor """
-        super.().__init__(trainable=False,name=name)
+        super().__init__(trainable=False,name=name)
 
     def __del__(self):
         """ Destructor """
@@ -44,7 +44,7 @@ class NeuralNetworkBuilders:
         self._filterSizes   = filterSizes
         self._kernelSizes   = kernelSizes
         self._poolSizes     = poolSizes
-        self._optimizer     = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9.beta_2=0.999,epsilon=1e-8)
+        self._optimizer     = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9,beta_2=0.999,epsilon=1e-8)
         self._objective     = tf.keras.losses.CategoricalCrossentroy()
         self._metrics       = [tf.keras.Accuracy(), tf.keras.Precision(), tf.keras.Recall()]
 
@@ -61,7 +61,7 @@ class NeuralNetworkBuilders:
                                       name=layerName)(x)
         # If Num Outputs specified
         if (shapeOutput is not None):
-            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax','outputMLP')
+            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax',name='outputMLP')
 
         # Build the Model
         x = tf.keras.Model(inputs=modelInput,outputs=x,name="MultilayerPerceptron")
@@ -87,7 +87,7 @@ class NeuralNetworkBuilders:
                                       name=layerName)(x)
         # If Num Outputs specified
         if (shapeOutput is not None):
-            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax','outputCNN')
+            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax',name='outputCNN')
 
         # Build the Model
         x = tf.keras.Model(inputs=modelInput,outputs=x,name="ConvolutionalNeuralNetwork")
@@ -102,7 +102,7 @@ class NeuralNetworkBuilders:
         filterSizes     = [64,64,64]
         kernelSizes     = [(3,3),(3,3),(3,3)]
         poolSizes       = [(3,3),(3,3),(3,3)]
-        optimizer       = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9.beta_2=0.999,epsilon=1e-8)
+        optimizer       = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9,beta_2=0.999,epsilon=1e-8)
         objective       = tf.keras.losses.CategoricalCrossentroy()
         metrics         = [tf.keras.Accuracy(), tf.keras.Precision(), tf.keras.Recall()]
         # Get the builder

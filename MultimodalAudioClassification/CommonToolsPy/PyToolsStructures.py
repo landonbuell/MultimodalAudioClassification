@@ -211,6 +211,14 @@ class DesignMatrix:
         # Return the populated matrix
         return matrix
 
+    def shuffle(self,seed=0):
+        """ Shuffle the Contents of the Matrix """
+        np.random.set_state(seed)
+        permutation = np.random.permutation(self._numSamples)
+        self._data = self._data[permutation]
+        self._tgts = self._tgts[permutation]
+        return self
+
     def clearData(self):
         """ Clear All Entries in this Array """
         self._data = np.zeros(shape=self.getMatrixShape(),dtype=np.float32)
@@ -326,7 +334,7 @@ class RunInfo:
         return self._batchSizes
 
     def getMatrixShape(self,matrixIndex):
-        """ Get the Pipeline ino for an index """
+        """ Get the Feature Shape for an index """
         return self._matrixShapes[matrixIndex]
 
     def getNumPipelines(self):
