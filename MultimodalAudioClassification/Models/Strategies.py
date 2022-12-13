@@ -86,7 +86,7 @@ class Strategy:
     def call(self):
         """ Invoke this strategy """
 
-        self.populateDesignMatrices()
+
 
         return self
 
@@ -105,21 +105,35 @@ class Strategy:
         numSamplesInBatchSet = sum(batchSizes[batchesToLoad])
 
         # Build Design Matrices Based off the Number of samples
-        self._designMatrixA = PyToolsStructures.DesignMatrix(numSamplesInBatchSet,self._runInfo.getMatrixShape(0))
-        self._designMatrixB = PyToolsStructures.DesignMatrix(numSamplesInBatchSet,self._runInfo.getMatrixShape(1))
+        matrixIndexCounter  = 0
+        if (self._loadA == True):
+            self._designMatrixA = PyToolsStructures.DesignMatrix(numSamplesInBatchSet,self._runInfo.getMatrixShape(0))
+        if (self._loadB == True):
+            self._designMatrixB = PyToolsStructures.DesignMatrix(numSamplesInBatchSet,self._runInfo.getMatrixShape(1))
 
         # Load in Design Matrix
         for ii in range(batchesToLoad):
-            # Message To Console
-            msg = "\tLoading Batch #{0}".format(self._batchIndex)
-            print(msg)
-            
+            # Message To Console + Load in batch
+            msg = "\tLoading Batch #{0}".format(batchesToLoad[ii])
+            print(msg)       
+            currentBatchSize = batchSizes[batchesToLoad[ii]]
             matrices = self._runInfo.loadBatch(
                 self._batchIndex,self._loadA,self._loadB)
-
+            # Copy Into Member Variables
+            for jj in range(currentBatchSize):
+                if (self._loadA == True):
+                    self._designMatrixA[matrixIndexCounter] = matrices[0][jj]
+                if (self._loadB == True):
+                    self._designMatrixA[matrixIndexCounter] = matrices[1][jj]
+                matrixIndexCounter += 1
+        
+        # Member Design Matrices are now populated
+        self._designMatrixA.shuffle(seed=self._randomSeed)
+        self._designMatrixB.shuffle(seed=self._randomSeed)
         # Increment Index Counter + Terminate
         self._batchIndex = batchStopIndex
         return self
+
 
 
 class TrainStrategy(Strategy):
@@ -149,9 +163,13 @@ class TrainStrategy(Strategy):
 
     def call(self):
         """ Invoke this strategy """
+        numBatches = self._runInfo.getNumBatches()
 
-        # Load in a Data Subset
-
+        while(self._batchIndex < numBatches):
+            # Load in a subset of the batches
+            self.populateDesignMatrices()    
+            # Use it to Fit the Model
+            self.fitModel()
 
         return self
 
