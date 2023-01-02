@@ -372,14 +372,14 @@ class DesignMatrix:
 
         def call(self):
             """ Run the Deserializer """
-            self.validateInputPaths()
-            self._data.setFeatures( self.readFeatures() )
-            self._data.setLabels( self.readLabels() )
+            self.__validateInputPaths()
+            self._data.setFeatures( self.__readFeatures() )
+            self._data.setLabels( self.__readLabels() )
             return self._data
 
         # Private Interface
 
-        def validateInputPaths(self):
+        def __validateInputPaths(self):
             """ Check that Input Directories Exists """
             if (os.path.isfile(self._pathX) == False):
                 # Path does not Exist
@@ -389,7 +389,7 @@ class DesignMatrix:
                 FileNotFoundError(self._pathY)
             return True
 
-        def readFeatures(self):
+        def __readFeatures(self):
             """ Read the Feature Data from the File into the Design Matrix """
             shape = self._data.getShape()
             self._inFileStream = open(self._pathX,"rb")
@@ -399,7 +399,7 @@ class DesignMatrix:
             array = array.reshape( shape )         
             return array
 
-        def readLabels(self):
+        def __readLabels(self):
             """ Read the Feature Data from the File into the Design Matrix """
             self._inFileStream = open(self._pathY,"rb")
             fileContents = self._inFileStream.read()
@@ -553,7 +553,7 @@ class RunInformation:
             pathY = self.__getPathToFile(ii,batchIndex,"Y")
             sampleShape = self._samplesShapes[ii]
             # Run the deserializer
-            result[ii] = DesignMatrix.deserialize((
+            result[ii] = DesignMatrix.deserialize(
                 pathX,pathY,totalNumSamples,sampleShape)
         # Result Array is Populated - Return now
         return result
@@ -600,7 +600,7 @@ class RunInformation:
         """ Class to serialize Run Information Instance"""
         pass
         
-    class __RunInformationDeserializer(PyTools.Deserializer):
+    class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
         
         def __init__(self,path):
