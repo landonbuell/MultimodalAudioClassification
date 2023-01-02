@@ -1,27 +1,19 @@
 """
-Repository:     MultimodalAudioClassification
-Solution:       MultimodalAudioClassification
-Project:        CommonToolsPy
-File:           PyToolsStructures.py
+Repository:     Buell-Senior-Thesis
+Solution:       SignalClassifier
+Project:        CommonUtilitiesPy
+File:           Structural.py
  
 Author:         Landon Buell
-Date:           June 2022
+Date:           April 2022
 """
 
         #### IMPORTS ####
 
 import os
-import sys
-import string
-
 import numpy as np
 
 import PyToolsIO
-
-        #### CONSTANTS ####
-
-UPPER_CASE_LETTERS = list(string.ascii_uppercase)
-    
 
         #### CLASS DEFINITIONS ####
 
@@ -30,6 +22,7 @@ class FeatureVector:
 
     def __init__(self,sampleShape,label=-1):
         """ Constructor for FeatureVector Instance """
+        self._sampleShape   = sampleShape
         self._label         = label
         self._data          = np.zeros(shape=sampleShape,dtype=np.float32)
 
@@ -41,7 +34,7 @@ class FeatureVector:
 
     def getShape(self):
         """ Get the Shape of this Sample """
-        return self._data.shape
+        return self._sampleShape
 
     def getLabel(self):
         """ Get the Target Label """
@@ -59,7 +52,7 @@ class FeatureVector:
     def setData(self,x,enforceShape=True):
         """ Set the Underlying Array, optionally chanign shape """
         if (enforceShape == True):
-            assert(list(x.shape) == self.getShape())
+            assert(x.shape == self.getShape())
             self._data = x
         else:
             self._sampleShape = x.shape
@@ -70,9 +63,18 @@ class FeatureVector:
 
     def clearData(self):
         """ Clear All Entries in this Array """
-        dataShape           = self._data.shape
         self._label         = -1
-        self._data          = np.zeros(shape=dataShape,dtype=np.float32)
+        self._data          = np.zeros(shape=self._sampleShape,dtype=np.float32)
+        return self
+
+    def __getitem___(self,key):
+        """ Get the Item at the Index """
+        return self._data[key]
+
+    def __setitem__(self,key,value):
+        """ Set the Item at the Index """
+        value = np.float32(value)   # cast to single-precs
+        self._data[key] = value
         return self
 
     # Magic Method
@@ -90,15 +92,6 @@ class FeatureVector:
         for i in range(self._data.shape[0]):
             yield self._data[i]
 
-    def __getitem___(self,key):
-        """ Get the Item at the Index """
-        return self._data[key]
-
-    def __setitem__(self,key,value):
-        """ Set the Item at the Index """
-        self._data[key] = np.float32(value)
-        return self
-
 class DesignMatrix:
     """ Class To hold Design Matrix """
 
@@ -106,7 +99,7 @@ class DesignMatrix:
         """ Constructor for DesignMatrix Instance """
         self._numSamples    = numSamples 
         self._sampleShape   = sampleShape
-        self._data          = np.zeros(shape=self.getMatrixShape(),dtype=np.float32)
+        self._data          = np.zeros(shape=self.getShape(),dtype=np.float32)
         self._tgts          = np.zeros(shape=numSamples,dtype=np.int16)
 
     def __del__(self):
@@ -115,9 +108,11 @@ class DesignMatrix:
 
     # Getters and Setters
 
-    def getMatrixShape(self):
+    def getShape(self):
         """ Get Total Shape of Design Matrix """
-        shape = [self._numSamples] + [x for x in self._sampleShape]
+        shape = [self._numSamples]
+        for axisShape in self._sampleShape:
+            shape.append(axisShape)
         return tuple(shape)
 
     def getSampleShape(self):
@@ -137,8 +132,16 @@ class DesignMatrix:
 
     def setNumSamples(self,numSamples):
         """ Set the Number of Samples in the Design Matrix """
-        self._numSamples = numSamples
-        self.clearData()
+        if (numSamples != self._numSamples):
+            self._numSamples = numSamples
+            self.clearData()
+        return self
+
+    def setSampleShape(self,sampleShape):
+        """ Set the shape of each sample in the design Matrix """
+        if (sampleShape != self._sampleShape):
+            self._sampleShape = sampleShape
+            self.clearData()
         return self
 
     def getFeatures(self):
@@ -149,7 +152,6 @@ class DesignMatrix:
         """ Set Design Matrix is an Array """
         self._numSamples = x.shape[0]
         self._sampleShape = tuple(x.shape[1:])
-        self._data = None
         self._data = x
         return self
 
@@ -168,119 +170,11 @@ class DesignMatrix:
 
     def getNumClasses(self):
         """ Get the Number of classes in the data set """
-        return np.unique(self._tgts).shape[-1]
+        return np.max(self._tgts)
 
-    # public Interface
+    # Public Interface
 
-    def variances(self):
-        """ Return the variance of each Feature """
-        return np.var(self._data,axis=0)
-
-    def means(self):
-        """ Return the mean of each Feature """
-        return np.mean(self._data,axis=0)
-
-    def serialize(self,pathX,pathY):
-        """ Write this design matrix out to a file """   
-        writerX = PyToolsIO.DesignMatrixDataSerializer(self,pathX)
-        writerY = PyToolsIO.DesignMatrixLabelSerializer(self,pathY)
-        success = True
-        try:          
-            success = writerX.call()
-            success = writerY.call()
-        except Exception as err:
-            print("\t\tDesignMatrix.serialize()" + err)
-            success = False
-        return success
-
-    @staticmethod
-    def deserialize(pathX,pathY,numSamples,shape):
-        """ Read a design matrix from a file """
-        matrix = DesignMatrix(numSamples,shape)
-        
-        # Read and Store Feature Array
-        shapeX = [numSamples] + [x for x in shape]
-        arr = np.fromfile(pathX,dtype=np.float32).reshape(shapeX)
-        matrix.setFeatures(arr)
-
-        # Read and Store Labels Array
-        shapeY = [numSamples,]
-        arr = np.fromfile(pathY,dtype=np.int16).reshape(shapeY)
-        matrix.setLabels(arr)
-        
-        # Return the populated matrix
-        return matrix
-
-    def shuffle(self,seed=0):
-        """ Shuffle the Contents of the Matrix """
-        np.random.set_state(seed)
-        permutation = np.random.permutation(self._numSamples)
-        self._data = self._data[permutation]
-        self._tgts = self._tgts[permutation]
-        return self
-
-    def clearData(self):
-        """ Clear All Entries in this Array """
-        self._data = np.zeros(shape=self.getMatrixShape(),dtype=np.float32)
-        self._tgts = np.zeros(shape=self.getNumSamples(),dtype=np.int16)
-        return self
-
-    def deepCopy(self):
-        """ Make a deep copy of the design matrix """
-        result = DesignMatrix(self.getNumSamples(),self.getSampleShape())
-        result.setFeatures(np.copy(self._data))
-        result.setLabels(np.copy(self._tgts))
-        return result
-
-    @staticmethod
-    def encodeOneHot(targets,numClasses):
-        """ Get a One-Hot-Encoded Array of targets """
-        numSamples = targets.shape[-1]
-        result = np.zeros(shape=(numSamples,numClasses),dtype=np.int16)   
-        for i in range(numSamples):
-            tgt = targets[i]
-            result[i,tgt] = 1
-        return result
-
-    @staticmethod
-    def concatenate(matrixA,matrixB):
-        """ Concatentate 2 matrices """
-        if (matrixA.getSampleShape() != matrixB.getSampleShape()):
-            errMsg = "Error: Cannot concatenate DesignMatrices due to shape mismatch"
-            raise RuntimeError(errMsg)
-        totalSamples = matrixA.getNumSamples() + matrixB.getNumSamples()
-        result = DesignMatrix(totalSamples,matrixA.getSampleShape())
-        # Concatenate and Store Features
-        a = matrixA.getFeatures()
-        b = matrixB.getFeatures()
-        X = np.concatenate([a,b],axis=0)
-        result.setFeatures(X)
-        # Concatenate and Store Labels
-        a = matrixA.getLabels()
-        b = matrixB.getLabels()
-        X = np.concatenate([a,b],axis=0)
-        result.setLabels(X)
-        # Return the new Matrix
-        return result
-
-    # Private Interface
- 
-    # Magic Methods 
-
-    def __str__(self):
-        """ String Representation of Instance """
-        return str(self.__class__) + " w/ shape: " + str(self.getShape())
-
-    def __repr__(self):
-        """ Debugger Representation of Instance """
-        return str(self.__class__) + " @ " + str(hex(id(self)))
-
-    def __iter__(self):
-        """ Forward-Iterator through Design Matrix """
-        for i in range(self._data.shape[0]):
-            yield self._data[i]
-
-    def __getitem__(self,key):
+    def __getitem___(self,key):
         """ Get the Item at the Index """
         if (key < 0 or key >= self._numSamples):
             errMsg = "key index is out of range for " + self.__repr__
@@ -296,19 +190,279 @@ class DesignMatrix:
         self._tgts[key] = value.getLabel()
         self._data[key] = value.getData()
         return self
+  
+    def applyMask(self,maskArray):
+        """ Apply A Mask Array to samples in the desing Matrix """
+        assert(maskArray.shape[0] == self._data.shape[0])
+        maskArray = maskArray.astype(np.bool8)
+        numSurvivingSamples = np.sum(maskArray)
+        newDesignMatrix = DesignMatrix( numSurvivingSamples,self.getSampleShape() )
+        sampleIndex = 0
 
-class RunInfo:
+        # Iterate Through Data
+        for idx,item in enumerate(maskArray):
+            if (item == True):
+                newDesignMatrix._data[sampleIndex] = self._data[idx]
+                newDesignMatrix._tgts[sampleIndex] = self._tgts[idx]
+                sampleIndex += 1
+
+        # Switch Features around
+        self.setNumSamples(numSurvivingSamples)
+        self._data = newDesignMatrix._data;
+        self._tgts = newDesignMatrix._data;
+        newDesignMatrix = None
+        return self
+
+    def getMaskForNaNsAndInfs(self):
+        """ Drop All Rows with NaNs in them """
+        sumOfRows = np.sum(self._data,axis=1)
+        mask = np.zeros(shape=(self._numSamples,),dtype=np.bool8)
+        for idx,item in enumerate(sumOfRows):
+            if np.isnan(item) == True:
+                continue
+            if np.isinf(item) == True:
+                continue
+            mask[idx] = True
+        # When applied, the returned masks will
+        # Remove samples w/ NaN or Inf Features
+        return mask
+        
+    def concat(self,otherMatrix):
+        """ Concatenate Another Design Matrix to the End of this One (SLOW) """
+        if (otherMatrix.getSampleShape() != self.getSampleShape()):
+            # Shapes Not Equal
+            raise ValueError("Shape Mismatch!")
+        totalNumSamples = self.getNumSamples() + otherMatrix.getNumSamples()
+        shapeNewMatrix = [totalNumSamples] + [x for x in self.getSampleShape()]
+        newFeatureArr = np.empty(shape=shapeNewMatrix,dtype=np.float32)
+        # Copy Features to New Array
+        sampleIndex = 0
+        for smpl in self._data:
+            newFeatureArr[sampleIndex] = smpl
+            sampleIndex += 1
+        for smpl in otherMatrix._data:
+            newFeatureArr[sampleIndex] = smpl
+            sampleIndex += 1
+        # Add to New Design Matrix + Append Target Vector
+        self.setFeatures(newFeatureArr)
+        self.setLabels(np.append(self._tgts,otherMatrix._tgts))
+        return self
+
+    def samplesInClass(self,classIndex):
+        """ Create New Design Matrix of Samples that all belong to one class """
+        if (classIndex not in self.getUniqueClasses()):
+            # Not a Valid Class
+            return DesignMatrix(1,self.getSampleShape())
+        # Find where targets matches index
+        mask = np.where(self._tgts == classIndex)[0]
+        newTgts = self._tgts[mask]
+        newData = self._data[mask]
+        # Create the new Design Matrix, attach values + Return
+        result = DesignMatrix(len(mask),self.getSampleShape())
+        result.setLabels(newTgts)
+        result.setFeatures(newData)
+        return result
+
+    def averageOfFeatures(self,mask=None):
+        """ Compute the Average of the Design Matrix Along each Feature """
+        means = np.mean(self._data,axis=0,dtype=np.float32)
+        if (mask is not None):
+            means = means[mask]
+        return means
+
+    def varianceOfFeatures(self,mask=None):
+        """ Compute the Variance of the Design Matrix Along each Feature """
+        varis = np.var(self._data,axis=0,dtype=np.float32)
+        if (mask is not None):
+            varis = varis[mask]
+        return varis
+
+    def serialize(self,pathX=None,pathY=None):
+        """ Write this design matrix out to a file """   
+        writer = DesignMatrix.__DesignMatrixSerializer(self,pathX,pathY)
+        success = True
+        try:          
+            success = writer.call()
+        except Exception as err:
+            print("\t\tDesignMatrix.serialize()" + err)
+            success = False
+        return success
+
+    def clearData(self):
+        """ Clear All Entries in this Array """
+        self._data = np.zeros(shape=self.getShape(),dtype=np.float32)
+        self._tgts = np.zeros(shape=self.getNumSamples(),dtype=np.int16)
+        return self
+
+    # Private Interface
+
+    class __DesignMatrixSerializer(PyToolsIO.Serializer):
+        """ Class to Serialize a DesignMatrixInstance """
+        
+        def __init__(self,matrix,pathX=None,pathY=None):
+            """ Constructor for DesignMatrixSerializer Instance """
+            super().__init__(matrix,None)
+            self._pathX =   pathX
+            self._pathY =   pathY
+            
+            
+        def __del__(self):
+            """ Destructor for DesignMatrixSerializer Instance """
+            super().__del__()
+
+        def call(self):
+            """ Run the Serializer """
+            self.validateOutputs()
+            if (self._pathX is not None):
+                self.writeDataX()
+            if (self._pathY is not None):
+                self.writeDataY()
+            return self
+
+        def writeDataX(self):
+            """ Write the Design Matrix Data """
+            numSamples = self._data.getNumSamples()
+            X = self._data.getFeatures()
+            self._outFileStream = open(self._pathX,"wb")
+            for i in range(numSamples):
+                row = X[i].flatten().tobytes()
+                self._outFileStream.write( row )
+            # Close + Return
+            self._outFileStream.close()
+            return self
+
+        def writeDataY(self):
+            """ Write the Design Matrix Labels """
+            numSamples = self._data.getNumSamples()
+            Y = self._data.getLabels()
+            self._outFileStream = open(self._pathY,"wb")
+            for i in range(numSamples):
+                row = Y[i].flatten().tobytes()
+                self._outFileStream.write( row )
+            # Close + Return
+            self._outFileStream.close()
+            return self
+
+        def validateOutputs(self):
+            """ Validate that Both Output Paths Make Sense """
+            if (self._pathX is None and self._pathY is None):
+                # Both Cannot be none - Nothing will be written
+                errMsg = "Both X and Y export paths cannot be None"
+                raise ValueError(errMsg)
+            elif (self._pathX == self._pathY):
+                # Both cannot be the same - will overwrite each other
+                errMsg = "X and Y paths cannot be indentical"
+                raise ValueError(errMsg)
+            else:
+                return self
+
+    class __DesignMatrixDeserializer(PyToolsIO.Deserializer):
+        """ Class to Serialize a DesignMatrix Instance """
+
+        def __init__(self,pathX,pathY,numSamples,sampleShape):
+            """ Constructor for DesignMatrixSerializer Instance """
+            super().__init__("-1")
+            self._pathX = pathX
+            self._pathY = pathY
+            self._data = DesignMatrix(numSamples,sampleShape)
+
+        def __del__(self):
+            """ Destructor for DesignMatrixSerializer Instance """
+            super().__del__()
+
+        def call(self):
+            """ Run the Deserializer """
+            self.validateInputPaths()
+            self._data.setFeatures( self.readFeatures() )
+            self._data.setLabels( self.readLabels() )
+            return self._data
+
+        # Private Interface
+
+        def validateInputPaths(self):
+            """ Check that Input Directories Exists """
+            if (os.path.isfile(self._pathX) == False):
+                # Path does not Exist
+                FileNotFoundError(self._pathX)
+            if (os.path.isfile(self._pathY) == False):
+                # Path does not Exist
+                FileNotFoundError(self._pathY)
+            return True
+
+        def readFeatures(self):
+            """ Read the Feature Data from the File into the Design Matrix """
+            shape = self._data.getShape()
+            self._inFileStream = open(self._pathX,"rb")
+            fileContents = self._inFileStream.read()
+            self._inFileStream.close()
+            array = np.frombuffer(fileContents,dtype=np.float32)         
+            array = array.reshape( shape )         
+            return array
+
+        def readLabels(self):
+            """ Read the Feature Data from the File into the Design Matrix """
+            self._inFileStream = open(self._pathY,"rb")
+            fileContents = self._inFileStream.read()
+            self._inFileStream.close()
+            array = np.frombuffer(fileContents,dtype=np.int16)               
+            return array
+
+    # Static Interface
+
+    @staticmethod
+    def deserialize(pathX,pathY,numSamples,shape):
+        """ Read a design matrix from a file """
+        reader = DesignMatrix.__DesignMatrixDeserializer(
+            pathX,pathY,numSamples,shape)
+        matrix = reader.call()
+        return matrix
+
+    @staticmethod
+    def encodeOneHot(targets,numClasses):
+        """ Get a One-Hot-Encoded Array of targets """
+        numSamples = targets.shape[-1]
+        result = np.zeros(shape=(numSamples,numClasses),dtype=np.int16)   
+        for i in range(numSamples):
+            tgt = targets[i]
+            result[i,tgt] = 1
+        return result
+    
+    # Magic Methods 
+
+    def __str__(self):
+        """ String Representation of Instance """
+        return str(self.__class__) + " w/ shape: " + str(self.getShape())
+
+    def __repr__(self):
+        """ Debugger Representation of Instance """
+        return str(self.__class__) + " @ " + str(hex(id(self)))
+
+    def __iter__(self):
+        """ Forward-Iterator through Design Matrix """
+        for i in range(self._data.shape[0]):
+            yield self._data[i]
+
+class RunInformation:
     """
     Class to Hold and Use all Metadata related to a feature collection Run
     """
 
-    def __init__(self,inputPaths,outputPath):
+    DEFAULT_NUM_PIPELINES = 8
+
+    def __init__(self,inputPaths,outputPath,
+                 numSamplesExpected=0,numSamplesRead=0):
         """ Constructor for RunInformation Instance """
         self._pathsInput        = inputPaths
         self._pathOutput        = outputPath
 
+        self._numPipelines      = RunInformation.DEFAULT_NUM_PIPELINES
+        self._pipelinesInUse    = [False] * RunInformation.DEFAULT_NUM_PIPELINES
+
+        self._samplesShapes     = [ (0,) ] * RunInformation.DEFAULT_NUM_PIPELINES
         self._batchSizes        = []
-        self._matrixShapes      = []
+
+        self._numSamplesExpt    = 0
+        self._numSamplesRead    = 0
 
 
     def __del__(self):
@@ -317,9 +471,9 @@ class RunInfo:
 
     # Getters and Setters
 
-    def getRunInfoPath(self):
+    def getRunInfoPath(self) -> str:
         """ Get the Path to the RunInfo Metadata """
-        return os.path.join(self._pathOutput,"runInfo.txt")
+        return os.path.join(self._pathOutput,"runInformation.txt")
 
     def getInputPaths(self) -> set:
         """ Return List of Input Paths """
@@ -329,132 +483,151 @@ class RunInfo:
         """ Return Output Path """
         return self._pathOutput
 
+    def getNumPossiblePipelines(self):
+        """ Return the possible number of pipelines """
+        return RunInformation.DEFAULT_NUM_PIPELINES
+
+    def getPipelinesInUse(self):
+        """ Return a List of the index of pipelines in Use """
+        return [ii for ii,val in enumerate(self._pipelinesInUse) if val is True]
+
+    def getNumPipelinesInUse(self):
+        """ Get the Number of pipelines in Use """
+        return sum(self._pipelinesInUse)
+
+    def getSampleShapes(self):
+        """ Get the shape of all pipelines """
+        return self._samplesShapes
+
+    def getSampleShapeOfPipeline(self,index):
+        """ Get the sample Shape f a particular pipeline """
+        return self._samplesShapes[index]
+
     def getBatchSizes(self):
-        """ Get a list with the size of each batch """
+        """ Get the size of all batches """
         return self._batchSizes
 
-    def getMatrixShape(self,matrixIndex):
-        """ Get the Feature Shape for an index """
-        return self._matrixShapes[matrixIndex]
+    def getSizeOfBatches(self,index):
+        """ Get the size of particular index(es) of batches """
+        return self._batchSizes[index]
 
-    def getNumPipelines(self):
-        """ Get the Number of registered pipelines """
-        return len(self._matrixShapes)
+    def getExpectedNumSamples(self):
+        """ Get the number of samples expected to process """
+        return self._numSamplesExpt
 
-    def getNumBatches(self):
-        """ Get the Number of Batches in the run """
-        return len(self._batchSizes)
-
-    def addBatchSize(self,batchSize):
-        """ Append to the list of batch sizes """
-        self._batchSizes.append(batchSize)
+    def setExpectedNumSamples(self,num):
+        """ Set the number of samples expected to process """
+        self._numSamplesExpt = num
         return self
 
-    def getNumSamplesProcessed(self):
-        """ Get the Totoal Number of Samples Seen """
-        return sum(self._batchSizes)
-    
-    # Public Interface 
+    def getActualNumSamples(self):
+        """ Get the number of samples actually processed """
+        return self._numSamplesRead
 
-    def registerPipeline(self,pipeline,index=-1):
-        """ Register A Pipeline w/ the RunInfo Struct """
-        featureVectorShape = pipeline.getDesignMatrix().getSampleShape()
-        if (index == -1):
-            self._matrixShapes.append(featureVectorShape)
-        else:
-            self._matrixShapes[index] = featureVectorShape
+    def setActualNumSamples(self,num):
+        """ Set the number of samples actually processed """
+        self._numSamplesRead = num
         return self
 
-    def serialize(self,path):
-        """ Serialize this Instance to specified Path """
-        writer = PyToolsIO.RunInfoSerializer(self,path)
-        success = False
-        try:
-            success = writer.call()
-        except Exception as expt:
-            print(expt)
-        return success
+    def getIsPipelineInUse(self,index):
+        """ Return T/F If pipeline is in use at index """
+        return self._pipelinesInUse[index]
 
-    @staticmethod
-    def deserialize(path):
-        """ Deserialize this instance from specified path """
-        reader = PyToolsIO.RunInfoDeserializer(path)
-        runInfo = reader.call()
-        return runInfo
+    def setIsPipelineInUse(self,index,value):
+        """ Set T/F if pipeline at index is in use """
+        self._pipelinesInUse[index] = value
+        return self
 
-    def loadBatch(self,batchIndex,loadA=True,loadB=True):
-        """ Load of Samples Based from output Directory """
+    # Public Interface
 
-        if (batchIndex >= self.getNumBatches()):
-            errMsg = "ERROR: Batch Index {0} exceeds max batch of {1}".format(
-                batchIndex,self.getNumBatches())
-            raise RuntimeError(errMsg)
-
-        # Preset some Data
-        matrices = [None] * self.getNumPipelines()
-        numSamples = self._batchSizes[batchIndex]
-        
-
-        # Load in all Modes
-        for pipelineIndex in range(len(matrices)):
-            
-            # Check which modes to load
-            if (pipelineIndex == 0 and loadA == False):
+    def loadSingleBatch(self,batchIndex):
+        """ Load Samples from Batch for all pipelines """
+        result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
+        totalNumSamples = self._batchSizes[batchIndex]
+        for ii in range(len(result)):
+            if (self._pipelinesInUse[ii] == False):
+                # This pipeline is not in use
                 continue
-            if (pipelineIndex == 1 and loadB == False): 
-                continue
+            # If it is in use...
+            pathX = self.__getPathToFile(ii,batchIndex,"X")
+            pathY = self.__getPathToFile(ii,batchIndex,"Y")
+            sampleShape = self._samplesShapes[ii]
+            # Run the deserializer
+            result[ii] = DesignMatrix.deserialize((
+                pathX,pathY,totalNumSamples,sampleShape)
+        # Result Array is Populated - Return now
+        return result
 
-            # Set shapes + paths
-            sampleShape = self._matrixShapes[pipelineIndex]
-            pathX = os.path.join(self._pathOutput,"pipeline{0}-batch{1}X.bin".format(UPPER_CASE_LETTERS[pipelineIndex],batchIndex))
-            pathY = os.path.join(self._pathOutput,"batch{0}Y.bin".format(batchIndex))
+    def loadMultipleBatches(self,batchIndices):
+        """ Load Samples from multiple batches in all pipelines """
+        result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
+        totalNumSamples = 0
+        for batchIndex in batchIndices:
+            totalNumSamples += self._batchSizes[batchIndex]
+        # For each batch:
+        resultSampleCounter = 0
+        for ii,batchIndex in enumerate(batchIndices):
+            outputMatrixSampleCounter = 0 
+            matrices = self.loadSingleBatch(batchIndex)
+            self.__populateLargerMatrices(result,matrices,outputMatrixSampleCounter)        
+            resultSampleCounter += self._batchSizes[batchIndex]
 
-            # Load the Matrix
-            try:
-                matrix = DesignMatrix.deserialize(pathX,pathY,numSamples,sampleShape)
-                matrices[pipelineIndex] = matrix
-            except Exception as err:
-                errMsg = "\tERROR: Could not load matrix {0} from batch {1}".format(
-                    pipelineIndex,batchIndex)
-                print(errMsg)
-                raise Exception(err)
+        return result
 
-        # Return the List of Design matrices
-        return matrices
-
-    def loadAllBatches(self,loadA=True,loadB=True):
-        """ Load all Batches in Dataset """ 
-        numBatches = len(self._batchSizes)
-        matrices = self.loadBatch(0,loadA,loadB)    # Load Batch 0 to start
-        for i in range(1,numBatches):
-            newMatrix = self.loadBatch(i,loadA,loadB)
-            if (loadA == True):
-                matrices[0] = DesignMatrix.concatenate(matrices[0],newMatrix[0])
-            if (loadB == True):
-                matrices[1] = DesignMatrix.concatenate(matrices[1],newMatrix[1])
-        #for pipelineIndex in range(len(matrices)):
-        #    matrices[pipelineIndex] = self.loadBatchHelper(pipelineIndex,batchIndex)
-        return matrices
 
     # Private Interface
 
-    def loadBatchHelper(self,pipelineIndex,batchIndex):
-        """ Private Helper to load a batch from RAM """
-        matrix      = None
-        numSamples  = self._batchSizes[batchIndex]
-        sampleShape = self._matrixShapes[pipelineIndex]
-        tagX        = "pipeline{0}-batch{1}X.bin".format(pipelineIndex,batchIndex)
-        tagY        = "pipeline{0}-batch{1}Y.bin".format(pipelineIndex,batchIndex)
-        try:
-            matrix  = DesignMatrix.deserialize(tagX,tagY,numSamples,sampleShape)
-        except Exception as err:
-            errMsg  = "\tERROR: Could not load matrix {0} from batch {1}".format(
-                pipelineIndex,batchIndex)
-            print(err)
-            print(errMsg)
-        return matrix
+    def __getPathToFile(self,pipelineIndex,batchIndex,strID):
+        """ Get a path to the batch of a particular pipeline """
+        fileName = "pipeline{0}Batch{1}{2}.bin".format(
+            piplineIndex,batchIndex,strID)
+        return os.path.join(self._outputPath,fileName)
 
+    def __populateLargerMatrices(self,matricesA,matricesB,startIndex):
+        """ Populate matrixA w/ contentd of matrixB starting at index """
+        assert(len(matricesA) == len(matricesB))
+        for ii,(a,b) in enumerate(zip(matricesA,matricesB)):
+            if ((a is None) or (b is None)):
+                # NONE type for matrix
+                continue
+            indexCounter = startIndex
+            for jj in range(len(b.getNumSamples())):
+                a[indexCounter] = b[jj]
+                indexCounter += 1
+        return self
 
+    class __RunInformationSerializer(PyToolsIO.Serializer):
+        """ Class to serialize Run Information Instance"""
+        pass
+        
+    class __RunInformationDeserializer(PyTools.Deserializer):
+        """ Class to deserialize RunInformation instance """
+        
+        def __init__(self,path):
+            """ Constructor """
+            super().__init__(path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        # Public Interface
+
+        def call(self):
+            """ Run the deserializer """
+            return self._data
+
+        # Private Interface
+                    
+    # Static Interface
+
+    @staticmethod
+    def deserialize(self,path):
+        """ Deserialize a RunInformation instance from path """
+        reader  = RunInformation.__RunInformationDeserializer(path)
+        runInfo = reader.call() 
+        return runInfo
+   
     # Magic Methods
 
     def __repr__(self):
