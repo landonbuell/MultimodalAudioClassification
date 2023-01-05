@@ -28,6 +28,7 @@ class BaseExperiment:
     def __init__(self,
                  runInfo,
                  outputPath,
+                 trainSize=0.8,
                  numIters=1,
                  seed=0,
                  batchesAtOnce=64,
@@ -39,10 +40,12 @@ class BaseExperiment:
         self._numIters      = numIters
         self._randomSeed    = seed
         
-        self._batchesAtOnce = batchesAtOnce
-        self._batchesRemaining = np.random.permutation(self._runInfo.getNumBatches())
+        self._batchesAtOnce     = batchesAtOnce
+        self._trainingBatches   = []
+        self._testingBatches    = []
 
         self._pipelines     = [False] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES;
+        self._model         = None          
 
         for pipelineIndex in pipelinesToUse:
             self._pipelines[pipelineIndex] = True
@@ -61,6 +64,10 @@ class BaseExperiment:
 
         for ii in range(self._numIters):
 
+            # Initialize Model + Train Test Split
+            self.__initializeModel()
+            self.__executeTrainTestSplit()
+
             # Load + Train the Model
             self.__runLoadAndTrainSequence()
 
@@ -68,13 +75,18 @@ class BaseExperiment:
             self.__runLoadAndTestSequence()
 
             # Export Experiment Details
-            self.__exportExperimentDetails()
+            self.__exportExperimentDetails(ii)
 
         return self
 
     def resetState(self):
         """ Public accessor to reset the state of the experiment instance """
         return self.__resetState()
+
+    def predictWithModel(self,X):
+        """ Run predictions on Model """
+
+        return self
 
     # Protected Interface
 
@@ -91,11 +103,16 @@ class BaseExperiment:
 
         return (X,y)
 
-    def _trainModel(self):
+    def _trainModel(self,X,y):
         """ VIRTUAL - Train the model with the provided data """
+
+
         return self
+    
+    def _testModel(self,X,y):
+        """ VIRTUAL - Test the model on the provided data """
 
-
+        return self
 
     # Private Interface
 
@@ -104,10 +121,27 @@ class BaseExperiment:
         self._randomSeed += 1
         np.random.seed(self._randomSeed)
 
-        self._batchesRemaining = np.random.permutation(self._runInfo.getNumBatches())
+        self._trainingBatches   = []
+        self._testingBatches    = []
 
         return self
+    
+    def __initializeModel(self):
+        """ Initialize the Neural Network Model """
+        return self
 
+    def __executeTrainTestSplit(self):
+        """ Perform train-test split on batches """
+        allBatches = np.random.permutation(
+            self._runInfo.getNumBatches())
+        # split
+        numTrainBatches = np.floor(len(allBatches))
+        numTestBatches = len(allBatches) - numTrainBatches
+        # Add to batches
+        for ii in range(numTrainBatches):
+            self._trainingBatches.append( allBatches.pop() )
+        self._testingBatches = allBatches[:]
+        return self
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
@@ -117,7 +151,7 @@ class BaseExperiment:
         """ Run data loading/testing sequence """
         return self
 
-    def __exportExperimentDetails(self):
+    def __exportExperimentDetails(self,iterCounter):
         """ Export the Details of the experient """
         return self
 
