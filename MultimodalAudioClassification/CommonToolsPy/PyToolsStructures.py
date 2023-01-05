@@ -540,6 +540,13 @@ class RunInformation:
 
     # Public Interface
 
+    def serialize(self,path):
+        """ Serialize this Instance """
+        success = True
+        writer = RunInformation.__RunInformationSerializer(self,path)
+        writer.call()
+        return success
+
     def loadSingleBatch(self,batchIndex):
         """ Load Samples from Batch for all pipelines """
         result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
@@ -580,7 +587,7 @@ class RunInformation:
     def __getPathToFile(self,pipelineIndex,batchIndex,strID):
         """ Get a path to the batch of a particular pipeline """
         fileName = "pipeline{0}Batch{1}{2}.bin".format(
-            piplineIndex,batchIndex,strID)
+            pipelineIndex,batchIndex,strID)
         return os.path.join(self._outputPath,fileName)
 
     def __populateLargerMatrices(self,matricesA,matricesB,startIndex):
@@ -598,7 +605,28 @@ class RunInformation:
 
     class __RunInformationSerializer(PyToolsIO.Serializer):
         """ Class to serialize Run Information Instance"""
-        pass
+        
+        def __init__(self,data,path):
+            """ Constructor """
+            super().__init__(data,path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        # Public Interface
+
+        def call(self):
+            """ Write Object to OutputStream """
+            self._outFileStream = open(self._outputPath,"w")
+
+
+            self._outFileStream.close()
+            return True
+
+        # Private Interface
+
+        
         
     class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
