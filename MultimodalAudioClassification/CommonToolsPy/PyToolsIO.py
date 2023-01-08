@@ -26,34 +26,50 @@ class Serializer:
         """ Constructor for Serializer Abstract Class """
         self._data              = data
         self._outputPath        = path
-        self._outFileStream     = None
-        self._outFmtStr         = lambda key,val :  "{0:<32}\t{1:<128}\n".format(key,val)
+        self._outFileBuffer     = []
 
     def __del__(self):
         """ Destructor for Serializer Abstract Class """
-        if (self._outFileStream is not None):
-            self._outFileStream.close()
-        return
+        self._data = None
+        self._outFileBuffer.clear()
 
     # Public Interface
 
-    def call(self):
-        """ Write Object to OutputStream """
+    def appendLine(self,line):
+        """ Append single line to output buffer """
+        self._outFileBuffer.append(line)
+        return self
 
-        return False
+    def appendLines(self,lines):
+        """ Append multiple lines to output buffer """
+        for item in lines:
+            self._outFileBuffer.append(item)
+        return self
+
+    def call(self):
+        """ ABSTRACT: Write Object to OutputStream """
+        return True
     
     # Protected Interface
 
+    def _writeBufferToPath(self):
+        """ Write Output Buffer to File """
+        outFileStream = open(self._outputPath,"w")
+        for line in self._outFileBuffer:
+            self._outFileBuffer.write(line + "\n")
+        outFileStream.close()
+        return self
+
     def _writeHeader(self):
         """ Add Header To Output """
-        self._outFileStream.write(repr(self) + "\n")
-        self._outFileStream.write("-"*64 + "\n")
+        lines = [repr(self),"-"*64]
+        self.appendLines( lines )
         return self
 
     def _writeFooter(self):
         """ Add Header To Output """
-        self._outFileStream.write("-"*64 + "\n")
-        self._outFileStream.write(repr(self) + "\n")
+        lines = ["-"*64,repr(self)]
+        self.appendLines( lines )
         return self
 
     # Static Interface
@@ -84,7 +100,7 @@ class Deserializer:
         """ Constructor for Deserializer Abstract Class """
         self._data              = None
         self._inputPath         = path
-        self._inFileStream      = None
+        self._inFileBuffer      = []
 
     def __del__(self):
         """ Destructor for Deserializer Abstract Class """
@@ -97,10 +113,21 @@ class Deserializer:
 
     def call(self):
         """ Read Object From inputStream """
-
-        return False
+        inFileStream = open(self._inputPath,'r')
+        self._inFileBuffer = inFileStream.readlines()
+        inFileStream.close()
+        return True
 
     # Protected Interface
+
+    def _findInBuffer(self,key):
+        """ Find Key in Buffer """
+        vals = []
+        for item in self._inFileBuffer:
+            if (item.startswith(key)):
+                tokens = item.split()
+                vals.append( tokens[-1] )
+        return vals
 
     # Static Interface
 
@@ -111,6 +138,27 @@ class Deserializer:
         if outType is not None:
             outputList = [outType(x) for x in outputList]
         return outputList
+
+    @staticmethod
+    def stringToInt(inputString):
+        """ Convert string to integer """
+        result = 0
+        try:
+            result = int(inputString.strip())
+        except Exception as err:
+            print(err)
+        return result
+
+    @staticmethod
+    def stringToBool(inputString):
+        """ Determine if item is T/F """
+        TRUE    = ["TRUE","T","1","YES","Y"]
+        FALSE   = ["FALSE","F","0","NO","N"]
+        text = inputString.capitalize()
+        if (text in TRUE):
+            return True
+        else:
+            return False
 
     # Magic Methods
 
