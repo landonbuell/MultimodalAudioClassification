@@ -20,6 +20,8 @@ import numpy as np
 class Serializer:
     """ Abstract Base Class for all Serializer Classes """
 
+    fmtKeyValPair = lambda x,y : "{0:<32}{1}\n".format(x,y)
+
     def __init__(self,data,path):
         """ Constructor for Serializer Abstract Class """
         self._data              = data
@@ -44,14 +46,14 @@ class Serializer:
 
     def _writeHeader(self):
         """ Add Header To Output """
-        self._outFileStream.write(self.__repr__() + "\n")
+        self._outFileStream.write(repr(self) + "\n")
         self._outFileStream.write("-"*64 + "\n")
         return self
 
     def _writeFooter(self):
         """ Add Header To Output """
         self._outFileStream.write("-"*64 + "\n")
-        self._outFileStream.write(self.__repr__() + "\n")
+        self._outFileStream.write(repr(self) + "\n")
         return self
 
     # Static Interface

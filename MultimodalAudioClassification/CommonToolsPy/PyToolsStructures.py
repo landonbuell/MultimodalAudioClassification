@@ -581,7 +581,6 @@ class RunInformation:
 
         return result
 
-
     # Private Interface
 
     def __getPathToFile(self,pipelineIndex,batchIndex,strID):
@@ -619,14 +618,74 @@ class RunInformation:
         def call(self):
             """ Write Object to OutputStream """
             self._outFileStream = open(self._outputPath,"w")
+            self._writeHeader()
 
+            self.__writeInputOutputPaths()
+            self.__writePipelineInUseData()
+            self.__writeSampleShapesBatchSizes
+            self.__writeNumSamples()
 
+            self._writeFooter()
             self._outFileStream.close()
             return True
 
         # Private Interface
 
+        def __writeInputOutputPaths(self):
+            """ Write Input Paths to File """
+            inputPaths = self._data.getInputPaths()
+            outputPath = self._data.getOutputPath()
+
+            # write input Paths
+            for ii,path in enumerate(inputPaths):
+                line = PyToolsIO.Serializer.fmtKeyValPair(
+                    "InputPath[{0}]".format(ii),path)
+                self._outFileStream.write(line)
+
+            # Write Output Path
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                "OutputPath",outputPath)
+
+            # All done!
+            return self
+
+        def __writePipelineInUseData(self):
+            """ Write Data pertaining to what pipeline are in use """
+            self._outFileStream.write( PyToolsIO.Serializer.fmtKeyValPair(
+                "NumPipelines",self._data.getNumPipelinesInUse() ))
+            # Write out which pipelines are in use
+            boolPipelineList = PyToolsIO.Serializer.listToString(
+                self._data._pipelinesInUse)
+            self._outFileStream.write( PyToolsIO.Serializer.fmtKeyValPair(
+                "PipelinesInUse",boolPipelineList))
+            return self
         
+        def __writeSampleShapesBatchSizes(self):
+            """ Write Sample Shapes and Batch Sizes """
+            shapes = self._data.getSampleShapes()
+
+            # Write out shapes
+            for ii,shape in enumerate(self._data.getNumPossiblePipelines()):
+                line = PyToolsIO.Serializer.fmtKeyValPair(
+                    "PipelineShape[{0}]".format(ii),str(shape))
+                self._outFileStream.write(line)
+
+            # Write out batch sizes
+            strBatchSizes = PyToolsIO.Serializer.listToString(
+                self._data.getBatchSizes())
+            self._outFileStream.write( PyToolsIO.Serializer.fmtKeyValPair(
+                "BatchSizes",strBatchSizes) )
+
+            return self
+
+        def __writeNumSamples(self):
+            """ Write out actual & expected num samples """
+            self._outFileStream.write( PyToolsIO.Serializer.fmtKeyValPair(
+                "NumExpectedSamples",self._data.getExpectedNumSamples() ))
+            self._outFileStream.write( PyToolsIO.Serializer.fmtKeyValPair(
+                "NumActualSamples",self._data.getActualNumSamples() ))
+            return self
+
         
     class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
