@@ -14,6 +14,7 @@ import os
 import datetime
 
 import PyToolsIO
+import PyToolsStructures
 
 import Managers
 
@@ -38,7 +39,7 @@ class FeatureCollectionApp:
         self._sampleManager     = Managers.SampleManager()
         self._rundataManager    = Managers.RundataManager()
 
-        self._pipelines         = [None,None]
+        self._pipelines         = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
 
         
     def __del__(self):
@@ -110,7 +111,6 @@ class FeatureCollectionApp:
         
         batchCounter = 0
         batchLimit = self.getSettings().getBatchLimit()
-        MAX_BATCHES = 100000
         loop = True
 
         while (loop == True):
@@ -125,9 +125,9 @@ class FeatureCollectionApp:
                 self.logMessage(msg)
                 loop = False
 
-            if (batchCounter >= MAX_BATCHES - 1):
+            if (batchCounter >= AppSettings.MAX_BATCHES - 1):
                 # Max Number of batches reached
-                msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(MAX_BATCHES)
+                msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(AppSettings.MAX_BATCHES )
                 self.logMessage(msg)
                 loop = False
 
@@ -200,6 +200,9 @@ class AppSettings:
     """
     Contains all runtime settings for duration of application
     """
+
+    MAX_BATCHES = 100000
+
     def __init__(self,pathsInput,pathOutput,batchSize=32,batchLimit=-1,sampleLimit=100000,shuffleSeed=-1):
         """ Constructor for AppSettings Instance """
         self._pathStartup   = os.getcwd()
@@ -213,8 +216,8 @@ class AppSettings:
         self._logToConsole  = True
         self._logToFile     = True
 
-        self.initInputPaths(pathsInput)
-        self.initOutputPath(pathOutput)
+        self.__initInputPaths(pathsInput)
+        self.__initOutputPath(pathOutput)
 
     def __del__(self):
         """ Destructor for AppSettings Instance """
@@ -300,13 +303,13 @@ class AppSettings:
 
     # Private Interface
 
-    def initInputPaths(self,pathSet):
+    def __initInputPaths(self,pathSet):
         """ Initialize Set of Input Paths """
         for x in pathSet:
             self.addInputPath(x)
         return self
 
-    def initOutputPath(self,output):
+    def __initOutputPath(self,output):
         """ Initialize the Output Path """
         fullOutput = os.path.abspath(output)
         if (os.path.isdir(fullOutput)):
@@ -339,10 +342,10 @@ class Logger:
         
         if (self._toFile):
             self._outFile = open(self._outPath,"w")
-        self.writeHeader()
+        self.__writeHeader()
 
     def __del__(self):
-        self.writeFooter()
+        self.__writeFooter()
         """ Destructor for Logger Instance """
         if (self._outFile is not None):
             if (self._outFile.closed() == False):
@@ -380,33 +383,33 @@ class Logger:
 
     # Private Interface
 
-    def writeHeader(self):
+    def __writeHeader(self):
         """ Write Header To Logger """
         header = [
-            self.spacer(),
+            self.__spacer(),
             "FeatureCollectionApp",
             FeatureCollectionApp.getDateTime(),
-            self.spacer()
+            self.__spacer()
             ]
         # Log Each Line of the Header
         for msg in header:
             self.logMessage(msg,False)
         return self
 
-    def writeFooter(self):
+    def __writeFooter(self):
         """ Write Footer To Logger """
         footer = [
-            self.spacer(),
+            self.__spacer(),
             "FeatureCollectionApp",
             FeatureCollectionApp.getDateTime(),
-            self.spacer()
+            self.__spacer()
             ]
         # Log Each Line of the Header
         for msg in footer:
             self.logMessage(msg,False)
         return self
 
-    def spacer(self,numChars=64):
+    def __spacer(self,numChars=64):
         """ Get a Spacer String """
         return "\n" + ("-" * numChars) + "\n"
     

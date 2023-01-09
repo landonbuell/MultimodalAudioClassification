@@ -544,6 +544,17 @@ class RunInformation:
 
     # Public Interface
 
+    def registerPipeline(self,pipeline,index):
+        """ Register a Pipeline w/ this instance """
+        if (pipeline is None):
+            self._pipelinesInUse[index] = False
+            self._samplesShapes[index] = (0,)
+            return self
+        # Is Valid Pipeline...
+        self._pipelinesInUse[index] = True
+        self._samplesShapes[index] = pipeline.
+
+
     def serialize(self,path):
         """ Serialize this Instance """
         success = True
