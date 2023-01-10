@@ -552,7 +552,7 @@ class RunInformation:
             return self
         # Is Valid Pipeline...
         self._pipelinesInUse[index] = True
-        self._samplesShapes[index] = pipeline.
+        self._samplesShapes[index]  = ( pipeline.getReturnSize(), )
 
 
     def serialize(self,path):

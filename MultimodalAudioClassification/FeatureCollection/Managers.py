@@ -33,7 +33,7 @@ class Manager:
 
     def __init__(self):
         """ Constructor for Manager Base Class """
-        self.logConstruction()
+        self._logConstruction()
 
     def __del__(self):
         """ Destructor for Manager Base Class """
@@ -256,7 +256,7 @@ class RundataManager(Manager):
         super().__init__()
         inputPaths = Administrative.FeatureCollectionApp.getInstance().getSettings().getInputPaths()
         outputPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
-        self._runInfo           = PyToolsStructures.RunInfo(inputPaths,outputPath)
+        self._runInfo           = PyToolsStructures.RunInformation(inputPaths,outputPath)
 
     def __del__(self):
         """ Destructor for MetadataManager Instance """

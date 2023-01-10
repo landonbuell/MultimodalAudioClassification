@@ -44,7 +44,7 @@ class FeatureCollectionApp:
         
     def __del__(self):
         """ Destructor for CollectionApplication Instance """
-        self.logDestruction()
+        self.__logDestruction()
         
     @staticmethod
     def constructApp(settings):
@@ -173,13 +173,15 @@ class FeatureCollectionApp:
         result = result.replace(" ",".")
         return result
 
-    def logConstruction(self):
+    # Private Interface
+
+    def __logConstruction(self):
         """ Log Construction of Sample Manager """
         msg = "Constructing FeatureCollectionApp Instance ..."
         FeatureCollectionApp._appInstance.logMessage(msg)
         return None
 
-    def logDestruction(self):
+    def __logDestruction(self):
         """ Log Construction of Sample Manager """
         msg = "Destroying FeatureCollectionApp Instance ..."
         self.logMessage(msg)
@@ -277,14 +279,9 @@ class AppSettings:
         """ Write the Settings Instance out to a text file """
         if (outputPath is None):
             outputPath = os.path.join(self.getOutputPath(),"settings.txt")
-        writer = PyToolsIO.AppSettingsSerializer(self,outputPath)
-        success = True
-        try:
-            writer.call()
-        except Exception as err:
-            print("\t\tAppSettings.serialize() " + err)
-            success = False
-        return success
+        writer = AppSettings.__AppSettingsSerializer(self,outputPath)
+        writer.call()
+        return True
 
     @staticmethod
     def developmentSettingsInstance():
@@ -320,6 +317,82 @@ class AppSettings:
             os.makedirs(fullOutput)
         self._pathOutput = fullOutput
         return self
+
+    class __AppSettingsSerializer(PyToolsIO.Serializer):
+        """ Class to Help Serialize App Settings Instance """
+
+        def __init__(self,data,path):
+            """ Constructor """
+            super().__init__(data,path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        # Public Interface
+
+        def call(self):
+            """ Run the Serializer """
+            super().call()
+
+            self.__writePaths()
+
+            self._writeFooter()
+            return True
+
+
+        # Private Interface
+
+        def __writePaths(self):
+            """ Write Input + Output + Startup paths """      
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "PathStartup",self._data.getStartupPath() ))
+            for ii,path in enumerate(self._data.getInputPaths()):
+                self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                    "PathInput[{0}]".format(ii),path ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "PathOutput",self._data.getOutputPath() ))
+            return self
+
+        def __writeBatchData(self):
+            """ Write Out data related to batches """
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "BatchSize",self._data.getBatchSize() ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "BatchLimit",self._data.getBatchLimit() ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "SampleLimit",self._data.getSampleLimit() ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "ShuffleSeed",self._data.getShuffleSeed() ))
+            return self
+
+        def __writeLoggerData(self):
+            """" Write out data related to logging """
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "Verbosity",self._data.getVerbose() ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "LogToConsole",self._data.getLogToConsole() ))
+            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
+                "LogToFile",self._data.getLogToFile() ))
+            return self
+
+    class __AppSettingsDeserializer(PyToolsIO.Deserializer):
+        """ Cllas to Help Deserialize App Settings Instance """
+
+        def __init__(self,path):
+            """ Constructor """
+            super().__init__(self,path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+
+
+
+        # Private Interface
+
+        
 
     # Magic Methods
 
