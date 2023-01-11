@@ -11,8 +11,6 @@ Date:           December 2021
         #### IMPORTS ####
 
 import os
-from typing import List
-
 
 import numpy as np
 import pandas as pd
@@ -148,7 +146,6 @@ class SampleManager (Manager):
 
             # Otherwise....
             batch = np.append(batch, self._database[self._counter])
-            self.__evaluateSignalPostprocessCallbacks()
             self._counter += 1
             
         # Batch is populated now
@@ -172,12 +169,9 @@ class SampleManager (Manager):
         # Register the callback to read the files
         self.registerFileParserCallback(
             SampleManager.createSamplesFromFile)
-
-        # Read all Input Files
         self.__readInputFiles()
-
-        # Shuffle the Samples (If Applicable)
         self.__shuffle()
+        self.describe
 
         return self
 
@@ -275,7 +269,7 @@ class RundataManager(Manager):
         super().init()
         self.getSettings().serialize()
         self.__registerPipelines()
-        self._describe()      
+        self.describe()      
         return self
 
     def processBatch(self,batchSamples,batchIndex):
@@ -344,6 +338,8 @@ class RundataManager(Manager):
         """ Reallocate Design Matrices if different batch Size """
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         for pipeline in pipelines:
+            if (pipeline is None):
+                continue
             numSamples = pipeline.getDesignMatrix().getNumSamples()
             # check if different size
             if (numSamples != batchSize):
@@ -482,8 +478,8 @@ class FeatureCollectionPipeline:
         returnSize = self.getReturnSize()
         self.__evaluateSignalPreprocessCallbacks(signal)
         featureVector = PyToolsStructures.FeatureVector(
-            returnSize,
-            signal.getTargetInt() )
+            sampleShape=(returnSize,),
+            label=signal.getTargetInt() )
         expectedSize = 1
 
         # Evaluate Queue (Iterate through collection methods)
@@ -509,22 +505,13 @@ class FeatureCollectionPipeline:
     def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
         """ Export the Design Matrices to Disk """
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
-        designMatrix = self.getDesignMatrix().__evaluateSignalPreprocessCallbacks
-        fileNameX = lambda t : "pipeline{0}-batch{1}{2}.bin".format(
-            self.getPipelineIdentifier(),batchIndex,t)
-        fileNameY = lambda t : "batch{0}{1}.bin".format(
-            batchIndex,t)
+        pathX,pathY = None,None
         if (exportX == True):
-            # Export the Data
-            path = os.path.join(exportPath, fileNameX("X"))
-            writer = PyToolsIO.DesignMatrixDataSerializer(designMatrix,path)
-            writer.call()
+            pathX = os.path.join(exportPath,"batch{0}x-pipeline{1}.bin".format( batchIndex, self.getPipelineIdentifier() ) )
         if (exportY == True):
-            # Export the Labels
-            path = os.path.join(exportPath, fileNameY("Y"))
-            writer = PyToolsIO.DesignMatrixLabelSerializer(designMatrix,path)
-            writer.call()
-        return self
+            pathY = os.path.join(exportPath,"batch{0}y.bin".format( batchIndex ) )
+        success = self._designMatrix.serialize(pathX,pathY)
+        return success
             
     def __iter__(self):
         """ Define Forward iterator """

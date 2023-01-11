@@ -153,7 +153,7 @@ class FeatureCollectionApp:
 
         return self
     
-    # Internal Interface
+    # Protected Interface
 
     def logMessage(self,message,timeStamp=True):
         """ Log Message To User """
@@ -288,9 +288,9 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV1",
+            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV2",
             batchSize=16,
-            batchLimit=4,
+            batchLimit=2,
             shuffleSeed=-1)
         #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
@@ -387,12 +387,7 @@ class AppSettings:
             """ Destructor """
             super().__del__()
 
-
-
-
         # Private Interface
-
-        
 
     # Magic Methods
 
@@ -442,7 +437,7 @@ class Logger:
         else:
             # Log Message w/o a TimeStamp
             now = ""
-        formattedMessage = "\t{0:<32}\t{1:<128}".format(now,message)
+        formattedMessage = "\t{0:<32}\t{1}".format(now,message)
 
         # Write the Message to Console and/or to File
         if (self._toConsole == True):

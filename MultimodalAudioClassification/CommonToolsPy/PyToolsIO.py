@@ -26,24 +26,24 @@ class Serializer:
         """ Constructor for Serializer Abstract Class """
         self._data              = data
         self._outputPath        = path
-        self._outFileBuffer     = []
+        self._buffer            = []
 
     def __del__(self):
         """ Destructor for Serializer Abstract Class """
         self._data = None
-        self._outFileBuffer.clear()
+        self._buffer.clear()
 
     # Public Interface
 
     def appendLine(self,line):
         """ Append single line to output buffer """
-        self._outFileBuffer.append(line)
+        self._buffer.append(line)
         return self
 
     def appendLines(self,lines):
         """ Append multiple lines to output buffer """
         for item in lines:
-            self._outFileBuffer.append(item)
+            self._buffer.append(item)
         return self
 
     def call(self):
@@ -55,8 +55,8 @@ class Serializer:
     def _writeBufferToPath(self):
         """ Write Output Buffer to File """
         outFileStream = open(self._outputPath,"w")
-        for line in self._outFileBuffer:
-            self._outFileBuffer.write(line + "\n")
+        for line in self._buffer:
+            self._buffer.write(line + "\n")
         outFileStream.close()
         return self
 
