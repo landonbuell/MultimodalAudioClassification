@@ -27,11 +27,11 @@ class FeatureCollectionApp:
     """
 
     # Static Memebers
-    _appInstance = None
+    __appInstance = None
 
     def __init__(self,appSettings):
         """ Constructor for CollectionApplication Instance """
-        FeatureCollectionApp._appInstance = self
+        FeatureCollectionApp.__appInstance = self
 
         self._settings          = appSettings 
         self._logger            = Logger(appSettings.getOutputPath())
@@ -49,23 +49,23 @@ class FeatureCollectionApp:
     @staticmethod
     def constructApp(settings):
         """ Construct the Application """
-        if (FeatureCollectionApp._appInstance is None):
-            FeatureCollectionApp._appInstance = FeatureCollectionApp(settings)
+        if (FeatureCollectionApp.__appInstance is None):
+            FeatureCollectionApp.__appInstance = FeatureCollectionApp(settings)
         else:
             errMsg = "Can only have one instance of FeatureCollectionApp at runtime"
             raise RuntimeError(errMsg)
-        return FeatureCollectionApp._appInstance
+        return FeatureCollectionApp.__appInstance
      
     # Getters and Setters
 
     @staticmethod
     def getInstance():
         """ Return the application Instance if it exists """
-        if (FeatureCollectionApp._appInstance is None):
+        if (FeatureCollectionApp.__appInstance is None):
             # App Does not Exist
             errMsg = "ERROR: FeatureCollectionApp has not been instantiated"
             raise RuntimeError(errMsg)
-        return FeatureCollectionApp._appInstance
+        return FeatureCollectionApp.__appInstance
 
     def getSettings(self):
         """ Return the Settings Instance """
@@ -178,7 +178,7 @@ class FeatureCollectionApp:
     def __logConstruction(self):
         """ Log Construction of Sample Manager """
         msg = "Constructing FeatureCollectionApp Instance ..."
-        FeatureCollectionApp._appInstance.logMessage(msg)
+        FeatureCollectionApp.__appInstance.logMessage(msg)
         return None
 
     def __logDestruction(self):
@@ -191,11 +191,11 @@ class FeatureCollectionApp:
 
     def __repr__(self):
         """ Debugger representation of Instance """
-        if (FeatureCollectionApp._appInstance is None):
+        if (FeatureCollectionApp.__appInstance is None):
             # Not Yet Initialized
             return "No Instance"
         else:
-            memAddress = str(hex(id(FeatureCollectionApp._appInstance)))
+            memAddress = str(hex(id(FeatureCollectionApp.__appInstance)))
             return str(self.__class__) + " @ " + memAddress
 
 class AppSettings:
@@ -405,8 +405,8 @@ class Logger:
         """ Constructor for Logger Instance """ 
         self._outPath       = os.path.join(outpath,"logger.txt")
         self._outFile       = None
-        self._toConsole     = FeatureCollectionApp._appInstance.getSettings().getLogToConsole()
-        self._toFile        = FeatureCollectionApp._appInstance.getSettings().getLogToFile()
+        self._toConsole     = FeatureCollectionApp.__appInstance.getSettings().getLogToConsole()
+        self._toFile        = FeatureCollectionApp.__appInstance.getSettings().getLogToFile()
         
         if (self._toFile):
             self._outFile = open(self._outPath,"w")
@@ -445,7 +445,7 @@ class Logger:
 
         if (self._toFile == True):
             self._outFile = open(self.getLoggerPath(),"a")
-            self._outFile.write(formattedMessage)
+            self._outFile.write(formattedMessage + "\n")
             self._outFile.close()
         return self
 

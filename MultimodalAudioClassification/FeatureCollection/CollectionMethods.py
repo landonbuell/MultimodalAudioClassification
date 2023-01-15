@@ -17,7 +17,6 @@ import numpy as np
 import scipy.fftpack as fftpack
 
 import Administrative
-import Structural
 
 EPSILON = np.array([1e-12],dtype=np.float32)
 
@@ -62,7 +61,7 @@ class CollectionMethod:
 
     def invoke(self,signalData,*args):
         """ Run this Collection method """
-        if (Administrative.FeatureCollectionApp._appInstance.getSettings().getVerbose() > 1):
+        if (Administrative.FeatureCollectionApp.__appInstance.getSettings().getVerbose() > 1):
             msg = "\t\tInvoking " + self.getMethodName()
             Administrative.FeatureCollectionApp.logMessage(msg)
         #self._result = np.zeros(shape=(self.getReturnSize(),),dtype=np.float32)
