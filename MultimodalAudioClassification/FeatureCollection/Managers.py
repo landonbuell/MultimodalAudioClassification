@@ -12,7 +12,6 @@ Date:           December 2021
 
 import os
 
-
 import numpy as np
 import pandas as pd
 
@@ -32,11 +31,11 @@ class Manager:
 
     def __init__(self):
         """ Constructor for Manager Base Class """
-        self.logConstruction()
+        self._logConstruction()
 
     def __del__(self):
         """ Destructor for Manager Base Class """
-        self.logDestruction()
+        self._logDestruction()
 
     # Getters and Setters
 
@@ -60,49 +59,49 @@ class Manager:
 
     def init(self):
         """ Initialize all Paramters for this Manager """
-        self.logInit()
+        self._logInit()
         return self
 
     def clean(self):
         """ Cleanup the Manager """
-        self.logCleanup()
+        self._logCleanup()
         return self
-
-    def logMessageInterface(self,msg,timeStamp=True):
-        """ Simplified Interface for Logging Message via the CollectionApplicationPrototype """
-        Administrative.FeatureCollectionApp.getInstance().logMessage(msg,timeStamp)
-        return None
-
-    # Protected Interface
 
     def describe(self):
         """ Log Description of the Current State of this Instance """
         msg = "Description of " + repr(self)
-        self.logMessageInterface(msg,True)
+        self._logMessageInterface(msg,True)
         return self
+    
+    # Protected Interface
 
-    def logConstruction(self):
+    def _logMessageInterface(self,msg,timeStamp=True):
+        """ Simplified Interface for Logging Message via the CollectionApplicationPrototype """
+        Administrative.FeatureCollectionApp.getInstance().logMessage(msg,timeStamp)
+        return None
+
+    def _logConstruction(self):
         """ Log Construction of Sample Manager """
         msg = "Constructing " + str(self.__class__) + " Instance..."
-        self.logMessageInterface(msg)
+        self._logMessageInterface(msg)
         return None
 
-    def logInit(self):
+    def _logInit(self):
         """ Log the Initialization of the instance """
         msg = "Initializing " + str(self.__class__) + " Instance..."
-        self.logMessageInterface(msg)
+        self._logMessageInterface(msg)
         return None
 
-    def logCleanup(self):
+    def _logCleanup(self):
         """ Log the Initialization of the instance """
         msg = "Cleaning " + str(self.__class__) + " Instance..."
-        self.logMessageInterface(msg)
+        self._logMessageInterface(msg)
         return None
 
-    def logDestruction(self):
+    def _logDestruction(self):
         """ Log Construction of Sample Manager """
         msg = "Destroying " + str(self.__class__) + " Instance..."
-        self.logMessageInterface(msg)
+        self._logMessageInterface(msg)
         return None
 
     # Magic Methods
@@ -147,8 +146,8 @@ class SampleManager (Manager):
 
             # Otherwise....
             batch = np.append(batch, self._database[self._counter])
-            self._counter += 1;
-
+            self._counter += 1
+            
         # Batch is populated now
         return batch
 
@@ -170,18 +169,14 @@ class SampleManager (Manager):
         # Register the callback to read the files
         self.registerFileParserCallback(
             SampleManager.createSamplesFromFile)
-
-        # Read all Input Files
-        self.readInputFiles()
-
-        # Shuffle the Samples (If Applicable)
-        self.shuffle()
-
+        self.__readInputFiles()
+        self.__shuffle()
+        self.describe()
         return self
 
     # Private Interface
 
-    def readInputFiles(self):
+    def __readInputFiles(self):
         """ Read Through All Input Files and Add to Sample Database """
         inputFiles = self.getSettings().getInputPaths()
         samplesInFile = None
@@ -190,7 +185,7 @@ class SampleManager (Manager):
         for path in inputFiles:
             # Log this File
             msg = "Reading samples from file: {0}".format(path)
-            self.logMessageInterface(msg)
+            self._logMessageInterface(msg)
             
             # Invoke the callback to parse the input file
             samplesInFile = self._fileParserCallback(path)
@@ -198,12 +193,15 @@ class SampleManager (Manager):
 
             # Log Number of Samples
             msg = "\tFound {0} samples".format(samplesInFile.shape[0])
-            self.logMessageInterface(msg)
+            self._logMessageInterface(msg)
 
-        # Finished Parsing all Samples
+        # Update RunInfo w/ Expected num samples
+        sampleDatabaseSize = len(self._database)
+        runInfo = Administrative.FeatureCollectionApp.getInstance().getRundataManager().getRunInfo()
+        runInfo.setExpectedNumberOfSamples(sampleDatabaseSize)
         return self
           
-    def shuffle(self):
+    def __shuffle(self):
         """ Shuffle Samples in Place According to Seed """
         seed = self.getSettings().getShuffleSeed()
         if (seed > -1):
@@ -246,7 +244,7 @@ class SampleManager (Manager):
 
         return sampleArray
 
-class RundataManager (Manager):
+class RundataManager(Manager):
     """ RundataManager Aggregates all important info from the Collection run process """
     
     def __init__(self):
@@ -254,7 +252,7 @@ class RundataManager (Manager):
         super().__init__()
         inputPaths = Administrative.FeatureCollectionApp.getInstance().getSettings().getInputPaths()
         outputPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
-        self._runInfo           = PyToolsStructures.RunInfo(inputPaths,outputPath)
+        self._runInfo           = PyToolsStructures.RunInformation(inputPaths,outputPath)
 
     def __del__(self):
         """ Destructor for MetadataManager Instance """
@@ -272,32 +270,32 @@ class RundataManager (Manager):
         """ Build the Data Manager Instance """
         super().init()
         self.getSettings().serialize()
-        self.registerPipelines()
+        self.__registerPipelines()
         self.describe()      
         return self
 
     def processBatch(self,batchSamples,batchIndex):
         """ Process a batch of Samples """
         msg = "Processing Batch {0}...".format(batchIndex)
-        self.logMessageInterface(msg)
+        self._logMessageInterface(msg)
 
         # Realloc for Batch Size
         batchSize = len(batchSamples)
-        self.reallocDesignMatrices(batchSize)
+        self.__reallocDesignMatrices(batchSize)
 
         # For each Sample in the Batch
         for i in range(batchSize):
             msg = "\tSample ({0:<2}/{1:<2})".format(i,batchSize)
-            self.logMessageInterface(msg)
+            self._logMessageInterface(msg)
 
             # Evaliate Feature Pipeline
             signal = batchSamples[i].readSignal()
-            self.evaluatePipelines(signal,i)
+            self.__evaluatePipelines(signal,i)
 
          
         # Update Run information
         self._runInfo.addBatchSize(batchSize)
-        self.exportDesignMatrices(batchIndex)
+        self.__exportDesignMatrices(batchIndex)
 
         # All Done!
         return True
@@ -316,28 +314,34 @@ class RundataManager (Manager):
 
     # Private Interface
 
-    def registerPipelines(self):
+    def __registerPipelines(self):
         """ Register Each Pipeline w/ the Run Info """
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
-        for pipeline in pipelines:
-            self._runInfo.registerPipeline(pipeline)
+        for ii,pipeline in enumerate(pipelines):
+            if (pipeline is None):
+                continue
+            self._runInfo.registerPipeline(pipeline,ii)
         return self
 
-    def evaluatePipelines(self,signal,sampleIndex):
+    def __evaluatePipelines(self,signal,sampleIndex):
         """ Evaluate Sample Against Each Feature Pipeline """
 
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         for pipeline in pipelines:
+            if (pipeline is None):
+                continue
             features = pipeline.evaluate(signal)
             pipeline.getDesignMatrix().__setitem__(sampleIndex,features)
        
         # Done!
         return 
 
-    def reallocDesignMatrices(self,batchSize):
+    def __reallocDesignMatrices(self,batchSize):
         """ Reallocate Design Matrices if different batch Size """
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         for pipeline in pipelines:
+            if (pipeline is None):
+                continue
             numSamples = pipeline.getDesignMatrix().getNumSamples()
             # check if different size
             if (numSamples != batchSize):
@@ -345,7 +349,7 @@ class RundataManager (Manager):
         # Done reallocatinging all design Matrices
         return self
 
-    def exportDesignMatrices(self,batchIndex):
+    def __exportDesignMatrices(self,batchIndex):
         """ Export design Matrices """
         pipelines = Administrative.FeatureCollectionApp.getInstance().getPipelines()
         
@@ -468,16 +472,16 @@ class FeatureCollectionPipeline:
         
         if(self._initalized == False):
             errMsg = "Must initialize FeatureCollectionPipeline {0} before use".format(self._identfier)
-            Administrative.FeatureCollectionApp.getInstance().logMessage(msg)
+            Administrative.FeatureCollectionApp.getInstance().logMessage(errMsg)
             raise RuntimeError(errMsg)
                                                                                         
         # Prepare to Evaluate the Queue
         indexCounter = 0
         returnSize = self.getReturnSize()
-        self.evaluateSignalPreprocessCallbacks(signal)
+        self.__evaluateSignalPreprocessCallbacks(signal)
         featureVector = PyToolsStructures.FeatureVector(
-            returnSize,
-            signal.getTargetInt() )
+            sampleShape=(returnSize,),
+            label=signal.getTargetInt() )
         expectedSize = 1
 
         # Evaluate Queue (Iterate through collection methods)
@@ -503,22 +507,13 @@ class FeatureCollectionPipeline:
     def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
         """ Export the Design Matrices to Disk """
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
-        designMatrix = self.getDesignMatrix()
-        fileNameX = lambda t : "pipeline{0}-batch{1}{2}.bin".format(
-            self.getPipelineIdentifier(),batchIndex,t)
-        fileNameY = lambda t : "batch{0}{1}.bin".format(
-            batchIndex,t)
+        pathX,pathY = None,None
         if (exportX == True):
-            # Export the Data
-            path = os.path.join(exportPath, fileNameX("X"))
-            writer = PyToolsIO.DesignMatrixDataSerializer(designMatrix,path)
-            writer.call()
+            pathX = os.path.join(exportPath,"batch{0}x-pipeline{1}.bin".format( batchIndex, self.getPipelineIdentifier() ) )
         if (exportY == True):
-            # Export the Labels
-            path = os.path.join(exportPath, fileNameY("Y"))
-            writer = PyToolsIO.DesignMatrixLabelSerializer(designMatrix,path)
-            writer.call()
-        return self
+            pathY = os.path.join(exportPath,"batch{0}y.bin".format( batchIndex ) )
+        success = self._designMatrix.serialize(pathX,pathY)
+        return success
             
     def __iter__(self):
         """ Define Forward iterator """
@@ -529,13 +524,13 @@ class FeatureCollectionPipeline:
 
     # Private Interface
 
-    def evaluateSignalPreprocessCallbacks(self,signal):
+    def __evaluateSignalPreprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPreprocessCallbacks:
             callback(signal,self.getAnalysisFrameParams())
         return self
     
-    def evaluateSignalPostprocessCallbacks(self,signal):
+    def __evaluateSignalPostprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPostprocessCallbacks:
             callback(signal,self.getAnalysisFrameParams())

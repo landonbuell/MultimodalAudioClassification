@@ -14,6 +14,7 @@ import os
 import datetime
 
 import PyToolsIO
+import PyToolsStructures
 
 import Managers
 
@@ -26,45 +27,45 @@ class FeatureCollectionApp:
     """
 
     # Static Memebers
-    _appInstance = None
+    __appInstance = None
 
     def __init__(self,appSettings):
         """ Constructor for CollectionApplication Instance """
-        FeatureCollectionApp._appInstance = self
+        FeatureCollectionApp.__appInstance = self
 
         self._settings          = appSettings 
-        self._logger            = Logger(appSettings.getOutputPath())
+        self._logger            = Logger.initFromApp(self)
         
         self._sampleManager     = Managers.SampleManager()
         self._rundataManager    = Managers.RundataManager()
 
-        self._pipelines         = [None,None]
+        self._pipelines         = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
 
         
     def __del__(self):
         """ Destructor for CollectionApplication Instance """
-        self.logDestruction()
+        self.__logDestruction()
         
     @staticmethod
     def constructApp(settings):
         """ Construct the Application """
-        if (FeatureCollectionApp._appInstance is None):
-            FeatureCollectionApp._appInstance = FeatureCollectionApp(settings)
+        if (FeatureCollectionApp.__appInstance is None):
+            FeatureCollectionApp.__appInstance = FeatureCollectionApp(settings)
         else:
             errMsg = "Can only have one instance of FeatureCollectionApp at runtime"
             raise RuntimeError(errMsg)
-        return FeatureCollectionApp._appInstance
+        return FeatureCollectionApp.__appInstance
      
     # Getters and Setters
 
     @staticmethod
     def getInstance():
         """ Return the application Instance if it exists """
-        if (FeatureCollectionApp._appInstance is None):
+        if (FeatureCollectionApp.__appInstance is None):
             # App Does not Exist
             errMsg = "ERROR: FeatureCollectionApp has not been instantiated"
             raise RuntimeError(errMsg)
-        return FeatureCollectionApp._appInstance
+        return FeatureCollectionApp.__appInstance
 
     def getSettings(self):
         """ Return the Settings Instance """
@@ -110,7 +111,6 @@ class FeatureCollectionApp:
         
         batchCounter = 0
         batchLimit = self.getSettings().getBatchLimit()
-        MAX_BATCHES = 100000
         loop = True
 
         while (loop == True):
@@ -125,9 +125,9 @@ class FeatureCollectionApp:
                 self.logMessage(msg)
                 loop = False
 
-            if (batchCounter >= MAX_BATCHES - 1):
+            if (batchCounter >= AppSettings.MAX_BATCHES - 1):
                 # Max Number of batches reached
-                msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(MAX_BATCHES)
+                msg = "batchCounter exceeded MAX_BATCHES of {0} ...".format(AppSettings.MAX_BATCHES )
                 self.logMessage(msg)
                 loop = False
 
@@ -153,16 +153,12 @@ class FeatureCollectionApp:
 
         return self
     
-    # Internal Interface
+    # Protected Interface
 
     def logMessage(self,message,timeStamp=True):
         """ Log Message To User """
         self._logger.logMessage(message,timeStamp)
         return self
-
-    def checkIterationConditions(self):
-        """ Return T/F - if """
-        return True
 
     @staticmethod
     def getDateTime() -> str:
@@ -173,13 +169,15 @@ class FeatureCollectionApp:
         result = result.replace(" ",".")
         return result
 
-    def logConstruction(self):
+    # Private Interface
+
+    def __logConstruction(self):
         """ Log Construction of Sample Manager """
         msg = "Constructing FeatureCollectionApp Instance ..."
-        FeatureCollectionApp._appInstance.logMessage(msg)
+        FeatureCollectionApp.__appInstance.logMessage(msg)
         return None
 
-    def logDestruction(self):
+    def __logDestruction(self):
         """ Log Construction of Sample Manager """
         msg = "Destroying FeatureCollectionApp Instance ..."
         self.logMessage(msg)
@@ -189,17 +187,20 @@ class FeatureCollectionApp:
 
     def __repr__(self):
         """ Debugger representation of Instance """
-        if (FeatureCollectionApp._appInstance is None):
+        if (FeatureCollectionApp.__appInstance is None):
             # Not Yet Initialized
             return "No Instance"
         else:
-            memAddress = str(hex(id(FeatureCollectionApp._appInstance)))
+            memAddress = str(hex(id(FeatureCollectionApp.__appInstance)))
             return str(self.__class__) + " @ " + memAddress
 
 class AppSettings:
     """
     Contains all runtime settings for duration of application
     """
+
+    MAX_BATCHES = 100000
+
     def __init__(self,pathsInput,pathOutput,batchSize=32,batchLimit=-1,sampleLimit=100000,shuffleSeed=-1):
         """ Constructor for AppSettings Instance """
         self._pathStartup   = os.getcwd()
@@ -213,8 +214,8 @@ class AppSettings:
         self._logToConsole  = True
         self._logToFile     = True
 
-        self.initInputPaths(pathsInput)
-        self.initOutputPath(pathOutput)
+        self.__initInputPaths(pathsInput)
+        self.__initOutputPath(pathOutput)
 
     def __del__(self):
         """ Destructor for AppSettings Instance """
@@ -274,14 +275,9 @@ class AppSettings:
         """ Write the Settings Instance out to a text file """
         if (outputPath is None):
             outputPath = os.path.join(self.getOutputPath(),"settings.txt")
-        writer = PyToolsIO.AppSettingsSerializer(self,outputPath)
-        success = True
-        try:
-            writer.call()
-        except Exception as err:
-            print("\t\tAppSettings.serialize() " + err)
-            success = False
-        return success
+        writer = AppSettings.__AppSettingsSerializer(self,outputPath)
+        writer.call()
+        return True
 
     @staticmethod
     def developmentSettingsInstance():
@@ -290,7 +286,7 @@ class AppSettings:
             pathsInput=[],
             pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV1",
             batchSize=16,
-            batchLimit=4,
+            batchLimit=256,
             shuffleSeed=-1)
         #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
@@ -300,13 +296,13 @@ class AppSettings:
 
     # Private Interface
 
-    def initInputPaths(self,pathSet):
+    def __initInputPaths(self,pathSet):
         """ Initialize Set of Input Paths """
         for x in pathSet:
             self.addInputPath(x)
         return self
 
-    def initOutputPath(self,output):
+    def __initOutputPath(self,output):
         """ Initialize the Output Path """
         fullOutput = os.path.abspath(output)
         if (os.path.isdir(fullOutput)):
@@ -317,6 +313,118 @@ class AppSettings:
             os.makedirs(fullOutput)
         self._pathOutput = fullOutput
         return self
+
+    class AppSettingsIOKeys:
+        """ Keys used in read/write AppSetting instance to disk """
+        KEY_PATH_STARTUP        = "PathStartup"
+        KEY_PATH_INPUT          = "PathInput"
+        KEY_PATH_OUTPUT         = "PathOutput"
+        KEY_BATCH_SIZE          = "BatchSize"
+        KEY_BATCH_LIMIT         = "BatchLimit"
+        KEY_SAMPLE_LIMIT        = "SampleLimit"
+        KEY_SHUFFLE_SEED        = "ShuffleSeed"
+        KEY_VERBOSITY           = "Verbosity"
+        KEY_LOG_TO_CONSOLE      = "LogToConsole"
+        KEY_LOG_TO_FILE         = "LogToFile"
+
+    class __AppSettingsSerializer(PyToolsIO.Serializer):
+        """ Class to Help Serialize App Settings Instance """
+
+        def __init__(self,data,path):
+            """ Constructor """
+            super().__init__(data,path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        # Public Interface
+
+        def call(self):
+            """ Run the Serializer """
+            super().call()
+            self.__writePaths()
+            self._writeFooter()
+            return True
+
+
+        # Private Interface
+
+        def __writePaths(self):
+            """ Write Input + Output + Startup paths """                
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_PATH_STARTUP,
+                self._data.getStartupPath() )
+            self.appendLine(line)
+
+            for ii,path in enumerate(self._data.getInputPaths()):
+                line =  PyToolsIO.Serializer.fmtKeyValPair(
+                    AppSettings.AppSettingsIOKeys.KEY_PATH_INPUT + "[{0}]".format(ii),
+                    path )
+                self.appendLine(line)
+
+            line =  PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_PATH_OUTPUT,
+                self._data.getOutputPath() )
+            self.appendLine(line)
+
+            return self
+
+        def __writeBatchData(self):
+            """ Write Out data related to batches """
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_BATCH_SIZE,
+                self._data.getBatchSize() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_BATCH_LIMIT,
+                self._data.getBatchLimit() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                 AppSettings.AppSettingsIOKeys,KEY_SAMPLE_LIMIT,
+                self._data.getSampleLimit() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_SHUFFLE_SEED,
+                self._data.getShuffleSeed() )
+            self.appendLine( line )
+
+            return self
+
+        def __writeLoggerData(self):
+            """" Write out data related to logging """
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_VERBOSITY,
+                self._data.getVerbose() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_LOG_TO_CONSOLE,
+                self._data.getLogToConsole() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_LOG_TO_FILE,
+                self._data.getLogToFile() )
+            self.appendLine( line )
+
+            return self
+
+    class __AppSettingsDeserializer(PyToolsIO.Deserializer):
+        """ Cllas to Help Deserialize App Settings Instance """
+
+        def __init__(self,path):
+            """ Constructor """
+            super().__init__(self,path)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        # Private Interface
 
     # Magic Methods
 
@@ -330,24 +438,33 @@ class Logger:
     Handles all runtime Logging 
     """
 
-    def __init__(self,outpath):
+    def __init__(self,outpath,toConsole=True,toFile=True):
         """ Constructor for Logger Instance """ 
         self._outPath       = os.path.join(outpath,"logger.txt")
         self._outFile       = None
-        self._toConsole     = FeatureCollectionApp._appInstance.getSettings().getLogToConsole()
-        self._toFile        = FeatureCollectionApp._appInstance.getSettings().getLogToFile()
+        self._toConsole     = toConsole
+        self._toFile        = toFile
         
         if (self._toFile):
             self._outFile = open(self._outPath,"w")
-        self.writeHeader()
+        self.__writeHeader()
 
     def __del__(self):
-        self.writeFooter()
+        self.__writeFooter()
         """ Destructor for Logger Instance """
         if (self._outFile is not None):
             if (self._outFile.closed() == False):
                 self._outFile.close()
         self._outFile = None
+
+    @staticmethod
+    def initFromApp(app):
+        """ Construct from Feature Collection App Instance """
+        outpath     = app.getSettings().getOutputPath()
+        toConsole   = app.getSettings().getLogToConsole()
+        toFile      = app.getSettings().getLogToFile()
+        logger = Logger(outpath,toConsole,toFile)
+        return logger
 
     # Getters and Setters
 
@@ -366,7 +483,7 @@ class Logger:
         else:
             # Log Message w/o a TimeStamp
             now = ""
-        formattedMessage = "\t{0:<32}\t{1:<128}".format(now,message)
+        formattedMessage = "\t{0:<32}\t{1}".format(now,message)
 
         # Write the Message to Console and/or to File
         if (self._toConsole == True):
@@ -374,39 +491,39 @@ class Logger:
 
         if (self._toFile == True):
             self._outFile = open(self.getLoggerPath(),"a")
-            self._outFile.write(formattedMessage)
+            self._outFile.write(formattedMessage + "\n")
             self._outFile.close()
         return self
 
     # Private Interface
 
-    def writeHeader(self):
+    def __writeHeader(self):
         """ Write Header To Logger """
         header = [
-            self.spacer(),
+            self.__spacer(),
             "FeatureCollectionApp",
             FeatureCollectionApp.getDateTime(),
-            self.spacer()
+            self.__spacer()
             ]
         # Log Each Line of the Header
         for msg in header:
             self.logMessage(msg,False)
         return self
 
-    def writeFooter(self):
+    def __writeFooter(self):
         """ Write Footer To Logger """
         footer = [
-            self.spacer(),
+            self.__spacer(),
             "FeatureCollectionApp",
             FeatureCollectionApp.getDateTime(),
-            self.spacer()
+            self.__spacer()
             ]
         # Log Each Line of the Header
         for msg in footer:
             self.logMessage(msg,False)
         return self
 
-    def spacer(self,numChars=64):
+    def __spacer(self,numChars=64):
         """ Get a Spacer String """
         return "\n" + ("-" * numChars) + "\n"
     
