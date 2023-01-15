@@ -62,7 +62,7 @@ class SampleIO:
         ext = self.getPathExtension()
         if (ext == "wav"):
             # Wav File
-            return self.readFileWav()
+            return self.__readFileWav()
         else:
             # Not Implements
             errMsg = "File extension: " + ext + " is not yet supported"
@@ -70,16 +70,16 @@ class SampleIO:
 
     # Private Interface
 
-    def readFileWav(self):
+    def __readFileWav(self):
         """ Read Data From .wav file """
         sampleRate,data = sciowav.read(self._filePath)
         waveform = data.astype(dtype=np.float32).flatten()
         waveform -= np.mean(waveform)
         waveform /= np.max(np.abs(waveform))       
-        waveform = self.padWaveform(waveform)    
+        waveform = self.__padWaveform(waveform)    
         return SignalData(waveform,self._targetInt,self._targetStr,sampleRate)
 
-    def padWaveform(self,waveform):
+    def __padWaveform(self,waveform):
         """ Pad or Crop Waveform if too long or too short """
         if (waveform.shape[0] < self._reqSamples):
             # Too few samples
@@ -455,14 +455,14 @@ class AnalysisFramesTimeConstructor(AnalysisFramesConstructor):
         """ Convert Signal to Analysis Frames """
         super().call(signalData)
         self._signal.AnalysisFramesTime = self.emptyFrames()
-        self.buildFramesTime()
+        self.__buildFramesTime()
         self._signal = None         # remove refrence
         # Return the New Signal Data Object
         return signalData
 
     # Private Interface
 
-    def buildFramesTime(self):
+    def __buildFramesTime(self):
         """ Construct Analysis Time-Series Frames """
         startIndex = 0
         numSamples = self._signal.Waveform.shape[0]
@@ -513,14 +513,14 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
             # Must have time-Frames
             errMsg = "AnalysisFramesFreqConstructor.call() - Must have Time-Frames to make Freq-Frames"
             raise RuntimeError(errMsg)
-        self.buildFramesFreq()
+        self.__buildFramesFreq()
         self._signal = None         # remove refrence
         # Return the New Signal Data Object
         return signalData
 
     # Private Interface
 
-    def buildFramesFreq(self):
+    def __buildFramesFreq(self):
         """ Construct Analysis Time-Series Frames """
         # Get the winow and apply to each frame
         window = WindowFunctions.getHanning(
@@ -533,13 +533,13 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
         frames = np.abs(frames,dtype=np.float32)**2
         
         # Crop the Frames to the Frequency Spectrum subset
-        freqAxis,mask = self.frequencyAxis(self._signal.getSampleSpace())
+        freqAxis,mask = self.__frequencyAxis(self._signal.getSampleSpace())
         frames = frames[:,mask];
         self._signal.AnalysisFramesFreq = frames
         self._signal.FrequencyAxis = freqAxis
         return self
 
-    def frequencyAxis(self,sampleSpacing=1):
+    def __frequencyAxis(self,sampleSpacing=1):
         """ Get the Frequnecy-Space Axis for the Analysis Frames """
         space = fftpack.fftfreq(self.getTotalFrameSize(),sampleSpacing)
         mask = np.where(
@@ -557,7 +557,7 @@ class MelFrequnecyCepstrumCoeffsConstructor:
         self._freqLowHz = freqLowHz
         self._freqHighHz = freqHighHz
         self._sampleRate = sampleRate
-        self._melFilterBanks = self.buildMelFilterBanks(frameParams)
+        self._melFilterBanks = self.__buildMelFilterBanks(frameParams)
        
 
     def __del__(self):
@@ -579,7 +579,7 @@ class MelFrequnecyCepstrumCoeffsConstructor:
 
     # Private Interface
 
-    def buildMelFilterBanks(self,frameParams):
+    def __buildMelFilterBanks(self,frameParams):
         """ Construct the Mel Filter Bank Envelopes """
         filters = CollectionMethods.MelFilterBankEnergies.melFilters(
             frameParams,self._numCoeffs,self._sampleRate)
