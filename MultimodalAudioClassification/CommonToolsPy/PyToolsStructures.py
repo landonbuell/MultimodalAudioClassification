@@ -545,6 +545,11 @@ class RunInformation:
 
     # Public Interface
 
+    def setExpectedNumberOfSamples(self,numSamples):
+        """ Set the expected number of samples to be seen by this runtime """
+        self._numSamplesExpt = numSamples
+        return self
+
     def registerPipeline(self,pipeline,index):
         """ Register a Pipeline w/ this instance """
         if (pipeline is None):
@@ -559,12 +564,13 @@ class RunInformation:
     def addBatchSize(self,batchSize):
         """ Add Batch Size to list of sizes """
         self._batchSizes.append(batchSize)
+        self._numSamplesRead += batchSize
         return self
 
     def serialize(self,path):
         """ Serialize this Instance """
         success = True
-        writer = RunInformation._RunInformationSerializer(self,path)
+        writer = RunInformation.__RunInformationSerializer(self,path)
         writer.call()
         return success
 
@@ -623,7 +629,7 @@ class RunInformation:
                 indexCounter += 1
         return self
 
-    class RunInfoKeys:
+    class RunInfoIOKeys:
         """ Keys used in read/writing RunInformation instance to disk """
         KEY_INPUT_PATHS         = "InputPath"
         KEY_OUTPUT_PATH         = "OutputPath"
@@ -634,7 +640,7 @@ class RunInformation:
         KEY_EXPECTED_SAMPLES    = "ExpectedSamples"
         KEY_ACTUAL_SAMPLES      = "ActualSamples"
 
-    class _RunInformationSerializer(PyToolsIO.Serializer):
+    class __RunInformationSerializer(PyToolsIO.Serializer):
         """ Class to serialize Run Information Instance"""
  
         def __init__(self,data,path):
@@ -674,13 +680,13 @@ class RunInformation:
             # write input Paths
             for ii,path in enumerate(inputPaths):
                 line = PyToolsIO.Serializer.fmtKeyValPair(
-                    RunInformation.RunInfoKeys.KEY_INPUT_PATHS + "[{0}]".format(ii),
+                    RunInformation.RunInfoIOKeys.KEY_INPUT_PATHS + "[{0}]".format(ii),
                     path)
                 self.appendLine(line)
 
             # Write Output Path
             line = PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_OUTPUT_PATH,
+                RunInformation.RunInfoIOKeys.KEY_OUTPUT_PATH,
                 outputPath)
             self.appendLine(line)
 
@@ -690,7 +696,7 @@ class RunInformation:
         def __writePipelineInUseData(self):
             """ Write Data pertaining to what pipeline are in use """
             line = PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_NUM_PIPELINES,
+                RunInformation.RunInfoIOKeys.KEY_NUM_PIPELINES,
                 self._data.getNumPipelinesInUse() )
             self.appendLine( line )
 
@@ -698,7 +704,7 @@ class RunInformation:
             strPipelineList = PyToolsIO.Serializer.listToString(
                 self._data._pipelinesInUse)
             line =  PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_PIPELINES_IN_USE,
+                RunInformation.RunInfoIOKeys.KEY_PIPELINES_IN_USE,
                 strPipelineList)
             self.appendLine( line )
             return self
@@ -708,36 +714,36 @@ class RunInformation:
             shapes = self._data.getSampleShapes()
 
             # Write out shapes
-            for ii,shape in enumerate(self._data.getNumPossiblePipelines()):
+            for ii,shape in enumerate(self._data.getSampleShapes()):
                 line = PyToolsIO.Serializer.fmtKeyValPair(
-                    RunInformation.RunInfoKeys.KEY_PIPELINE_SHAPE + "[{0}]".format(ii),
+                    RunInformation.RunInfoIOKeys.KEY_PIPELINE_SHAPE + "[{0}]".format(ii),
                     str(shape))
-                self.append(line)
+                self.appendLine(line)
 
             # Write out batch sizes
             strBatchSizes = PyToolsIO.Serializer.listToString(
                 self._data.getBatchSizes())
             line = PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_BATCH_SIZES,
-                strBatchSizes) )
-            self.append(line)
+                RunInformation.RunInfoIOKeys.KEY_BATCH_SIZES,
+                strBatchSizes) 
+            self.appendLine(line)
 
             return self
 
         def __writeNumSamples(self):
             """ Write out actual & expected num samples """
-            self._line = PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_EXPECTED_SAMPLES,
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                RunInformation.RunInfoIOKeys.KEY_EXPECTED_SAMPLES,
                 self._data.getExpectedNumSamples() )
             self.appendLine( line )
 
             line = PyToolsIO.Serializer.fmtKeyValPair(
-                RunInformation.RunInfoKeys.KEY_ACTUAL_SAMPLES,
+                RunInformation.RunInfoIOKeys.KEY_ACTUAL_SAMPLES,
                 self._data.getActualNumSamples() )
             self.appendLine( line )
             return self
 
-    class _RunInformationDeserializer(PyToolsIO.Deserializer):
+    class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
         
         def __init__(self,path):
@@ -763,8 +769,8 @@ class RunInformation:
 
         def __readInputOutputPaths(self):
             """ Write Input Paths to File """
-            inputPaths = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_INPUT_PATHS)
-            outputPath = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_OUTPUT_PATH)
+            inputPaths = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_INPUT_PATHS)
+            outputPath = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_OUTPUT_PATH)
 
             # Create the Instance
             self._data = RunInformation(inputPaths,outputPath)
@@ -775,8 +781,8 @@ class RunInformation:
         def __readPipelineInUseData(self):
             """ Write Data pertaining to what pipeline are in use """
 
-            numPipelines = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_NUM_PIPELINES)
-            pipelinesInUse = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_PIPELINES_IN_USE)
+            numPipelines = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_NUM_PIPELINES)
+            pipelinesInUse = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_PIPELINES_IN_USE)
             pipelinesInUse = PyToolsIO.Deserializer.stringToList(pipelinesInUse,outType=bool)
 
             # Register w/ result instance
@@ -789,8 +795,8 @@ class RunInformation:
         
         def __readSampleShapesBatchSizes(self):
             """ Write Sample Shapes and Batch Sizes """
-            strSampleShapes = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_PIPELINE_SHAPE)
-            strBatchSizes = self._inFileBuffer(RunInformation._RunInformationSerializer.KEY_BATCH_SIZES)
+            strSampleShapes = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_PIPELINE_SHAPE)
+            strBatchSizes = self._inFileBuffer(RunInformation.__RunInformationSerializer.KEY_BATCH_SIZES)
 
             # Handle Batch Sizes
             listBatchSizes = PyToolsIO.Deserializer.stringToList(strBatchSizes,outType=int)
@@ -803,8 +809,8 @@ class RunInformation:
         def __readNumSamples(self):
             """ Write out actual & expected num samples """
 
-            expectedSamples = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_EXPECTED_SAMPLES)
-            actualSamples = self._findInBuffer(RunInformation._RunInformationSerializer.KEY_ACTUAL_SAMPLES)
+            expectedSamples = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_EXPECTED_SAMPLES)
+            actualSamples = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_ACTUAL_SAMPLES)
 
             self._data._numSamplesExpt = PyToolsIO.Deserializer.stringToInt(expectedSamples)
             self._data._numSamplesRead = PyToolsIO.Deserializer.stringToInt(actualSamples)
@@ -816,7 +822,7 @@ class RunInformation:
     @staticmethod
     def deserialize(self,path):
         """ Deserialize a RunInformation instance from path """
-        reader  = RunInformation._RunInformationDeserializer(path)
+        reader  = RunInformation.__RunInformationDeserializer(path)
         runInfo = reader.call() 
         return runInfo
    

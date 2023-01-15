@@ -171,8 +171,7 @@ class SampleManager (Manager):
             SampleManager.createSamplesFromFile)
         self.__readInputFiles()
         self.__shuffle()
-        self.describe
-
+        self.describe()
         return self
 
     # Private Interface
@@ -196,7 +195,10 @@ class SampleManager (Manager):
             msg = "\tFound {0} samples".format(samplesInFile.shape[0])
             self._logMessageInterface(msg)
 
-        # Finished Parsing all Samples
+        # Update RunInfo w/ Expected num samples
+        sampleDatabaseSize = len(self._database)
+        runInfo = Administrative.FeatureCollectionApp.getInstance().getRundataManager().getRunInfo()
+        runInfo.setExpectedNumberOfSamples(sampleDatabaseSize)
         return self
           
     def __shuffle(self):

@@ -61,7 +61,7 @@ class CollectionMethod:
 
     def invoke(self,signalData,*args):
         """ Run this Collection method """
-        if (Administrative.FeatureCollectionApp.__appInstance.getSettings().getVerbose() > 1):
+        if (Administrative.FeatureCollectionApp.getInstance().getSettings().getVerbose() > 1):
             msg = "\t\tInvoking " + self.getMethodName()
             Administrative.FeatureCollectionApp.logMessage(msg)
         #self._result = np.zeros(shape=(self.getReturnSize(),),dtype=np.float32)

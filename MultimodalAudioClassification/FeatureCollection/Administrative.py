@@ -34,7 +34,7 @@ class FeatureCollectionApp:
         FeatureCollectionApp.__appInstance = self
 
         self._settings          = appSettings 
-        self._logger            = Logger(appSettings.getOutputPath())
+        self._logger            = Logger.initFromApp(self)
         
         self._sampleManager     = Managers.SampleManager()
         self._rundataManager    = Managers.RundataManager()
@@ -160,10 +160,6 @@ class FeatureCollectionApp:
         self._logger.logMessage(message,timeStamp)
         return self
 
-    def checkIterationConditions(self):
-        """ Return T/F - if """
-        return True
-
     @staticmethod
     def getDateTime() -> str:
         """ Get formatted DateTime as String """
@@ -288,9 +284,9 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV2",
+            pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV1",
             batchSize=16,
-            batchLimit=2,
+            batchLimit=256,
             shuffleSeed=-1)
         #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
@@ -318,6 +314,19 @@ class AppSettings:
         self._pathOutput = fullOutput
         return self
 
+    class AppSettingsIOKeys:
+        """ Keys used in read/write AppSetting instance to disk """
+        KEY_PATH_STARTUP        = "PathStartup"
+        KEY_PATH_INPUT          = "PathInput"
+        KEY_PATH_OUTPUT         = "PathOutput"
+        KEY_BATCH_SIZE          = "BatchSize"
+        KEY_BATCH_LIMIT         = "BatchLimit"
+        KEY_SAMPLE_LIMIT        = "SampleLimit"
+        KEY_SHUFFLE_SEED        = "ShuffleSeed"
+        KEY_VERBOSITY           = "Verbosity"
+        KEY_LOG_TO_CONSOLE      = "LogToConsole"
+        KEY_LOG_TO_FILE         = "LogToFile"
+
     class __AppSettingsSerializer(PyToolsIO.Serializer):
         """ Class to Help Serialize App Settings Instance """
 
@@ -334,9 +343,7 @@ class AppSettings:
         def call(self):
             """ Run the Serializer """
             super().call()
-
             self.__writePaths()
-
             self._writeFooter()
             return True
 
@@ -344,36 +351,66 @@ class AppSettings:
         # Private Interface
 
         def __writePaths(self):
-            """ Write Input + Output + Startup paths """      
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "PathStartup",self._data.getStartupPath() ))
+            """ Write Input + Output + Startup paths """                
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_PATH_STARTUP,
+                self._data.getStartupPath() )
+            self.appendLine(line)
+
             for ii,path in enumerate(self._data.getInputPaths()):
-                self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                    "PathInput[{0}]".format(ii),path ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "PathOutput",self._data.getOutputPath() ))
+                line =  PyToolsIO.Serializer.fmtKeyValPair(
+                    AppSettings.AppSettingsIOKeys.KEY_PATH_INPUT + "[{0}]".format(ii),
+                    path )
+                self.appendLine(line)
+
+            line =  PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_PATH_OUTPUT,
+                self._data.getOutputPath() )
+            self.appendLine(line)
+
             return self
 
         def __writeBatchData(self):
             """ Write Out data related to batches """
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "BatchSize",self._data.getBatchSize() ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "BatchLimit",self._data.getBatchLimit() ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "SampleLimit",self._data.getSampleLimit() ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "ShuffleSeed",self._data.getShuffleSeed() ))
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys.KEY_BATCH_SIZE,
+                self._data.getBatchSize() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_BATCH_LIMIT,
+                self._data.getBatchLimit() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                 AppSettings.AppSettingsIOKeys,KEY_SAMPLE_LIMIT,
+                self._data.getSampleLimit() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_SHUFFLE_SEED,
+                self._data.getShuffleSeed() )
+            self.appendLine( line )
+
             return self
 
         def __writeLoggerData(self):
             """" Write out data related to logging """
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "Verbosity",self._data.getVerbose() ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "LogToConsole",self._data.getLogToConsole() ))
-            self._outFileBuffer.append( PyToolsIO.Serializer.fmtKeyValPair(
-                "LogToFile",self._data.getLogToFile() ))
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_VERBOSITY,
+                self._data.getVerbose() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_LOG_TO_CONSOLE,
+                self._data.getLogToConsole() )
+            self.appendLine( line )
+
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                AppSettings.AppSettingsIOKeys,KEY_LOG_TO_FILE,
+                self._data.getLogToFile() )
+            self.appendLine( line )
+
             return self
 
     class __AppSettingsDeserializer(PyToolsIO.Deserializer):
@@ -401,12 +438,12 @@ class Logger:
     Handles all runtime Logging 
     """
 
-    def __init__(self,outpath):
+    def __init__(self,outpath,toConsole=True,toFile=True):
         """ Constructor for Logger Instance """ 
         self._outPath       = os.path.join(outpath,"logger.txt")
         self._outFile       = None
-        self._toConsole     = FeatureCollectionApp.__appInstance.getSettings().getLogToConsole()
-        self._toFile        = FeatureCollectionApp.__appInstance.getSettings().getLogToFile()
+        self._toConsole     = toConsole
+        self._toFile        = toFile
         
         if (self._toFile):
             self._outFile = open(self._outPath,"w")
@@ -419,6 +456,15 @@ class Logger:
             if (self._outFile.closed() == False):
                 self._outFile.close()
         self._outFile = None
+
+    @staticmethod
+    def initFromApp(app):
+        """ Construct from Feature Collection App Instance """
+        outpath     = app.getSettings().getOutputPath()
+        toConsole   = app.getSettings().getLogToConsole()
+        toFile      = app.getSettings().getLogToFile()
+        logger = Logger(outpath,toConsole,toFile)
+        return logger
 
     # Getters and Setters
 

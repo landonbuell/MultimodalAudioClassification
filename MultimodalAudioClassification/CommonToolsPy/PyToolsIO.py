@@ -62,14 +62,14 @@ class Serializer:
 
     def _writeHeader(self):
         """ Add Header To Output """
-        lines = [repr(self),"-"*64]
-        self.appendLines( lines )
+        self.appendLine( repr(self) + "\n" )
+        self.appendLine( "-"*64 + "\n" )
         return self
 
     def _writeFooter(self):
-        """ Add Header To Output """
-        lines = ["-"*64,repr(self)]
-        self.appendLines( lines )
+        """ Add Footer To Output """
+        self.appendLine( "-"*64 + "\n" )
+        self.appendLine( repr(self) + "\n" )
         return self
 
     # Static Interface
