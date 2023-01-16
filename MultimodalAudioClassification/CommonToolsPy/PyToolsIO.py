@@ -135,6 +135,8 @@ class Deserializer:
     def stringToList(inputString,delimiter=" ",outType=None):
         """ Convert string to list of type """
         outputList = inputString.split(delimiter)
+        if (outputList[-1] == ""):
+            outputList.pop()
         if outType is not None:
             outputList = [outType(x) for x in outputList]
         return outputList

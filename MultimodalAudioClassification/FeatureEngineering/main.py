@@ -24,8 +24,8 @@ import numpy as np
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2"
-    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2_processed"
+    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
+    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1_processed"
     runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
     # Create + Fit the Scaler Instance

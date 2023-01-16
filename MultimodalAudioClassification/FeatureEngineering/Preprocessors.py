@@ -44,6 +44,8 @@ class StandardScaler:
         self._sampleCounter = 0
         self._sampleData    = np.empty(shape=(totalNumSamples,),dtype=np.float32)
 
+        if (os.path.isdir(self._outputPath) == False):
+            os.makedirs(self._outputPath)
 
     def __del__(self):
         """ Destructor """
