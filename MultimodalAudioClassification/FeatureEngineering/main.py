@@ -24,24 +24,13 @@ import numpy as np
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    INPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2"
+    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2"
     OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2_processed"
-    runInfo = PyToolsStructures.RunInfo.deserialize(INPUT_PATH)
+    runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
-    # Load Batches
-    allBatches = runInfo.loadAllBatches(True,False)
-    numFeaturesA = allBatches[0].getNumFeatures()
-    #numFeaturesB = allBatches[1].getNumFeatures()
+    # Create + Fit the Scaler Instance
+    scaler = Preprocessors.StandardScaler(runInfo,OUTPUT_PATH)
+    scaler.fit()
 
-    # Create the Scaler
-    scaler = Preprocessors.StandardScaler(numFeaturesA)
-    scaler.fit(allBatches[0])
-    scaler.call(allBatches[0])
 
-    # Show that It worked
-    means = np.mean(allBatches[0].getFeatures(),axis=0)
-    varis = np.var(allBatches[0].getFeatures(),axis=0)
-
-    # Write The Params for the scaler
-    scaler.serialize( os.path.join(OUTPUT_PATH,"paramsStandardScaler.txt") )
     sys.exit(0)

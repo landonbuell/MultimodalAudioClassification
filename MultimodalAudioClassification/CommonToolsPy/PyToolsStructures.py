@@ -15,6 +15,16 @@ import numpy as np
 
 import PyToolsIO
 
+        #### FUNCTION DEFINITIONS ####
+
+def getDesignMatrixDataPath(outputPath,batchIndex,pipelineIdentifier):
+    """ Get the location of a Design Matrix's Features """
+    return os.path.join(outputPath,"batch{0}x-pipeline{1}.bin".format( batchIndex, pipelineIdentifier ) )
+
+def getDesignMatrixLabelsPath(outputPath,batchIndex):
+    """ Get the location of a Design Matrix's labels """
+    return os.path.join(outputPath,"batch{0}y.bin".format( batchIndex ) )
+
         #### CLASS DEFINITIONS ####
 
 class FeatureVector:
@@ -512,7 +522,7 @@ class RunInformation:
         """ Get the size of all batches """
         return self._batchSizes
 
-    def getSizeOfBatches(self,index):
+    def getSizeOfBatch(self,index):
         """ Get the size of particular index(es) of batches """
         return self._batchSizes[index]
 
