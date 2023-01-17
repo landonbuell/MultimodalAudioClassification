@@ -76,8 +76,8 @@ class StandardScaler:
 
     def __fitHelper(self,pipelines):
         """ Private Helper for Fitting Data to the pipeline """
-        for pipelineIndex in range(len(pipelines)):
-            inUse = self.__pipelineIsInUse(pipelineIndex)
+        for pipelineIndex in pipelines:
+            inUse = self._runInfo.getIsPipelineInUse(pipelineIndex)
             if (inUse == False):
                 continue
             # Process the pipeline if it is in Use
@@ -110,7 +110,9 @@ class StandardScaler:
             numFeatures = (numFeatures * axisSize)
         self._params[pipelineIndex] = StandardScaler.__ScalerParams(numFeatures)
         # Now Visit All Features
-        for featureIndex in range(len(numFeatures)):
+        for featureIndex in range(numFeatures):
+            msg = "Processing Feature {0} in pipeline {1}".format(featureIndex,pipelineIndex)
+            print(msg)
             self._sampleCounter = 0
             self.__getParamsForFeature(pipelineIndex,featureIndex,numFeatures)
             self.__setParamsForFeature(pipelineIndex,featureIndex)           
@@ -130,7 +132,7 @@ class StandardScaler:
                 rawDataPath,batchIndex)
             # Load in Design Matrix from batch
             designMatrix = PyToolsStructures.DesignMatrix.deserialize(
-                pathX,pathY,batchSize,numFeatures)
+                pathX,pathY,batchSize,shape=(numFeatures,))
             featureFromAllSamples = designMatrix.getFeatures()[:,featureIndex]
             # Populate Larger Data Array w/ Samples
             for ii in range(batchSize):
@@ -153,7 +155,7 @@ class StandardScaler:
         outputFile = self.getOutFile(pipelineIndex)
         outputStream    = open(outputFile,"w")
         for ii in range(pipelineParams.numFeatures):
-            line = "{0}\t{1}\n".format(
+            line = "{0:<64}\t{1}\n".format(
                 pipelineParams.means[ii],
                 pipelineParams.varis[ii])
             outputStream.write(line)

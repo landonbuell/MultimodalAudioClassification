@@ -795,7 +795,8 @@ class RunInformation:
             strPipelinesInUse = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_PIPELINES_IN_USE)[0]
             
             intNumPipelines = int(strNumPipelines[0])
-            listPipelinesInUse = PyToolsIO.Deserializer.stringToList(strPipelinesInUse,delimiter=',',outType=bool)
+            listPipelinesInUse = PyToolsIO.Deserializer.stringToList(strPipelinesInUse,delimiter=',')
+            listPipelinesInUse = [PyToolsIO.Deserializer.stringToBool(x) for x in listPipelinesInUse]
 
             # Register w/ result instance
             self._data._numPipelines = intNumPipelines
@@ -813,19 +814,31 @@ class RunInformation:
             listBatchSizes = PyToolsIO.Deserializer.stringToList(strBatchSizes,delimiter=',',outType=int)
             self._data._batchSizes = listBatchSizes[:]
 
-            # Come back to Sample Shapes another time?
+            # handle Sample Shapes
+            self.__readSampleShapesHelper(strSampleShapes)
 
             return self
 
         def __readNumSamples(self):
             """ Write out actual & expected num samples """
 
-            expectedSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_EXPECTED_SAMPLES)
-            actualSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_ACTUAL_SAMPLES)
+            expectedSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_EXPECTED_SAMPLES)[0]
+            actualSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_ACTUAL_SAMPLES)[0]
 
             self._data._numSamplesExpt = PyToolsIO.Deserializer.stringToInt(expectedSamples)
             self._data._numSamplesRead = PyToolsIO.Deserializer.stringToInt(actualSamples)
 
+            return self
+
+        def __readSampleShapesHelper(self,listOfStrsSampleShape):
+            """ Parse out sample shapes from list of strings """
+            for ii,strItem in enumerate(listOfStrsSampleShape):
+                data = strItem.replace("(","").replace(")","")
+                strAxisSizes = data.split(",")
+                if (strAxisSizes[-1] == ""):
+                    strAxisSizes.pop()
+                intAxisSizes = tuple([int(x) for x in strAxisSizes])
+                self._data._samplesShapes[ii] = intAxisSizes
             return self
                     
     # Static Interface
