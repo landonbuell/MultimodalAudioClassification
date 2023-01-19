@@ -32,6 +32,7 @@ if __name__ == "__main__":
     # Generate Sine Waves
     sineWaveGenerator = WaveformGenerators.DatasetGenerator(
         WaveformGenerators.SimpleWavesforms.getSineWave,
+        WaveformGenerators.SimpleNoise.getUniformNoise,
         timeAxis,
         name="sineWave")
     sineWaveGenerator.createSamples(NUM_AUDIO_SAMPLES,OUTPUT_PATH)

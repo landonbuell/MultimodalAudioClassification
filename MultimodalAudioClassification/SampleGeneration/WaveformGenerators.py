@@ -97,24 +97,23 @@ class SimpleWavesforms:
 class SimpleNoise:
 
     @staticmethod
-    def getUniformNoise(low,high,numSamples=1,scale=1):
-        """ Get samples from a uniform distrobution """
-        return np.random.Generator.uniform(low,high,numSamples) * scale
-
-    @staticmethod
-    def getGaussianNoise(mu,sigma,numSamples,scale=1):
-        """ Get samples from a gaussian distrobution """
-        return np.random.Generator.normal(mu,sigma,numSamples)* scale
+    def getUniformNoise(numSamples):
+        """ Get Array of Uniform Random Noise """
+        y = (np.random.random(numSamples) - 0.5) / 100.0
+        return y.astype(np.float32)
 
 class DatasetGenerator:
     """ Generate a Collection of Samples """
 
     def __init__(self,
-                 callback,
+                 signalCallback,
+                 noiseCallback,
                  timeAxis,
                  name):
         """ Constructor """
-        self._generator     = callback
+        self._signalCallback = signalCallback
+        self._noiseCallback = noiseCallback
+
         self._timeAxis      = timeAxis
         self._name          = name
 
@@ -136,9 +135,6 @@ class DatasetGenerator:
         self.__createSamples(numSamples,exportPath)
         return self
 
-
-        
-
     # Private Interface
 
     def __createSamples(self,numSamples,exportPath):
@@ -148,18 +144,21 @@ class DatasetGenerator:
                 low=self._freqBounds[0],
                 high=self._freqBounds[1],
                 size=1).astype(np.float32)
-            noiseVector = (np.random.random(size=len(self._timeAxis)) - 0.5)/100.0
-            noiseVector = noiseVector.astype(np.float32)
-            signal = self._generator.__call__(
+            # Generate Signal
+            signal = self._signalCallback.__call__(
                 self._timeAxis,
                 fundamental,
                 self._amplitude,
                 self._phase,
                 self._offset)
-            noisySignal = signal + noiseVector
-            noisySignal /= np.max(np.abs(noisySignal))
+            # Generate Nois3
+            noise = self._noiseCallback.__call__(
+                len(self._timeAxis))
+            # Normalize
+            waveform = signal + noise
+            waveform /= np.max(np.abs(waveform))
+            # Export the Waveform 
             fileName = self.__getNameForSample(fundamental[0],"wav")
-            #plotSignal(self._timeAxis,noisySignal,fileName)
             outpath = os.path.join(exportPath,fileName)
             self.__toWavFile(noisySignal,outpath)
         return self
