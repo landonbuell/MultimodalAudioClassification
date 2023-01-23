@@ -28,21 +28,47 @@ LETTERS_LOWER_CASE = list(string.ascii_lowercase)
 
         #### CLASS DEFINITIONS ####
 
-class StandardScaler:
+class Preprocessor:
+    """ Base class for all preprocessors """
+
+    def __init__(self,runInfo,outputPath):
+        """ Constructor """
+        self._runInfo       = runInfo
+        self._outputPath    = outputPath
+
+    def __del__(self):
+        """ Destructor """
+
+    # Public Interface
+
+    # Protected Interface
+
+    def _getNumFeaturesInPipeline(self,pipelineIndex):
+        """ Get the total number of features in a pipeline """
+        numFeatures = 1
+        pipelineShape = self._runInfo.getSampleShapeOfPipeline(pipelineIndex)
+        for ii in range(len(pipelineShape)):
+            numFeatures *= pipelineShape[ii]
+        return numFeatures
+
+
+class StandardScaler(Preprocessor):
     """ Apply Standard Scaling to Design Matrix """
 
     __NAME    = "standardScaler"
     
     def __init__(self,runInfo,outputPath):
         """ Constructor """
-        self._runInfo       = runInfo
-        self._outputPath    = outputPath
+        super().__init__(runInfo,outputPath)
+      
+        self._params            = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
+        self._featuresAtOnce    = 1024
 
-        totalNumSamples     = self._runInfo.getActualNumSamples()
-        self._params        = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
+        totalNumSamples         = self._runInfo.getActualNumSamples()
+        sampleDataShape         = (totalNumSamples,self._featuresAtOnce)
                
         self._sampleCounter = 0
-        self._sampleData    = np.empty(shape=(totalNumSamples,),dtype=np.float32)
+        self._sampleData    = np.empty(shape=sampleDataShape,dtype=np.float32)
 
         if (os.path.isdir(self._outputPath) == False):
             os.makedirs(self._outputPath)
@@ -67,9 +93,14 @@ class StandardScaler:
             pipelines = self._runInfo.getPipelinesInUse()
         return self.__fitHelper(pipelines)
 
-    def exportParams(self):
+    def exportParams(self,pipelineIndex):
         """ Export Learned Params to Disk for later use """
-
+        params = self._params[pipelineIndex]
+        outStream = open(self.getOutFile(pipelineIndex),"w")
+        for ii,(m,v) in enumerate(zip(params.means,params.varis)):
+            line = "{0:<16}{1:<32}{2:<32}\n".format(ii,m,v)
+            outStream.write(line)
+        outStream.close()
         return self
 
     # Private Interface
@@ -81,7 +112,7 @@ class StandardScaler:
             if (inUse == False):
                 continue
             # Process the pipeline if it is in Use
-            self.__getParamsForPipeline(pipelineIndex)
+            self.__processPipeline(pipelineIndex)
         return self
 
     class __ScalerParams:
@@ -102,67 +133,89 @@ class StandardScaler:
              """ Get the number of features in this pipeline """
              return len(self.means)
 
-    def __getParamsForPipeline(self,pipelineIndex):
-        """ Fit All Features from this pipeline """
-        pipelineSampleShape = self._runInfo.getSampleShapeOfPipeline(pipelineIndex)
-        numFeatures = 1
-        for axisSize in pipelineSampleShape:
-            numFeatures = (numFeatures * axisSize)
-        self._params[pipelineIndex] = StandardScaler.__ScalerParams(numFeatures)
-        # Now Visit All Features
-        for featureIndex in range(numFeatures):
-            msg = "Processing Feature {0} in pipeline {1}".format(featureIndex,pipelineIndex)
-            print(msg)
-            self._sampleCounter = 0
-            self.__getParamsForFeature(pipelineIndex,featureIndex,numFeatures)
-            self.__setParamsForFeature(pipelineIndex,featureIndex)           
-        # Export the Means + Varis for All Features
-        self.__exportParamsForFeatures(pipelineIndex)
+    def __processPipeline(self,pipelineIndex):
+        """ Process all the Features in this pipeline """
+        numFeaturesInPipeline = self._getNumFeaturesInPipeline(pipelineIndex)
+        self._params[pipelineIndex] = StandardScaler.__ScalerParams(numFeaturesInPipeline)
+
+        featureStartIndex = 0
+        featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
+
+        numLoops = np.ceil(self._featuresAtOnce/numFeaturesInPipeline)
+        self.__printProcessingFeaturesMessage(pipelineIndex,featureStartIndex,featureStopIndex)
+
+        # Process a Group of Features
+        while (featureStartIndex < numFeaturesInPipeline):
+            self.__printProcessingFeaturesMessage(pipelineIndex,featureStartIndex,featureStopIndex)
+            featuresToProcessMask = np.arange(featureStartIndex,featureStopIndex,dtype=np.int16)  
+            
+            self._sampleData = np.empty(
+                shape=(self._runInfo.getActualNumSamples(),len(featuresToProcessMask),),
+                       dtype=np.float32)
+           
+            self.__storeFeatureGroup(
+                featuresToProcessMask,
+                pipelineIndex,
+                numFeaturesInPipeline)
+            self.__processFeatureGroup(
+                featuresToProcessMask,
+                pipelineIndex)
+            
+            # increment Feature To Process Mask
+            featureStartIndex += self._featuresAtOnce
+            featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
+            
+
+        # All Groups of Features Are processed
+        self.exportParams(pipelineIndex)
         return self
 
-    def __getParamsForFeature(self,pipelineIndex,featureIndex,numFeatures):
-        """ Fit feature from specific Pipeline """
-        rawDataPath = self._runInfo.getOutputPath()
-        batchSizes  = self._runInfo.getBatchSizes()
-        pipelineIndetifier = LETTERS_UPPER_CASE[pipelineIndex]
-        for batchIndex,batchSize in enumerate(batchSizes):
-            pathX = PyToolsStructures.getDesignMatrixDataPath(
-                rawDataPath,batchIndex,pipelineIndetifier)
-            pathY = PyToolsStructures.getDesignMatrixLabelsPath(
-                rawDataPath,batchIndex)
-            # Load in Design Matrix from batch
-            designMatrix = PyToolsStructures.DesignMatrix.deserialize(
-                pathX,pathY,batchSize,shape=(numFeatures,))
-            featureFromAllSamples = designMatrix.getFeatures()[:,featureIndex]
-            # Populate Larger Data Array w/ Samples
-            for ii in range(batchSize):
-                self._sampleData[self._sampleCounter] = featureFromAllSamples[ii]
-                self._sampleCounter += 1
-        # All Done!
+    def __storeFeatureGroup(self,featureMask,pipelineIndex,numFeatures):
+        """ Store all Samples from a Group of Features """
+        batchSizes = self._runInfo.getBatchSizes()
+        outputPath = self._runInfo.getOutputPath()
+        nameX = lambda x,y  : "batch{0}x-pipeline{1}.bin".format(x,y)
+        nameY = lambda x    : "batch{0}y.bin".format(x)
+        for ii,numSamples in enumerate(batchSizes):
+
+            pipelineIdentifier = LETTERS_UPPER_CASE[pipelineIndex]
+            pathX = os.path.join(outputPath,nameX(ii,pipelineIdentifier))
+            pathY = os.path.join(outputPath,nameY(ii))
+
+            # Load + Store Design Matrix
+            matrix = PyToolsStructures.DesignMatrix.deserialize(
+                pathX,pathY,numSamples,(numFeatures,))
+            self.__storeDesignMatrix(matrix,featureMask)
+
+        # All Features are stored   
+        self._sampleCounter = 0   
         return self
 
-    def __setParamsForFeature(self,pipelineIndex,featureIndex):
-        """ Store the Mean + Vari Data for this Pipeline/Feature """   
-        self._params[pipelineIndex].means[featureIndex] = np.mean(self._sampleData)
-        self._params[pipelineIndex].varis[featureIndex] = np.var(self._sampleData)
+    def __processFeatureGroup(self,featureMask,pipelineIndex):
+        """ Process the group of features """
+        allMeans = np.mean(self._sampleData,axis=0)
+        allVaris = np.var(self._sampleData,axis=0)
+
+        for ii,featureIndex in enumerate(featureMask):
+            self._params[pipelineIndex].means[featureIndex] = allMeans[ii]
+            self._params[pipelineIndex].varis[featureIndex] = allVaris[ii]
+
+        return self
+        
+    def __storeDesignMatrix(self,designMatrix,featureMask):
+        """ Store subset of Features from Design Matrix """
+        X = designMatrix.getFeatures()[:,featureMask]
+        for ii in range(len(X)):
+            self._sampleData[self._sampleCounter] = X[ii]
+            self._sampleCounter += 1
         return self
 
-    def __exportParamsForFeatures(self,pipelineIndex):
-        """ Return Pipeline Index """
-        pipelineParams  = self._params[pipelineIndex]
-        if (pipelineParams is None):
-            return self
-        outputFile = self.getOutFile(pipelineIndex)
-        outputStream    = open(outputFile,"w")
-        for ii in range(pipelineParams.numFeatures):
-            line = "{0:<64}\t{1}\n".format(
-                pipelineParams.means[ii],
-                pipelineParams.varis[ii])
-            outputStream.write(line)
-        outputStream.close()
-        return self
-
-
+    def __printProcessingFeaturesMessage(self,pipelineID,start,stop):
+        """ Print message to console showing what features are being proccessed """
+        msg = "\tProcessing Pipeline {0}: Features {1} -> {2}"
+        print(msg.format(pipelineID,start,stop))
+        return None
+         
 class StandardScalerWrapper:
     """ Apply Standard Scaling to Design Matrix """
 

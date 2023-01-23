@@ -16,16 +16,13 @@ import os
 import PyToolsStructures
 import Preprocessors
 
-import numpy as np
-
-
     #### MAIN EXECUTABLE ####
 
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
-    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1_processed"
+    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1_processedV1"
     runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
     # Create + Fit the Scaler Instance
