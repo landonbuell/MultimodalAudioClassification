@@ -1,6 +1,6 @@
 """
-Repository:     Buell-Senior-Thesis
-Solution:       SignalClassifierPrototype
+Repository:     MultimodalAudioClassification
+Solution:       MultimodalAudioClassification
 Project:        FeatureCollection  
 File:           Administrative.py
  
@@ -20,6 +20,8 @@ import scipy.signal as scisig
 import Administrative
 import Managers
 import CollectionMethods
+
+import PyToolsPlotting
 
         #### CLASS DEFINITIONS ####
 
@@ -294,7 +296,8 @@ class AnalysisFramesParameters:
 
     def __init__(self,samplesPerFrame=1024,samplesOverlap=768,
                  headPad=1024,tailPad=2048,maxFrames=256,
-                 window="hanning",freqLowHz=0,freqHighHz=12000):
+                 window="hanning",freqLowHz=0,freqHighHz=12000,
+                 sampleRate=44100):
         """ Constructor for AnalysisFramesParameters Instance """
 
         # For Time Series Frames
@@ -309,6 +312,7 @@ class AnalysisFramesParameters:
         self._windowFunction    = window
         self._freqLowHz         = freqLowHz
         self._freqHighHz        = freqHighHz
+        self._sampleRate        = sampleRate
 
     def __del__(self):
         """ Destructor for AnalysisFramesParameters Instance """
@@ -341,13 +345,10 @@ class AnalysisFramesParameters:
         result += self._padTail
         return result
 
-    def getTotalFreqFrameSize(self,sampleRate=44100):
+    def getTotalFreqFrameSize(self):
         """ Get total Size of Each Frequency Frame including padding """
-        fftAxis = fftpack.fftfreq(self.getTotalTimeFrameSize(),1/sampleRate)
-        mask = np.where(
-            (fftAxis>=self._freqLowHz) & 
-            (fftAxis<=self._freqHighHz) )[0]   # get slices
-        size = mask.shape[0]
+        arr = self.generateFreqAxis()
+        size = arr.shape[0]
         return size
 
     def getTimeFramesShape(self):
@@ -357,6 +358,23 @@ class AnalysisFramesParameters:
     def getFreqFramesShape(self,sampleRate=44100):
         """ Get the Shape of the Freq-Series Analysis Frames Matrix """
         return (self.getMaxNumFrames(), self.getTotalFreqFrameSize(), )
+
+    # Public Interface
+
+    def generateTimeAxis(self):
+        """ Generate an array that represents the time axis """
+        arr = np.arange(0,self._maxFrames,1,dtype=np.float64)
+        secondsPerFrameOverlap = self._samplesOverlap * (1/self._sampleRate)
+        arr *= secondsPerFrameOverlap
+        return arr
+
+    def generateFreqAxis(self):
+        """ Generate an array that reprents the frequency axis """
+        fftAxis = fftpack.fftfreq(self.getTotalTimeFrameSize(),1/self._sampleRate)
+        mask = np.where(
+            (fftAxis>=self._freqLowHz) & 
+            (fftAxis<=self._freqHighHz) )[0]   # get slices
+        return fftAxis[mask]
 
     # Magic Methods
 
@@ -523,6 +541,7 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
     def __buildFramesFreq(self):
         """ Construct Analysis Time-Series Frames """
         # Get the winow and apply to each frame
+        timeAxis = np.arange(0,self.getTotalFrameSize())
         window = WindowFunctions.getHanning(
             self.getSamplesPerFrame(),self.getSizeHeadPad(),self.getSizeTailPad())
         frames = self._signal.AnalysisFramesTime * window

@@ -28,8 +28,10 @@ def spectrogram(spectrogram,freqAxis,timeAxis,title,savepath=None,show=True):
     plt.ylabel("Frequency",size=20,weight='bold')
 
     # Plot the Stuff
-    plt.pcolormesh(timeAxis,freqAxis,
-                    spectrogram,cmap=plt.cm.binary)
+    plt.pcolormesh(timeAxis,
+                   freqAxis,
+                   spectrogram,
+                   cmap=plt.cm.binary)
 
     # House Keeping
     plt.grid()
@@ -50,6 +52,26 @@ def heatMap(image,title,savepath=None,show=True):
 
     # Plot the Stuff
     plt.imshow(image,cmap=plt.cm.binary)
+
+    # House Keeping
+    plt.grid()
+    if (savepath is not None):
+        plt.savefig(savepath)
+    if (show == True):
+        plt.show()
+    return None
+
+def plotSignal(xData,yData,title,savepath=None,show=True):
+    """
+    Plot a 1D Signal 
+    """
+    plt.figure(figsize=(16,12))
+    plt.title(title,size=24,weight='bold')
+    plt.xlabel("Domain",size=20,weight='bold')
+    plt.ylabel("Amplitude",size=20,weight='bold')
+
+    # Plot the Stuff
+    plt.plot(xData,yData,color='blue')
 
     # House Keeping
     plt.grid()

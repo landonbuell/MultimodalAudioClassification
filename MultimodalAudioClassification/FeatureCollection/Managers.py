@@ -11,6 +11,7 @@ Date:           December 2021
         #### IMPORTS ####
 
 import os
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -21,6 +22,7 @@ import PyToolsIO
 import Administrative
 import CollectionMethods
 import Structural
+import Callbacks
 
         #### CLASS DEFINITIONS ####
 
@@ -373,7 +375,7 @@ class FeatureCollectionPipeline:
         self._designMatrix  = None
         self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
-        self._signalPostprocessCallbacks = []
+        self._featureVectorPostProcessCallbacks = []
 
     def __del__(self):
         """ FeatureCollectionPipeline Destructor """
@@ -438,9 +440,9 @@ class FeatureCollectionPipeline:
         self._signalPreprocessCallbacks.append(callback)
         return self
 
-    def registerSignalPostprocessCallback(self,callback):
+    def registerFeatureVectorPostprocessCallback(self,callback):
         """ Register a Callback for post processing a signal """
-        self._signalPostprocessCallbacks.append(callback)
+        self._featureVectorPostProcessCallbacks.append(callback)
         return self
 
     def resize(self,newSize):
@@ -502,6 +504,7 @@ class FeatureCollectionPipeline:
                 indexCounter += 1
 
         # Return the Feature Vector from this Samples
+        self.__evaluateFeatureVectorPostprocessCallbacks(featureVector)
         return featureVector
 
     def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
@@ -517,23 +520,23 @@ class FeatureCollectionPipeline:
             
     def __iter__(self):
         """ Define Forward iterator """
-        for i in range(self._size):
-            if (self._queue[i] == 0):
+        for ii in range(self._size):
+            if (self._queue[ii] == 0):
                 continue        # Skip if nothing there
-            yield self._queue[i]
+            yield self._queue[ii]
 
     # Private Interface
 
     def __evaluateSignalPreprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPreprocessCallbacks:
-            callback(signal,self.getAnalysisFrameParams())
+            callback.__call__(self,signal)
         return self
     
-    def __evaluateSignalPostprocessCallbacks(self,signal):
+    def __evaluateFeatureVectorPostprocessCallbacks(self,featureVector):
         """ Pass the signal through each callback """
-        for callback in self._signalPostprocessCallbacks:
-            callback(signal,self.getAnalysisFrameParams())
+        for callback in self._featureVectorPostProcessCallbacks:
+            callback.__call__(self,featureVector)
         return self
 
     # Static Interface
@@ -575,9 +578,9 @@ class FeatureCollectionPipeline:
         pipeline[27] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
 
         # Return the resulting pipeline
-        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesTime )
-        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesFreq )
-
+        pipeline.registerSignalPreprocessCallback( Callbacks.SignalDataPreprocessCallbacks.makeAnalysisFramesTime )
+        pipeline.registerSignalPreprocessCallback( Callbacks.SignalDataPreprocessCallbacks.makeAnalysisFramesFreq )
+     
         return pipeline
 
     @staticmethod
@@ -589,6 +592,8 @@ class FeatureCollectionPipeline:
         
         pipeline[0] = CollectionMethods.Spectrogram(
             pipeline.getAnalysisFrameParams() )
+
+        pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
 
         # Return the resulting pipeline
         return pipeline
