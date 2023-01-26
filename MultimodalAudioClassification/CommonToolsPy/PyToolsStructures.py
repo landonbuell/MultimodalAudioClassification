@@ -15,6 +15,16 @@ import numpy as np
 
 import PyToolsIO
 
+        #### FUNCTION DEFINITIONS ####
+
+def getDesignMatrixDataPath(outputPath,batchIndex,pipelineIdentifier):
+    """ Get the location of a Design Matrix's Features """
+    return os.path.join(outputPath,"batch{0}x-pipeline{1}.bin".format( batchIndex, pipelineIdentifier ) )
+
+def getDesignMatrixLabelsPath(outputPath,batchIndex):
+    """ Get the location of a Design Matrix's labels """
+    return os.path.join(outputPath,"batch{0}y.bin".format( batchIndex ) )
+
         #### CLASS DEFINITIONS ####
 
 class FeatureVector:
@@ -512,7 +522,7 @@ class RunInformation:
         """ Get the size of all batches """
         return self._batchSizes
 
-    def getSizeOfBatches(self,index):
+    def getSizeOfBatch(self,index):
         """ Get the size of particular index(es) of batches """
         return self._batchSizes[index]
 
@@ -769,8 +779,8 @@ class RunInformation:
 
         def __readInputOutputPaths(self):
             """ Write Input Paths to File """
-            inputPaths = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_INPUT_PATHS)
-            outputPath = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_OUTPUT_PATH)
+            inputPaths = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_INPUT_PATHS)
+            outputPath = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_OUTPUT_PATH)[0]
 
             # Create the Instance
             self._data = RunInformation(inputPaths,outputPath)
@@ -781,47 +791,62 @@ class RunInformation:
         def __readPipelineInUseData(self):
             """ Write Data pertaining to what pipeline are in use """
 
-            numPipelines = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_NUM_PIPELINES)
-            pipelinesInUse = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_PIPELINES_IN_USE)
-            pipelinesInUse = PyToolsIO.Deserializer.stringToList(pipelinesInUse,outType=bool)
+            strNumPipelines = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_NUM_PIPELINES)[0]
+            strPipelinesInUse = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_PIPELINES_IN_USE)[0]
+            
+            intNumPipelines = int(strNumPipelines[0])
+            listPipelinesInUse = PyToolsIO.Deserializer.stringToList(strPipelinesInUse,delimiter=',')
+            listPipelinesInUse = [PyToolsIO.Deserializer.stringToBool(x) for x in listPipelinesInUse]
 
             # Register w/ result instance
-            self._data._numPipelines = numPipelines
+            self._data._numPipelines = intNumPipelines
             for ii in range(RunInformation.DEFAULT_NUM_PIPELINES):
-                inUse = PyToolsIO.Deserializer.stringToBool(pipelinesInUse[ii])
-                self._data._pipelinesInUse[ii] = inUse
+                self._data._pipelinesInUse[ii] = listPipelinesInUse[ii]
            
             return self
         
         def __readSampleShapesBatchSizes(self):
             """ Write Sample Shapes and Batch Sizes """
-            strSampleShapes = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_PIPELINE_SHAPE)
-            strBatchSizes = self._inFileBuffer(RunInformation.__RunInformationSerializer.KEY_BATCH_SIZES)
+            strSampleShapes = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_PIPELINE_SHAPE)
+            strBatchSizes = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_BATCH_SIZES)[0]
 
             # Handle Batch Sizes
-            listBatchSizes = PyToolsIO.Deserializer.stringToList(strBatchSizes,outType=int)
+            listBatchSizes = PyToolsIO.Deserializer.stringToList(strBatchSizes,delimiter=',',outType=int)
             self._data._batchSizes = listBatchSizes[:]
 
-            # Come back to Sample Shapes another time?
+            # handle Sample Shapes
+            self.__readSampleShapesHelper(strSampleShapes)
 
             return self
 
         def __readNumSamples(self):
             """ Write out actual & expected num samples """
 
-            expectedSamples = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_EXPECTED_SAMPLES)
-            actualSamples = self._findInBuffer(RunInformation.__RunInformationSerializer.KEY_ACTUAL_SAMPLES)
+            expectedSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_EXPECTED_SAMPLES)[0]
+            actualSamples = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_ACTUAL_SAMPLES)[0]
 
             self._data._numSamplesExpt = PyToolsIO.Deserializer.stringToInt(expectedSamples)
             self._data._numSamplesRead = PyToolsIO.Deserializer.stringToInt(actualSamples)
 
             return self
+
+        def __readSampleShapesHelper(self,listOfStrsSampleShape):
+            """ Parse out sample shapes from list of strings """
+            for ii,strItem in enumerate(listOfStrsSampleShape):
+                data = strItem.replace("(","").replace(")","")
+                strAxisSizes = data.split(",")
+                if (strAxisSizes[-1] == ""):
+                    strAxisSizes.pop()
+                intAxisSizes = tuple([int(x) for x in strAxisSizes])
+                self._data._samplesShapes[ii] = intAxisSizes
+            return self
                     
     # Static Interface
 
     @staticmethod
-    def deserialize(self,path):
+    def deserialize(path):
         """ Deserialize a RunInformation instance from path """
+        path = os.path.join(path,"runInfo.txt")
         reader  = RunInformation.__RunInformationDeserializer(path)
         runInfo = reader.call() 
         return runInfo

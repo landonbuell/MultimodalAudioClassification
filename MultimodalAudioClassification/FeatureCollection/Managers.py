@@ -509,9 +509,9 @@ class FeatureCollectionPipeline:
         exportPath = Administrative.FeatureCollectionApp.getInstance().getSettings().getOutputPath()
         pathX,pathY = None,None
         if (exportX == True):
-            pathX = os.path.join(exportPath,"batch{0}x-pipeline{1}.bin".format( batchIndex, self.getPipelineIdentifier() ) )
+            pathX = PyToolsStructures.getDesignMatrixDataPath(exportPath,batchIndex,self.getPipelineIdentifier())
         if (exportY == True):
-            pathY = os.path.join(exportPath,"batch{0}y.bin".format( batchIndex ) )
+            pathY = PyToolsStructures.getDesignMatrixLabelsPath(exportPath,batchIndex)
         success = self._designMatrix.serialize(pathX,pathY)
         return success
             

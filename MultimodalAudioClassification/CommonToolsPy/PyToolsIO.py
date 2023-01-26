@@ -98,15 +98,14 @@ class Deserializer:
 
     def __init__(self,path):
         """ Constructor for Deserializer Abstract Class """
-        self._data              = None
-        self._inputPath         = path
-        self._inFileBuffer      = []
+        self._data      = None
+        self._inputPath = path
+        self._buffer    = []
 
     def __del__(self):
         """ Destructor for Deserializer Abstract Class """
         self._data = None
-        if (self._inFileStream is not None):
-            self._inFileStream.close()
+        self._buffer.clear()
         return
 
     # Public Interface
@@ -114,7 +113,7 @@ class Deserializer:
     def call(self):
         """ Read Object From inputStream """
         inFileStream = open(self._inputPath,'r')
-        self._inFileBuffer = inFileStream.readlines()
+        self._buffer = inFileStream.readlines()
         inFileStream.close()
         return True
 
@@ -123,7 +122,7 @@ class Deserializer:
     def _findInBuffer(self,key):
         """ Find Key in Buffer """
         vals = []
-        for item in self._inFileBuffer:
+        for item in self._buffer:
             if (item.startswith(key)):
                 tokens = item.split()
                 vals.append( tokens[-1] )
@@ -135,6 +134,8 @@ class Deserializer:
     def stringToList(inputString,delimiter=" ",outType=None):
         """ Convert string to list of type """
         outputList = inputString.split(delimiter)
+        if (outputList[-1] == ""):
+            outputList.pop()
         if outType is not None:
             outputList = [outType(x) for x in outputList]
         return outputList
@@ -154,7 +155,7 @@ class Deserializer:
         """ Determine if item is T/F """
         TRUE    = ["TRUE","T","1","YES","Y"]
         FALSE   = ["FALSE","F","0","NO","N"]
-        text = inputString.capitalize()
+        text = inputString.upper()
         if (text in TRUE):
             return True
         else:
