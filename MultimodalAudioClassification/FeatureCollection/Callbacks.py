@@ -43,6 +43,5 @@ class FeatureVectorPostProcessCallbacks:
         X = featureVector.getData().reshape(freqFramesShape)
         timeAxis = frameParams.generateTimeAxis()
         freqAxis = frameParams.generateFreqAxis()
-        PyToolsPlotting.spectrogram(
-            X,timeAxis,freqAxis,"Spectrogram")
+        PyToolsPlotting.spectrogram(X,timeAxis,freqAxis,"Spectrogram")
         return None

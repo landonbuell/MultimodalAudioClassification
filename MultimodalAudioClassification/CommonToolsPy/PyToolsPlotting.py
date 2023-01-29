@@ -18,20 +18,20 @@ import matplotlib.pyplot as plt
 
         #### CLASS DEFINITIONS ####
 
-def spectrogram(spectrogram,freqAxis,timeAxis,title,savepath=None,show=True):   
+def spectrogram(spectrogram,timeAxis,freqAxis,title,savepath=None,show=True):   
     """
     Plot a Heat-Map Spectrogram
     """
     plt.figure(figsize=(16,12))
     plt.title(title,size=24,weight='bold')
-    plt.xlabel("Time",size=20,weight='bold')
-    plt.ylabel("Frequency",size=20,weight='bold')
+    plt.xlabel("Frequency",size=20,weight='bold')
+    plt.ylabel("Time Frame Index",size=20,weight='bold')
 
     # Plot the Stuff
-    plt.pcolormesh(timeAxis,
-                   freqAxis,
+    plt.pcolormesh(freqAxis,
+                   timeAxis,
                    spectrogram,
-                   cmap=plt.cm.binary)
+                   cmap=plt.cm.viridis)
 
     # House Keeping
     plt.grid()

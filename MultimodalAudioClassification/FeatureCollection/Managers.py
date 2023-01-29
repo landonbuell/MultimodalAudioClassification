@@ -545,7 +545,7 @@ class FeatureCollectionPipeline:
     def getDefaultPipelineAlpha():
         """ Default Pipeline Alpha """
         pipeline = FeatureCollectionPipeline("A")      
-        pipeline.resize( 28 )
+        pipeline.resize( 32 )
 
         # Register the CollectionMethods
         pipeline[0] = CollectionMethods.TimeDomainEnvelopPartitions(8)
@@ -569,13 +569,15 @@ class FeatureCollectionPipeline:
         pipeline[18] = CollectionMethods.AutoCorrelationCoefficientsMean(1)
         pipeline[19] = CollectionMethods.AutoCorrelationCoefficientsVariance(1)
         pipeline[20] = CollectionMethods.AutoCorrelationCoefficientsDiffMinMax(1)
-        pipeline[21] = CollectionMethods.FrequencyCenterOfMass("linear")
-        pipeline[22] = CollectionMethods.FrequencyCenterOfMass("natural_log")
-        pipeline[23] = CollectionMethods.MelFilterBankEnergies(12)
-        pipeline[24] = CollectionMethods.MelFilterBankEnergiesMean(1)
-        pipeline[25] = CollectionMethods.MelFilterBankEnergiesVariance(1)
-        pipeline[26] = CollectionMethods.MelFilterBankEnergiesDiffMinMax(1)
-        pipeline[27] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
+        pipeline[21] = CollectionMethods.FrequencyCenterOfMassMean("linear")
+        pipeline[22] = CollectionMethods.FrequencyCenterOfMassVari("linear")
+        pipeline[23] = CollectionMethods.FrequencyCenterOfMassMean("natural_log")
+        pipeline[24] = CollectionMethods.FrequencyCenterOfMassVari("natural_log")
+        pipeline[25] = CollectionMethods.MelFilterBankEnergies(12)
+        pipeline[26] = CollectionMethods.MelFilterBankEnergiesMean(1)
+        pipeline[27] = CollectionMethods.MelFilterBankEnergiesVariance(1)
+        pipeline[28] = CollectionMethods.MelFilterBankEnergiesDiffMinMax(1)
+        pipeline[29] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
 
         # Return the resulting pipeline
         pipeline.registerSignalPreprocessCallback( Callbacks.SignalDataPreprocessCallbacks.makeAnalysisFramesTime )
@@ -593,7 +595,7 @@ class FeatureCollectionPipeline:
         pipeline[0] = CollectionMethods.Spectrogram(
             pipeline.getAnalysisFrameParams() )
 
-        pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
+        #pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
 
         # Return the resulting pipeline
         return pipeline

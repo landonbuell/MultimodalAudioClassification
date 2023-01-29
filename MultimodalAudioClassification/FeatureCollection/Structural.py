@@ -112,6 +112,7 @@ class SignalData:
         self.Waveform               = waveform
         self.AnalysisFramesTime     = None
         self.AnalysisFramesFreq     = None
+        self.FreqCenterOfMasses     = None
         self.MelFilterBankEnergies  = None
         self.AutoCorrelationCoeffs  = None
         self.FrameZeroCrossings     = None
@@ -179,7 +180,8 @@ class SignalData:
         """ Clear all Fields of the Instance """
         self.AnalysisFramesTime     = None
         self.AnalysisFramesFreq     = None
-        self.MelFilterBankEnergies   = None
+        self.FreqCenterOfMasses     = None
+        self.MelFilterBankEnergies  = None
         self.AutoCorrelationCoeffs  = None
         self.FrameZeroCrossings     = None
         self.FrameEnergyTime        = None
@@ -211,10 +213,24 @@ class SignalData:
         constructor.call(self)
         return self
 
+    def makeFrequencyCenterOfMass(self,weights):
+        """ Compute Frequency Center of Mass for Each Analysis Frame """
+        if (self.AnalysisFramesFreq is None):
+            # No Freq Analysis Frames - Cannot make FCM's
+            errMsg = "ERROR: need analysis frames time to make analysis frames frequency"
+            raise RuntimeError(errMsg)
+        # Compute Total "Mass"
+        massTotals = np.sum(self.AnalysisFramesFreq,axis=-1) + CollectionMethods.EPSILON     
+        # Compute Center of Mass (by Weights)
+        massCenters = np.matmul(self.AnalysisFramesFreq,weights)
+        massCenters /= massTotals
+        self.FreqCenterOfMasses = massCenters
+        return self
+
     def makeMelFilterBankEnergies(self,frameParams,numCoeffs):
         """ Make All Mel-Cepstrum Frequency Coefficients """
         if (self.AnalysisFramesFreq is None):
-            # No Waveform - Cannot make MFCC's
+            # No Freq Analysis Frames - Cannot make MFCC's
             errMsg = "ERROR: need analysis frames time to make analysis frames frequency"
             raise RuntimeError(errMsg)
 
@@ -541,7 +557,6 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
     def __buildFramesFreq(self):
         """ Construct Analysis Time-Series Frames """
         # Get the winow and apply to each frame
-        timeAxis = np.arange(0,self.getTotalFrameSize())
         window = WindowFunctions.getHanning(
             self.getSamplesPerFrame(),self.getSizeHeadPad(),self.getSizeTailPad())
         frames = self._signal.AnalysisFramesTime * window
@@ -550,10 +565,13 @@ class AnalysisFramesFreqConstructor(AnalysisFramesConstructor):
         frames = fftpack.fft(frames,axis=-1,)
         frames = frames / frames.shape[1]
         frames = np.abs(frames,dtype=np.float32)**2
-        
+
         # Crop the Frames to the Frequency Spectrum subset
         freqAxis,mask = self.__frequencyAxis(self._signal.getSampleSpace())
         frames = frames[:,mask];
+        #timeAxis = np.arange(0,self.getMaxNumFrames() )
+        #PyToolsPlotting.spectrogram(frames,timeAxis,freqAxis,"Spectrogram")
+
         self._signal.AnalysisFramesFreq = frames
         self._signal.FrequencyAxis = freqAxis
         return self
@@ -587,13 +605,12 @@ class MelFrequnecyCepstrumCoeffsConstructor:
     def call(self,signalData):
         """ Create Mel-Freqency Cepstrum Coeffs from Analysis Frames """
         signalData.MelFilterBankEnergies = np.empty(
-            shape=(signalData.AnalysisFramesFreq.shape[0],self._numCoeffs),
+            shape=(signalData.AnalysisFramesFreq.shape[0],self._numCoeffs,),
             dtype=np.float32)
         # Compute the MFCCs for Each Freq-Series Analysis Frames
-        filtersTransp = self._melFilterBanks.transpose()
-        np.matmul(signalData.AnalysisFramesFreq,
-                  filtersTransp,
-                  out=signalData.MelFilterBankEnergies)        
+        np.matmul(  signalData.AnalysisFramesFreq,
+                    self._melFilterBanks.transpose(),       
+                    out=signalData.MelFilterBankEnergies)        
         return signalData
 
     # Private Interface
