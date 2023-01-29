@@ -11,6 +11,7 @@ Date:           December 2021
         #### IMPORTS ####
 
 import os
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -21,6 +22,7 @@ import PyToolsIO
 import Administrative
 import CollectionMethods
 import Structural
+import Callbacks
 
         #### CLASS DEFINITIONS ####
 
@@ -204,10 +206,11 @@ class SampleManager (Manager):
     def __shuffle(self):
         """ Shuffle Samples in Place According to Seed """
         seed = self.getSettings().getShuffleSeed()
-        if (seed > -1):
-            # Non-Negative Seed - Shuffle in place
-            np.random.set_state(seed)
-            self._database = np.random.shuffle(self._database)
+        if (seed < 0):
+            return self    
+        # Non-Negative Seed - Shuffle in place
+        np.random.seed(seed)
+        np.random.shuffle(self._database)
         # If Seed is Negative, do not shuffle samples
         return self
 
@@ -373,7 +376,7 @@ class FeatureCollectionPipeline:
         self._designMatrix  = None
         self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
-        self._signalPostprocessCallbacks = []
+        self._featureVectorPostProcessCallbacks = []
 
     def __del__(self):
         """ FeatureCollectionPipeline Destructor """
@@ -438,9 +441,9 @@ class FeatureCollectionPipeline:
         self._signalPreprocessCallbacks.append(callback)
         return self
 
-    def registerSignalPostprocessCallback(self,callback):
+    def registerFeatureVectorPostprocessCallback(self,callback):
         """ Register a Callback for post processing a signal """
-        self._signalPostprocessCallbacks.append(callback)
+        self._featureVectorPostProcessCallbacks.append(callback)
         return self
 
     def resize(self,newSize):
@@ -502,6 +505,7 @@ class FeatureCollectionPipeline:
                 indexCounter += 1
 
         # Return the Feature Vector from this Samples
+        self.__evaluateFeatureVectorPostprocessCallbacks(featureVector)
         return featureVector
 
     def exportDesignMatrix(self,batchIndex,exportX=True,exportY=True):
@@ -517,23 +521,23 @@ class FeatureCollectionPipeline:
             
     def __iter__(self):
         """ Define Forward iterator """
-        for i in range(self._size):
-            if (self._queue[i] == 0):
+        for ii in range(self._size):
+            if (self._queue[ii] == 0):
                 continue        # Skip if nothing there
-            yield self._queue[i]
+            yield self._queue[ii]
 
     # Private Interface
 
     def __evaluateSignalPreprocessCallbacks(self,signal):
         """ Pass the signal through each callback """
         for callback in self._signalPreprocessCallbacks:
-            callback(signal,self.getAnalysisFrameParams())
+            callback.__call__(self,signal)
         return self
     
-    def __evaluateSignalPostprocessCallbacks(self,signal):
+    def __evaluateFeatureVectorPostprocessCallbacks(self,featureVector):
         """ Pass the signal through each callback """
-        for callback in self._signalPostprocessCallbacks:
-            callback(signal,self.getAnalysisFrameParams())
+        for callback in self._featureVectorPostProcessCallbacks:
+            callback.__call__(self,featureVector)
         return self
 
     # Static Interface
@@ -542,7 +546,7 @@ class FeatureCollectionPipeline:
     def getDefaultPipelineAlpha():
         """ Default Pipeline Alpha """
         pipeline = FeatureCollectionPipeline("A")      
-        pipeline.resize( 28 )
+        pipeline.resize( 32 )
 
         # Register the CollectionMethods
         pipeline[0] = CollectionMethods.TimeDomainEnvelopPartitions(8)
@@ -566,18 +570,20 @@ class FeatureCollectionPipeline:
         pipeline[18] = CollectionMethods.AutoCorrelationCoefficientsMean(1)
         pipeline[19] = CollectionMethods.AutoCorrelationCoefficientsVariance(1)
         pipeline[20] = CollectionMethods.AutoCorrelationCoefficientsDiffMinMax(1)
-        pipeline[21] = CollectionMethods.FrequencyCenterOfMass("linear")
-        pipeline[22] = CollectionMethods.FrequencyCenterOfMass("natural_log")
-        pipeline[23] = CollectionMethods.MelFilterBankEnergies(12)
-        pipeline[24] = CollectionMethods.MelFilterBankEnergiesMean(1)
-        pipeline[25] = CollectionMethods.MelFilterBankEnergiesVariance(1)
-        pipeline[26] = CollectionMethods.MelFilterBankEnergiesDiffMinMax(1)
-        pipeline[27] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
+        pipeline[21] = CollectionMethods.FrequencyCenterOfMassMean("linear")
+        pipeline[22] = CollectionMethods.FrequencyCenterOfMassVari("linear")
+        pipeline[23] = CollectionMethods.FrequencyCenterOfMassMean("natural_log")
+        pipeline[24] = CollectionMethods.FrequencyCenterOfMassVari("natural_log")
+        pipeline[25] = CollectionMethods.MelFilterBankEnergies(12)
+        pipeline[26] = CollectionMethods.MelFilterBankEnergiesMean(1)
+        pipeline[27] = CollectionMethods.MelFilterBankEnergiesVariance(1)
+        pipeline[28] = CollectionMethods.MelFilterBankEnergiesDiffMinMax(1)
+        pipeline[29] = CollectionMethods.MelFrequencyCepstrumCoefficients(12)
 
         # Return the resulting pipeline
-        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesTime )
-        pipeline.registerSignalPreprocessCallback( Structural.SignalData.makeAnalysisFramesFreq )
-
+        pipeline.registerSignalPreprocessCallback( Callbacks.SignalDataPreprocessCallbacks.makeAnalysisFramesTime )
+        pipeline.registerSignalPreprocessCallback( Callbacks.SignalDataPreprocessCallbacks.makeAnalysisFramesFreq )
+     
         return pipeline
 
     @staticmethod
@@ -589,6 +595,8 @@ class FeatureCollectionPipeline:
         
         pipeline[0] = CollectionMethods.Spectrogram(
             pipeline.getAnalysisFrameParams() )
+
+        pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
 
         # Return the resulting pipeline
         return pipeline

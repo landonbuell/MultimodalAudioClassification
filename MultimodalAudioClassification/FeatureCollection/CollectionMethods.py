@@ -695,14 +695,14 @@ class AutoCorrelationCoefficientsDiffMinMax(CollectionMethod):
         super().validateParameter()
         return True
 
-class FrequencyCenterOfMass(CollectionMethod):
+class FrequencyCenterOfMassMean(CollectionMethod):
     """
     Compute the Frequency Center of Mass over all frames weighted linearly
     """
 
     def __init__(self,kernelType="linear"):
         """ Constructor for FrequencyCenterOfMass Instance """
-        super().__init__(FrequencyCenterOfMass,1)
+        super().__init__("FrequencyCenterOfMassMean",1)
         self._kernelType = kernelType.upper()
         self.validateParameter()
 
@@ -717,18 +717,76 @@ class FrequencyCenterOfMass(CollectionMethod):
         self.validateInputSignal(signalData)
         super().invoke(signalData)   
 
-        # Compute Total Mass + Weights
-        sizeOfFrame = signalData.AnalysisFramesFreq.shape[1]
-        massTotal = np.sum(signalData.AnalysisFramesFreq,axis=-1) + EPSILON
-        weights = self.kernelFunction(sizeOfFrame)
-       
-        # Compute Center of Mass (by Weights)
-        massCenter = np.matmul(signalData.AnalysisFramesFreq,weights)
-        massCenter /= massTotal
-        massCenter /= sizeOfFrame
+        # Compute FCM
+        if (signalData.FreqCenterOfMasses is None):
+            sizeOfFrame = signalData.AnalysisFramesFreq.shape[1]
+            weights = self.kernelFunction(sizeOfFrame)
+            signalData.makeFrequencyCenterOfMass(weights)
 
-        # Add the Average of all frames, and put into result
-        self._result[0] = np.mean(massCenter)
+        # Find the Variance of all frames, and put into result
+        massCenters = signalData.FreqCenterOfMasses
+        self._result[0] = np.var(massCenters)
+        self.checkForNaNsAndInfs()
+        return self._result
+
+    # Protected Interface
+
+    def kernelFunction(self,numSamples):
+        """ Set the Kernel Function based on the parameter """
+        kernel = np.arange(0,numSamples,1)
+        if (self._kernelType == "LINEAR"):
+            pass                    # Linear Kernel
+        elif (self._kernelType == "QUADRATIC"):
+            kernel = kernel ** 2    # Quadratic
+        elif (self._kernelType == "NATURAL_LOG"):
+            kernel = np.log(kernel + EPSILON[0]) # Nat log
+        else:
+            pass
+        return kernel
+
+    def validateInputSignal(self,signalData):
+        """ Validate Input Signal Everything that we need """
+        if (signalData.AnalysisFramesFreq is None):
+            errMsg = "signalData.AnalysisFramesFreq must not be None"
+            raise ValueError(errMsg)
+        return True
+
+    def validateParameter(self):
+        """ Validate that Parameter Values Makes Sense """
+        super().validateParameter()
+        return True
+    
+class FrequencyCenterOfMassVari(CollectionMethod):
+    """
+    Compute the Frequency Center of Mass over all frames weighted linearly
+    """
+
+    def __init__(self,kernelType="linear"):
+        """ Constructor for FrequencyCenterOfMass Instance """
+        super().__init__("FrequencyCenterOfMass",1)
+        self._kernelType = kernelType.upper()
+        self.validateParameter()
+
+    def __del__(self):
+        """ Destructor for FrequencyCenterOfMassLinear Instance """
+        super().__del__()
+
+    # Public Interface
+
+    def invoke(self, signalData, *args):
+        """ Run this Collection method """
+        self.validateInputSignal(signalData)
+        super().invoke(signalData)   
+
+        # Compute FCM
+        if (signalData.FreqCenterOfMasses is None):
+            sizeOfFrame = signalData.AnalysisFramesFreq.shape[1]
+            weights = self.kernelFunction(sizeOfFrame)
+            signalData.makeFrequencyCenterOfMass(weights)
+
+        # Find the Variance of all frames, and put into result
+        massCenters = signalData.FreqCenterOfMasses
+        self._result[0] = np.var(massCenters)
         self.checkForNaNsAndInfs()
         return self._result
 
@@ -1035,8 +1093,8 @@ class Spectrogram(CollectionMethod):
         if (signalData.AnalysisFramesFreq is None):
             # Spect does not exist
             signalData.makeAnalysisFramesFreq(self._framesParams)
-
-
+        maxVal = np.max(signalData.AnalysisFramesFreq)
+        self._result = (signalData.AnalysisFramesFreq/maxVal).flatten()
         return self._result
 
 
