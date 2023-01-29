@@ -596,7 +596,7 @@ class FeatureCollectionPipeline:
         pipeline[0] = CollectionMethods.Spectrogram(
             pipeline.getAnalysisFrameParams() )
 
-        pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
+        #pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
 
         # Return the resulting pipeline
         return pipeline
