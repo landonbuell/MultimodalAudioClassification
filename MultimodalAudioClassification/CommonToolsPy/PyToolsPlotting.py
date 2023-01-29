@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
         #### CLASS DEFINITIONS ####
 
-def spectrogram(spectrogram,timeAxis,freqAxis,title,savepath=None,show=True):   
+def spectrogram(spectrogram,xAxisData,yAxisData,title,savepath=None,show=True):   
     """
     Plot a Heat-Map Spectrogram
     """
@@ -28,8 +28,8 @@ def spectrogram(spectrogram,timeAxis,freqAxis,title,savepath=None,show=True):
     plt.ylabel("Time Frame Index",size=20,weight='bold')
 
     # Plot the Stuff
-    plt.pcolormesh(freqAxis,
-                   timeAxis,
+    plt.pcolormesh(xAxisData,
+                   yAxisData,
                    spectrogram,
                    cmap=plt.cm.viridis)
 

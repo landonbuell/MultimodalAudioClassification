@@ -91,7 +91,8 @@ class FeatureCollectionApp:
 
     def startup(self):
         """ Run Application Startup Sequence """
-        
+        self.__logConstruction()
+
         # Emplace Feature Pipelines
         self._pipelines[0] = Managers.FeatureCollectionPipeline.getDefaultPipelineAlpha()
         self._pipelines[1] = Managers.FeatureCollectionPipeline.getDefaultPipelineBeta()
@@ -287,10 +288,10 @@ class AppSettings:
             pathOutput="..\\..\\..\\..\\audioFeatures\\simpleSignalsV3",
             batchSize=128,
             batchLimit=256,
-            shuffleSeed=-1)
-        #result.addInputPath("..\\..\\InputFiles\\Y1.csv")
-        #result.addInputPath("..\\..\\InputFiles\\Y2.csv")
-        #result.addInputPath("..\\..\\InputFiles\\Y3.csv")
+            shuffleSeed=123456789)
+        result.addInputPath("..\\..\\InputFiles\\Y1.csv")
+        result.addInputPath("..\\..\\InputFiles\\Y2.csv")
+        result.addInputPath("..\\..\\InputFiles\\Y3.csv")
         result.addInputPath("..\\..\\InputFiles\\Y4.csv")
         return result
 

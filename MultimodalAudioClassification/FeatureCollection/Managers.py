@@ -206,10 +206,11 @@ class SampleManager (Manager):
     def __shuffle(self):
         """ Shuffle Samples in Place According to Seed """
         seed = self.getSettings().getShuffleSeed()
-        if (seed > -1):
-            # Non-Negative Seed - Shuffle in place
-            np.random.set_state(seed)
-            self._database = np.random.shuffle(self._database)
+        if (seed < 0):
+            return self    
+        # Non-Negative Seed - Shuffle in place
+        np.random.seed(seed)
+        np.random.shuffle(self._database)
         # If Seed is Negative, do not shuffle samples
         return self
 
@@ -595,7 +596,7 @@ class FeatureCollectionPipeline:
         pipeline[0] = CollectionMethods.Spectrogram(
             pipeline.getAnalysisFrameParams() )
 
-        #pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
+        pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
 
         # Return the resulting pipeline
         return pipeline

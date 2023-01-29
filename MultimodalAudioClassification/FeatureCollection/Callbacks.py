@@ -40,7 +40,7 @@ class FeatureVectorPostProcessCallbacks:
         freqFramesShape = frameParams.getFreqFramesShape()
 
         # Assemble Data For Analysis Frames
-        X = featureVector.getData().reshape(freqFramesShape)
+        X = featureVector.getData().reshape(freqFramesShape).transpose()
         timeAxis = frameParams.generateTimeAxis()
         freqAxis = frameParams.generateFreqAxis()
         PyToolsPlotting.spectrogram(X,timeAxis,freqAxis,"Spectrogram")
