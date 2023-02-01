@@ -1,11 +1,11 @@
 """
-Repo:       MultimodalAudioClassification
-Solution:   MultimodalAudioClassification
-Project:    Experiments
-File:       ExperimentDrivers.py
+    Repo:       MultimodalAudioClassification
+    Solution:   MultimodalAudioClassification
+    Project:    Experiments
+    File:       ExperimentDrivers.py
 
-Author:     Landon Buell
-Date:       November 2022
+    Author:     Landon Buell
+    Date:       November 2022
 """
 
     #### IMPORTS ####
@@ -22,42 +22,49 @@ import PyToolsStructures
 
     #### CLASS DEFINITIONS ####
 
-class BaseExperiment:
+class __BaseExperiment:
     """ Parent Class for Running Experiments """
 
     def __init__(self,
                  runInfo,
                  outputPath,
-                 trainSize=0.8,
+                 model,
+                 dataloaderCallback,
                  numIters=1,
-                 seed=0,
-                 batchesAtOnce=64,
-                 pipelinesToUse=None):
+                 seed=123456789):
         """ Constructor """
         self._runInfo       = runInfo
         self._outputPath    = os.path.abspath(outputPath)
         
+        self._model         = model
+        self._dataCallback  = dataloaderCallback
+
         self._numIters      = numIters
-        self._randomSeed    = seed
-        
-        self._batchesAtOnce     = batchesAtOnce
-        self._trainingBatches   = []
-        self._testingBatches    = []
+        self._seed          = seed
 
-        self._pipelines     = [False] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES;
-        self._model         = None          
-
-        for pipelineIndex in pipelinesToUse:
-            self._pipelines[pipelineIndex] = True
-        np.random.seed(self._randomSeed)
+        self._trainingBatches   = np.array([],dtype=np.int32)
+        self._testingBatches    = np.array([],dtype=np.int32)
         
     def __del__(self):
         """ Destructor """
-        self._runInfo = None
+        self._runInfo   = None
+        self._model     = None
+
         
     # Getters and Setters
 
     # Public Interface
+
+    def registerTrainingBatches(self,batches):
+        """ Add a list of batches to the training batch list """
+        self._trainingBatches = np.append(self._trainingBatches,batches)
+        return self
+
+    def registerTestingBatches(self,batches):
+        """ Add a list of batches to the testing batch list """
+        self._testingBatches = np.append(self._testingBatches,batches)
+        return self
+
 
     def run(self):
         """ Run the Experiment """
@@ -89,10 +96,6 @@ class BaseExperiment:
         return self
 
     # Protected Interface
-
-    def _generateModel(self):
-        """ ABSTRACT - Generate a model to run the experiment with """
-        return None
 
     def _loadSamplesFrom(self):
         """ VIRTUAL - Load Data for training """
@@ -128,23 +131,20 @@ class BaseExperiment:
     
     def __initializeModel(self):
         """ Initialize the Neural Network Model """
+        self._model = self._config.initializeModel()
         return self
 
     def __executeTrainTestSplit(self):
         """ Perform train-test split on batches """
-        allBatches = np.random.permutation(
-            self._runInfo.getNumBatches())
-        # split
-        numTrainBatches = np.floor(len(allBatches))
-        numTestBatches = len(allBatches) - numTrainBatches
-        # Add to batches
-        for ii in range(numTrainBatches):
-            self._trainingBatches.append( allBatches.pop() )
-        self._testingBatches = allBatches[:]
+        self._trainingBatches   = self._config.sendTrainBatches(self._runInfo)
+        self._testingBatches    = self._config.sendTestBatches(self._runInfo)
         return self
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
+        for batch in self._trainingBatches:
+            designMatrices = None
+
         return self
 
     def __runLoadAndTestSequence(self):
@@ -154,4 +154,29 @@ class BaseExperiment:
     def __exportExperimentDetails(self,iterCounter):
         """ Export the Details of the experient """
         return self
+
+
+class CrossValidationFoldExperiment(__BaseExperiment):
+    """ Experiment to be used as a apart of a X-Validation set """
+
+    def __init__(self,
+                 runInfo,
+                 outputPath,
+                 model,
+                 dataloaderCallback,
+                 foldIndex,
+                 numIters=1,
+                 seed=123456789):
+        """ Constructor """
+        super().__init__(runInfo,
+                         outputPath,
+                         model,
+                         dataloaderCallback,
+                         numIters,
+                         seed)
+        self._foldIndex = foldIndex
+        
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
 

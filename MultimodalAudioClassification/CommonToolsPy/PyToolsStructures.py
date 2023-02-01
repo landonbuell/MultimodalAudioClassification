@@ -526,6 +526,10 @@ class RunInformation:
         """ Get the size of particular index(es) of batches """
         return self._batchSizes[index]
 
+    def getNumBatches(self):
+        """ Get the number of batched processed """
+        return len(self._batchSizes)
+
     def getExpectedNumSamples(self):
         """ Get the number of samples expected to process """
         return self._numSamplesExpt

@@ -13,10 +13,17 @@ Date:       November 2022
 import sys
 import os
 
+import numpy as np
+
+import KFoldsCrossValidation
+
 import PyToolsStructures
 import Preprocessors
 
-import numpy as np
+
+import NeuralNetworks
+
+
 
 
     #### MAIN EXECUTABLE ####
@@ -24,14 +31,26 @@ import numpy as np
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
+    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\allsamplesV1"
     PROCESSED = os.path.join(FEATURES,"preprocessedV1")
-    runInfo = PyToolsStructures.RunInfo.deserialize(FEATURES)
+    OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allsamplesV1"
+
+    runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
 
     # Multilayer Perceptron Experiment
+    inputShapeMlp = runInfo.getSampleShapeOfPipeline(0)
+    modelMLP = NeuralNetworks.NeuralNetworkBuilders
 
     # Convolutional Neural Network Experiment
 
     # Multimodal Nueral Network Experiment
 
+    xValidation = KFoldsCrossValidation.KFoldsCrossValidation(
+        runInfo,
+        OUTPUT,
+        numFolds=10,
+        modelLoaderCallback=None,
+        dataLoaderCallback=None,
+        seed=987654321)
+    xValidation.run()
 
