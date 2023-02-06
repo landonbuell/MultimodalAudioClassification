@@ -121,6 +121,7 @@ class SampleManager (Manager):
         super().__init__()
         self._counter               = 0
         self._database              = np.array([],dtype=object)
+        self._classData             = Structural.CategoryDatabase()
         self._fileParserCallback    = None
 
     def __del__(self):
@@ -132,6 +133,10 @@ class SampleManager (Manager):
     def getDatabaseSize(self):
         """ Get the Size of the Database """
         return len(self._database)
+
+    def getClassDatabase(self):
+        """ Get the Info for the processed classes """
+        return self._classData
 
     def getNextBatch(self):
         """ Get the next Batch of Samples """
@@ -191,6 +196,7 @@ class SampleManager (Manager):
             
             # Invoke the callback to parse the input file
             samplesInFile = self._fileParserCallback(path)
+            self._classData.updateWithBatchData(samplesInFile)
             self._database = np.append(self._database,samplesInFile)
 
             # Log Number of Samples
@@ -307,8 +313,11 @@ class RundataManager(Manager):
     def clean(self):
         """ Run Cleaning method on Instance """
         super().clean()
+ 
+        # Store that classes that were processed
+        classesInUse = self.getSampleManager().getClassDatabase().getClassesInUse()
+        self._runInfo.setClassesInUse(classesInUse)
 
-     
         # Serialize the run info 
         runInfoOutputPath = os.path.join(self.getSettings().getOutputPath() ,"runInfo.txt")
         self._runInfo.serialize(runInfoOutputPath)

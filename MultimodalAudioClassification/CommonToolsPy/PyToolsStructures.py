@@ -479,6 +479,8 @@ class RunInformation:
         self._numSamplesExpt    = 0
         self._numSamplesRead    = 0
 
+        self._classesInUse      = []
+
 
     def __del__(self):
         """ Destructor for RunInformation Instance """
@@ -530,6 +532,10 @@ class RunInformation:
         """ Get the number of samples expected to process """
         return self._numSamplesExpt
 
+    def getClassesInUse(self):
+        """ Get a list of the classes that were passed through the pipelines """
+        return self._classesInUse[:]
+
     def setExpectedNumSamples(self,num):
         """ Set the number of samples expected to process """
         self._numSamplesExpt = num
@@ -551,6 +557,11 @@ class RunInformation:
     def setIsPipelineInUse(self,index,value):
         """ Set T/F if pipeline at index is in use """
         self._pipelinesInUse[index] = value
+        return self
+
+    def setClassesInUse(self,classesInUse):
+        """ Set a List of the Classes that passed through the pipelines """
+        self._classesInUse = classesInUse[:]
         return self
 
     # Public Interface
@@ -649,6 +660,7 @@ class RunInformation:
         KEY_BATCH_SIZES         = "BatchSizes"
         KEY_EXPECTED_SAMPLES    = "ExpectedSamples"
         KEY_ACTUAL_SAMPLES      = "ActualSamples"
+        KEY_CLASSES_IN_USE      = "ClassesInUse"
 
     class __RunInformationSerializer(PyToolsIO.Serializer):
         """ Class to serialize Run Information Instance"""
@@ -672,7 +684,7 @@ class RunInformation:
             self.__writePipelineInUseData()
             self.__writeSampleShapesBatchSizes()
             self.__writeNumSamples()
-
+            self.__writeClassesInUse()
             self._writeFooter()
 
             # Write to disk + close
@@ -753,6 +765,16 @@ class RunInformation:
             self.appendLine( line )
             return self
 
+        def __writeClassesInUse(self):
+            """ Write Out the List of Classes Being Used by the pipeline """
+            strClassesInUse = PyToolsIO.Serializer.listToString(
+                self._data.getClassesInUse())
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                RunInformation.RunInfoIOKeys.KEY_CLASSES_IN_USE,
+                strClassesInUse)
+            self.appendLine(line)
+            return self
+
     class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
         
@@ -773,6 +795,7 @@ class RunInformation:
             self.__readPipelineInUseData()
             self.__readSampleShapesBatchSizes()
             self.__readNumSamples()
+            self.__readClassesInUse()
             return self._data
 
         # Private Interface
@@ -840,7 +863,15 @@ class RunInformation:
                 intAxisSizes = tuple([int(x) for x in strAxisSizes])
                 self._data._samplesShapes[ii] = intAxisSizes
             return self
-                    
+
+        def __readClassesInUse(self):
+            """ Read the List of All Classes Currently In Use """
+            strClassesInUse = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_CLASSES_IN_USE)[0]
+            listClassesInUse = PyToolsIO.Deserializer.stringToList(strClassesInUse,delimiter=',')
+            listClassesInUse = [int(x) for x in listClassesInUse]
+            self._data.setClassesInUse(listClassesInUse)
+            return self
+
     # Static Interface
 
     @staticmethod

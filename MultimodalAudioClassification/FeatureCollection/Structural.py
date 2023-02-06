@@ -101,6 +101,89 @@ class SampleIO:
         """ Debug representation of instance """
         return "Sample: " + self.getPathExtension() + " " + self.getTargetStr()
 
+
+class CategoryDatabase:
+    """ Store info related to each category """
+
+    __NUM_STARTING_CLASSES = 32
+
+    def __init__(self):
+        """ Constructor """
+        self._data = [None] * CategoryDatabase.__NUM_STARTING_CLASSES
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Getters and Setters
+
+    def getNumClassesTotal(self):
+        """ Get the number of Classes that are available """
+        return len(self._data)
+
+    def getNumClassesInUse(self):
+        """ Get the number of classes that are actually being used """
+        result = 0
+        for item in self._data:
+            if (item is not None):
+                result += 1
+        return result
+
+    def getClassesInUse(self):
+        """ Get a list of the classes that are in use """
+        result = []
+        for ii,item in self._data:
+            if (item is not None):
+                result.append(ii)
+        return result
+
+    def getDataForClass(self,classIndex):
+        """ Get the Data associated w/ a class index """
+        return self._data[classIndex]
+
+    # Public Interface
+
+    def updateWithBatchData(self,batch):
+        """ Use a batch of Samples to update the data """
+        for sample in batch: 
+            classInteger = sample.getTargetInt()
+            if (classInteger >= len(self._data)):
+                self.__increaseSizeTo(classInteger)
+            # Now Insert Data from that sample - check if it already exists
+            if (self._data[classInteger] is None):
+                className = sample.getTargetStr()
+                self._data[classInteger] = CategoryDatabase.__ClassDataStruct(
+                    classInteger,className)
+            # Now update the counter associuated with that class index 
+            self._data[classInteger].sampleCount += 1
+        return None
+
+    # Private Interface
+
+    def __increaseSizeTo(self,newSize):
+        """ Increase the size of the data array to new Size """
+        if (newSize < len(self._data)):
+            return None
+        # Otherwise - Increase the Size
+        numItemsToAdd = (newSize - len(self._data) + 1)
+        for _ in range(numItemsToAdd):
+            self._data.append(None)
+        return self
+
+    class __ClassDataStruct:
+        """ Private Nested Struct to store info related to each category """
+
+        def __init__(self,classIndex,className):
+            """ Constructor """
+            self.classIndex     = classIndex
+            self.className      = className
+            self.sampleCount    = 0
+
+        def __del__(self):
+            """ Destructor """
+            pass
+
+
 class SignalData:
     """ Contain all signal Data (NOT ENCAPSULATED) """
 

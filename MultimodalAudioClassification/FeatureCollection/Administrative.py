@@ -148,10 +148,8 @@ class FeatureCollectionApp:
 
     def shutdown(self):
         """ Run Application Shutdown Sequence """
-
         self._sampleManager.clean()
         self._rundataManager.clean()
-
         return self
     
     # Protected Interface
@@ -285,7 +283,7 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV1",
+            pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV2",
             batchSize=128,
             batchLimit=256,
             shuffleSeed=123456789)
