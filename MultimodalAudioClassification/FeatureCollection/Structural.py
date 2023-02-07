@@ -132,7 +132,7 @@ class CategoryDatabase:
     def getClassesInUse(self):
         """ Get a list of the classes that are in use """
         result = []
-        for ii,item in self._data:
+        for ii,item in enumerate(self._data):
             if (item is not None):
                 result.append(ii)
         return result
