@@ -56,7 +56,7 @@ class Serializer:
         """ Write Output Buffer to File """
         outFileStream = open(self._outputPath,"w")
         for line in self._buffer:
-            self._buffer.write(line + "\n")
+            outFileStream.write(line + "\n")
         outFileStream.close()
         return self
 

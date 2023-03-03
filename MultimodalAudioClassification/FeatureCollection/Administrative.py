@@ -148,10 +148,8 @@ class FeatureCollectionApp:
 
     def shutdown(self):
         """ Run Application Shutdown Sequence """
-
         self._sampleManager.clean()
         self._rundataManager.clean()
-
         return self
     
     # Protected Interface
@@ -286,9 +284,9 @@ class AppSettings:
         result = AppSettings(
             pathsInput=[],
             pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV1",
-            batchSize=128,
-            batchLimit=256,
-            shuffleSeed=123456789)
+            batchSize=256,
+            batchLimit=128,
+            shuffleSeed=987654321)
         result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         result.addInputPath("..\\..\\InputFiles\\Y2.csv")
         result.addInputPath("..\\..\\InputFiles\\Y3.csv")
