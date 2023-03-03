@@ -283,7 +283,7 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV2",
+            pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV3",
             batchSize=128,
             batchLimit=256,
             shuffleSeed=123456789)

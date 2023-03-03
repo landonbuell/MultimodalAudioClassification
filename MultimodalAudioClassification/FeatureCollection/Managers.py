@@ -121,7 +121,7 @@ class SampleManager (Manager):
         super().__init__()
         self._counter               = 0
         self._database              = np.array([],dtype=object)
-        self._classData             = Structural.CategoryDatabase()
+        self._classData             = PyToolsStructures.CategoryDatabase()
         self._fileParserCallback    = None
 
     def __del__(self):
@@ -155,7 +155,8 @@ class SampleManager (Manager):
             batch = np.append(batch, self._database[self._counter])
             self._counter += 1
             
-        # Batch is populated now
+        # Batch is populated now, add to data
+        self._classData.updateWithBatchData(batch)
         return batch
 
     def samplesRemaining(self):
@@ -181,6 +182,13 @@ class SampleManager (Manager):
         self.describe()
         return self
 
+    def clean(self):
+        """ OVERRIDE : Cleanup the Sample Manager after usage """
+        classDataOutputPath = os.path.join(self.getSettings().getOutputPath(),"classData.txt")
+        self._classData.export(classDataOutputPath)
+
+        return None
+
     # Private Interface
 
     def __readInputFiles(self):
@@ -196,7 +204,6 @@ class SampleManager (Manager):
             
             # Invoke the callback to parse the input file
             samplesInFile = self._fileParserCallback(path)
-            self._classData.updateWithBatchData(samplesInFile)
             self._database = np.append(self._database,samplesInFile)
 
             # Log Number of Samples
