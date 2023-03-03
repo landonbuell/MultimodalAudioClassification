@@ -479,6 +479,8 @@ class RunInformation:
         self._numSamplesExpt    = 0
         self._numSamplesRead    = 0
 
+        self._classesInUse      = []
+
 
     def __del__(self):
         """ Destructor for RunInformation Instance """
@@ -530,6 +532,10 @@ class RunInformation:
         """ Get the number of samples expected to process """
         return self._numSamplesExpt
 
+    def getClassesInUse(self):
+        """ Get a list of the classes that were passed through the pipelines """
+        return self._classesInUse[:]
+
     def setExpectedNumSamples(self,num):
         """ Set the number of samples expected to process """
         self._numSamplesExpt = num
@@ -551,6 +557,11 @@ class RunInformation:
     def setIsPipelineInUse(self,index,value):
         """ Set T/F if pipeline at index is in use """
         self._pipelinesInUse[index] = value
+        return self
+
+    def setClassesInUse(self,classesInUse):
+        """ Set a List of the Classes that passed through the pipelines """
+        self._classesInUse = classesInUse[:]
         return self
 
     # Public Interface
@@ -649,6 +660,7 @@ class RunInformation:
         KEY_BATCH_SIZES         = "BatchSizes"
         KEY_EXPECTED_SAMPLES    = "ExpectedSamples"
         KEY_ACTUAL_SAMPLES      = "ActualSamples"
+        KEY_CLASSES_IN_USE      = "ClassesInUse"
 
     class __RunInformationSerializer(PyToolsIO.Serializer):
         """ Class to serialize Run Information Instance"""
@@ -672,7 +684,7 @@ class RunInformation:
             self.__writePipelineInUseData()
             self.__writeSampleShapesBatchSizes()
             self.__writeNumSamples()
-
+            self.__writeClassesInUse()
             self._writeFooter()
 
             # Write to disk + close
@@ -753,6 +765,16 @@ class RunInformation:
             self.appendLine( line )
             return self
 
+        def __writeClassesInUse(self):
+            """ Write Out the List of Classes Being Used by the pipeline """
+            strClassesInUse = PyToolsIO.Serializer.listToString(
+                self._data.getClassesInUse())
+            line = PyToolsIO.Serializer.fmtKeyValPair(
+                RunInformation.RunInfoIOKeys.KEY_CLASSES_IN_USE,
+                strClassesInUse)
+            self.appendLine(line)
+            return self
+
     class __RunInformationDeserializer(PyToolsIO.Deserializer):
         """ Class to deserialize RunInformation instance """
         
@@ -773,6 +795,7 @@ class RunInformation:
             self.__readPipelineInUseData()
             self.__readSampleShapesBatchSizes()
             self.__readNumSamples()
+            self.__readClassesInUse()
             return self._data
 
         # Private Interface
@@ -840,7 +863,15 @@ class RunInformation:
                 intAxisSizes = tuple([int(x) for x in strAxisSizes])
                 self._data._samplesShapes[ii] = intAxisSizes
             return self
-                    
+
+        def __readClassesInUse(self):
+            """ Read the List of All Classes Currently In Use """
+            strClassesInUse = self._findInBuffer(RunInformation.RunInfoIOKeys.KEY_CLASSES_IN_USE)[0]
+            listClassesInUse = PyToolsIO.Deserializer.stringToList(strClassesInUse,delimiter=',')
+            listClassesInUse = [int(x) for x in listClassesInUse]
+            self._data.setClassesInUse(listClassesInUse)
+            return self
+
     # Static Interface
 
     @staticmethod
@@ -856,3 +887,185 @@ class RunInformation:
     def __repr__(self):
         """ Debug Representation of Instance """
         return str(self.__class__) + " @ " + str(hex(id(self)))
+
+class CategoryDatabase:
+    """ Store info related to each category """
+
+    __NUM_STARTING_CLASSES = 32
+
+    def __init__(self):
+        """ Constructor """
+        self._data = [None] * CategoryDatabase.__NUM_STARTING_CLASSES
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Getters and Setters
+
+    def getNumClassesTotal(self):
+        """ Get the number of Classes that are available """
+        return len(self._data)
+
+    def getNumClassesInUse(self):
+        """ Get the number of classes that are actually being used """
+        result = 0
+        for item in self._data:
+            if (item is not None):
+                result += 1
+        return result
+
+    def getClassesInUse(self):
+        """ Get a list of the classes that are in use """
+        result = []
+        for ii,item in enumerate(self._data):
+            if (item is not None):
+                result.append(ii)
+        return result
+
+    def getDataForClass(self,classIndex):
+        """ Get the Data associated w/ a class index """
+        return self._data[classIndex]
+
+    def setData(self,index,name,counts):
+        """ Override to set data at index """
+        if (index >= len(self._data)):
+                self.__increaseSizeTo(index)
+        self._data[index] = CategoryDatabase.__ClassDataStruct(
+            index,name)
+        self._data[index].sampleCount = counts
+        return self
+
+    # Public Interface
+
+    def updateWithBatchData(self,batch):
+        """ Use a batch of Samples to update the data """
+        for sample in batch: 
+            classInteger = sample.getTargetInt()
+            if (classInteger >= len(self._data)):
+                self.__increaseSizeTo(classInteger)
+            # Now Insert Data from that sample - check if it already exists
+            if (self._data[classInteger] is None):
+                className = sample.getTargetStr()
+                self._data[classInteger] = CategoryDatabase.__ClassDataStruct(
+                    classInteger,className)
+            # Now update the counter associuated with that class index 
+            self._data[classInteger].sampleCount += 1
+        return None
+
+    def serialize(self,exportPath: str):
+        """ Export the class data to the output folder """    
+        writer = CategoryDatabase.__CategoryDatabaseSerializer(self,exportPath)
+        writer.call()
+        return True
+
+    @staticmethod
+    def deserialize(importPath):
+        """ Read an instance in from disk """
+        reader = CategoryDatabase.__CategoryDatabaseDeserializer(importPath)
+        database = reader.call()
+        return database
+
+    # Private Interface
+
+    def __increaseSizeTo(self,newSize):
+        """ Increase the size of the data array to new Size """
+        if (newSize < len(self._data)):
+            return None
+        # Otherwise - Increase the Size
+        numItemsToAdd = (newSize - len(self._data) + 1)
+        for _ in range(numItemsToAdd):
+            self._data.append(None)
+        return self
+
+    class __ClassDataStruct:
+        """ Private Nested Struct to store info related to each category """
+
+        def __init__(self,classIndex,className):
+            """ Constructor """
+            self.classIndex     = classIndex
+            self.className      = className
+            self.sampleCount    = 0
+
+        def __del__(self):
+            """ Destructor """
+            pass
+
+        def __str__(self):
+            """ String Representation of Instance """
+            return "{0:<8}{1:<32}{2:<8}".format(
+                self.classIndex,self.className,self.sampleCount)
+
+    class __CategoryDatabaseSerializer(PyToolsIO.Serializer):
+        """ Class to help Serialize Class Data Information """
+
+        def __init__(self,data,outputPath):
+            """ Constructor """
+            super().__init__(data,outputPath)
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        def call(self):
+            """ Write to Output """
+            super().call()
+            self._writeHeader()
+            self.__writeAllRows()
+            self._writeFooter()
+            self._writeBufferToPath()
+            return True
+
+        def __writeAllRows(self):
+            """ Write Each Element of the Array out """
+            for ii,item in enumerate(self._data):
+                if (item is None):
+                    continue
+                self.appendLine(str(item))
+            return self
+
+    class __CategoryDatabaseDeserializer(PyToolsIO.Deserializer):
+        """ Class to help Deserialize Class Data Information """
+
+        def __init__(self,path):
+            """ Constructor """
+            super().__init__(path)
+            self._data = CategoryDatabase()
+
+        def __del__(self):
+            """ Destructor """
+            super().__del__()
+
+        def call(self):
+            """ OVERRIDE: Read from disk """
+            super().call()
+            self.__readAll()
+            return self._data
+
+        def __readAll(self):
+            """ Read through input list """
+            for line in self._buffer:
+                if (line.startswith("<") or line.startswith("-")):
+                    continue
+                # Tokenize
+                lineTokens = line.split()
+                if (len(lineTokens != 3)):
+                    continue
+                # Parse Out Data
+                classInt = int(lineTokens[0])
+                classStr = lineTokens[1]
+                sampleCount = int(lineTokens[2])
+                self._data.setData(classInt,classStr,sampleCount)
+            # Done Populating
+            return None
+
+    # Dunder Methods
+
+    def __iter__(self):
+        """ Forward Iterator """
+        for item in self._data:
+            if (item is None):
+                continue
+            yield item
+
+

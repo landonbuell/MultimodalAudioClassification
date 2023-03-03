@@ -121,6 +121,7 @@ class SampleManager (Manager):
         super().__init__()
         self._counter               = 0
         self._database              = np.array([],dtype=object)
+        self._classData             = PyToolsStructures.CategoryDatabase()
         self._fileParserCallback    = None
 
     def __del__(self):
@@ -132,6 +133,10 @@ class SampleManager (Manager):
     def getDatabaseSize(self):
         """ Get the Size of the Database """
         return len(self._database)
+
+    def getClassDatabase(self):
+        """ Get the Info for the processed classes """
+        return self._classData
 
     def getNextBatch(self):
         """ Get the next Batch of Samples """
@@ -150,7 +155,8 @@ class SampleManager (Manager):
             batch = np.append(batch, self._database[self._counter])
             self._counter += 1
             
-        # Batch is populated now
+        # Batch is populated now, add to data
+        self._classData.updateWithBatchData(batch)
         return batch
 
     def samplesRemaining(self):
@@ -175,6 +181,13 @@ class SampleManager (Manager):
         self.__shuffle()
         self.describe()
         return self
+
+    def clean(self):
+        """ OVERRIDE : Cleanup the Sample Manager after usage """
+        classDataOutputPath = os.path.join(self.getSettings().getOutputPath(),"classData.txt")
+        self._classData.serialize(classDataOutputPath)
+
+        return None
 
     # Private Interface
 
@@ -307,8 +320,11 @@ class RundataManager(Manager):
     def clean(self):
         """ Run Cleaning method on Instance """
         super().clean()
+ 
+        # Store that classes that were processed
+        classesInUse = self.getSampleManager().getClassDatabase().getClassesInUse()
+        self._runInfo.setClassesInUse(classesInUse)
 
-     
         # Serialize the run info 
         runInfoOutputPath = os.path.join(self.getSettings().getOutputPath() ,"runInfo.txt")
         self._runInfo.serialize(runInfoOutputPath)
