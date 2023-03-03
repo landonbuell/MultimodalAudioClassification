@@ -36,10 +36,12 @@ if __name__ == "__main__":
     OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allsamplesV1"
 
     runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
+    NUM_CLASSES = 4
 
     # Multilayer Perceptron Experiment
     inputShapeMlp = runInfo.getSampleShapeOfPipeline(0)
-    modelMLP = NeuralNetworks.NeuralNetworkBuilders
+    modelMLP = NeuralNetworks.NeuralNetworkPresets.getDefaultModelMultilayerPerceptron(
+        inputShapeMlp,
 
     # Convolutional Neural Network Experiment
 

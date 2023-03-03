@@ -93,6 +93,25 @@ class NeuralNetworkBuilders:
         x = tf.keras.Model(inputs=modelInput,outputs=x,name="ConvolutionalNeuralNetwork")
         return x
 
+
+class NeuralNetworkPresets:
+    """ Static Class of Neural networks that are preset """
+
+    def getDefaultModelMultilayerPerceptron(inputShape,numClasses,name):
+        """ Get the Default Multilayer Perceptron for Training/Testing """
+        denseLayers    = [64,128,128,64]
+        optimizer       = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9,beta_2=0.999,epsilon=1e-8)
+        objective       = tf.keras.losses.CategoricalCrossentroy()
+        metrics         = [tf.keras.Accuracy(), tf.keras.Precision(), tf.keras.Recall()]
+
+        modelMLP = NeuralNetworkBuilders.getMultiLayerPerceptron(inputShape,denseLayers,numClasses)
+        modelMLP.compile(optimizer=optimizer,loss=objective,metrics=metrics)
+        return modelMLP
+
+    def getDefaultModelConvolutionalNeuralNetwork(inputShape,numClasses,name):
+        """
+
+
     @staticmethod
     def getDefaultHybridModel(shapeInputA,shapeInputB,numClasses,name):
         """ Get the Default Hybrid Model for Training/Testing """
