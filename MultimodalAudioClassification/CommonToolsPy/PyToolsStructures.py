@@ -929,6 +929,8 @@ class CategoryDatabase:
 
     def setData(self,index,name,counts):
         """ Override to set data at index """
+        if (index >= len(self._data)):
+                self.__increaseSizeTo(index)
         self._data[index] = CategoryDatabase.__ClassDataStruct(
             index,name)
         self._data[index].sampleCount = counts
@@ -1016,7 +1018,9 @@ class CategoryDatabase:
 
         def __writeAllRows(self):
             """ Write Each Element of the Array out """
-            for ii,item in range(self._data):
+            for ii,item in enumerate(self._data):
+                if (item is None):
+                    continue
                 self.appendLine(str(item))
             return self
 
@@ -1054,5 +1058,14 @@ class CategoryDatabase:
                 self._data.setData(classInt,classStr,sampleCount)
             # Done Populating
             return None
+
+    # Dunder Methods
+
+    def __iter__(self):
+        """ Forward Iterator """
+        for item in self._data:
+            if (item is None):
+                continue
+            yield item
 
 

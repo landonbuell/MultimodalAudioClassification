@@ -185,7 +185,7 @@ class SampleManager (Manager):
     def clean(self):
         """ OVERRIDE : Cleanup the Sample Manager after usage """
         classDataOutputPath = os.path.join(self.getSettings().getOutputPath(),"classData.txt")
-        self._classData.export(classDataOutputPath)
+        self._classData.serialize(classDataOutputPath)
 
         return None
 
