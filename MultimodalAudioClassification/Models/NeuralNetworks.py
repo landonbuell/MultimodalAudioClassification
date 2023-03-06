@@ -61,7 +61,7 @@ class NeuralNetworkBuilders:
                                       name=layerName)(x)
         # If Num Outputs specified
         if (shapeOutput is not None):
-            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax',name='outputMLP')
+            x = tf.keras.layers.Dense(units=shapeOutput,activation='softmax',name='outputMLP')(x)
 
         # Build the Model
         x = tf.keras.Model(inputs=modelInput,outputs=x,name="MultilayerPerceptron")
@@ -96,20 +96,25 @@ class NeuralNetworkBuilders:
 
 class NeuralNetworkPresets:
     """ Static Class of Neural networks that are preset """
-
+    
+    @staticmethod
     def getDefaultModelMultilayerPerceptron(inputShape,numClasses,name):
         """ Get the Default Multilayer Perceptron for Training/Testing """
         denseLayers    = [64,128,128,64]
         optimizer       = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9,beta_2=0.999,epsilon=1e-8)
-        objective       = tf.keras.losses.CategoricalCrossentroy()
-        metrics         = [tf.keras.Accuracy(), tf.keras.Precision(), tf.keras.Recall()]
+        objective       = tf.keras.losses.CategoricalCrossentropy()
+        metrics         = [tf.keras.metrics.Accuracy(),
+                           tf.keras.metrics.Precision(),
+                           tf.keras.metrics.Recall()]
 
         modelMLP = NeuralNetworkBuilders.getMultiLayerPerceptron(inputShape,denseLayers,numClasses)
         modelMLP.compile(optimizer=optimizer,loss=objective,metrics=metrics)
         return modelMLP
 
+    @staticmethod
     def getDefaultModelConvolutionalNeuralNetwork(inputShape,numClasses,name):
-        """
+        """ """
+        pass
 
 
     @staticmethod

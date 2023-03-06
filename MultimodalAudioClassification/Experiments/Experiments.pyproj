@@ -25,6 +25,7 @@
     <Compile Include="Experiments.py" />
     <Compile Include="KFoldsCrossValidation.py" />
     <Compile Include="main.py" />
+    <Compile Include="ModelParams.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>

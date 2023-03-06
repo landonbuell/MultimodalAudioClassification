@@ -122,7 +122,7 @@ class __BaseExperiment:
     def __initializeModel(self):
         """ Initialize the Neural Network Model """
         randomState = self._seed
-        self._model = self._modelLoaderCallback.__call__(randomState)
+        self._model = self._modelLoaderCallback.__call__(self)
         return self
 
     def __loadBatch(self,batchIndex):
@@ -134,10 +134,10 @@ class __BaseExperiment:
         """ Determine which batches will be used for training/testing """
         totalNumBatches = self._runInfo.getNumBatches()
         numTrainBatches = int(totalNumBatches * self._trainSize)
-
-        batchIndicies = np.random.shuffle(np.arange(totalNumBatches))
-        self._trainingBatches = batchIndicies[0:numTrainBatches]
-        self._testingBatches = batchIndicies[numTrainBatches:]
+        batches = np.arange(totalNumBatches)
+        np.random.shuffle(batches)
+        self._trainingBatches = batches[0:numTrainBatches]
+        self._testingBatches = batches[numTrainBatches:]
         return self
 
     def __preprocessFeatures(self,X):
@@ -188,4 +188,26 @@ class __BaseExperiment:
 
 class MultilayerPerceptronExperiment(__BaseExperiment):
     """ Train + Test Multilater perceptron """
-    pass
+    
+    def __init__(self,
+                 runInfo,
+                 outputPath,
+                 trainSize=0.8,
+                 numIters=1,              
+                 seed=123456789):
+        """ Constructor """
+        super().__init__(runInfo,
+                         outputPath,
+                         modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadMultilayerPerceptron,
+                         dataloaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatch,
+                         pipelines=[0],
+                         trainSize=trainSize,
+                         numIters=numIters,
+                         seed=seed)
+
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
+
+
+
