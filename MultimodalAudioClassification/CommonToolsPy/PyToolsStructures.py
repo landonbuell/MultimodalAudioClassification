@@ -633,6 +633,24 @@ class RunInformation:
 
         return result
 
+    def loadSingleBatchFromPipelines(self,batchIndex,pipelineIndices):
+        """ Load Samples from Batch for all pipelines """
+        result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
+        totalNumSamples = self._batchSizes[batchIndex]
+        for index in pipelineIndices:
+            if (self._pipelinesInUse[index] == False):
+                # This pipeline is not in use
+                continue
+            # If it is in use...
+            pathX = self.__getPathToFile(index,batchIndex,"X")
+            pathY = self.__getPathToFile(index,batchIndex,"Y")
+            sampleShape = self._samplesShapes[index]
+            # Run the deserializer
+            result[index] = DesignMatrix.deserialize(
+                pathX,pathY,totalNumSamples,sampleShape)
+        # Result Array is Populated - Return now
+        return result
+
     # Private Interface
 
     def __getPathToFile(self,pipelineIndex,batchIndex,strID):

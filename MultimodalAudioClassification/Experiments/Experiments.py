@@ -15,7 +15,11 @@ import os
 
 import numpy as np
 
+import ExperimentCallbacks
+import ModelParams
+
 import PyToolsStructures
+
 
     #### CONSTANTS ####
 
@@ -28,22 +32,32 @@ class __BaseExperiment:
     def __init__(self,
                  runInfo,
                  outputPath,
-                 model,
-                 dataloaderCallback,
-                 numIters=1,
+                 modelLoaderCallback,   # <model> = modelLoaderCallback.__call__(self,randomSeed)
+                 dataloaderCallback,    # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
+                 pipelines,
+                 trainSize=0.8,
+                 numIters=1,              
                  seed=123456789):
         """ Constructor """
         self._runInfo       = runInfo
         self._outputPath    = os.path.abspath(outputPath)
         
-        self._model         = model
-        self._dataCallback  = dataloaderCallback
-
+        self._modelLoaderCallback   = modelLoaderCallback
+        self._dataLoaderCallback    = dataloaderCallback
+        
         self._numIters      = numIters
         self._seed          = seed
 
+        self._pipelines     = pipelines
+        self._trainSize     = trainSize
+
+        self._model     = None
+        self._fitParams = ModelParams.TensorFlowFitModelParams()
+
         self._trainingBatches   = np.array([],dtype=np.int32)
         self._testingBatches    = np.array([],dtype=np.int32)
+
+        self._trainingHistories = []
         
     def __del__(self):
         """ Destructor """
@@ -52,6 +66,14 @@ class __BaseExperiment:
 
         
     # Getters and Setters
+
+    def getRunInfo(self):
+        """ Return the RunInfo Structure """
+        return self._runInfo
+
+    def getPipelines(self):
+        """ Return a list of the pipelines to load """
+        return self._pipelines
 
     # Public Interface
 
@@ -73,7 +95,7 @@ class __BaseExperiment:
 
             # Initialize Model + Train Test Split
             self.__initializeModel()
-            self.__executeTrainTestSplit()
+            self.__registerTrainTestBatches()
 
             # Load + Train the Model
             self.__runLoadAndTrainSequence()
@@ -96,55 +118,54 @@ class __BaseExperiment:
         return self
 
     # Protected Interface
-
-    def _loadSamplesFrom(self):
-        """ VIRTUAL - Load Data for training """
-        batchesToLoad = []
-        for ii in range(self._batchesAtOnce):
-            batchIndex = self._batchesRemaining.pop()
-            batchesToLoad.append(batchIndex)
-
-        return (X,y)
-
-    def _trainModel(self,X,y):
-        """ VIRTUAL - Train the model with the provided data """
-
-
-        return self
-    
-    def _testModel(self,X,y):
-        """ VIRTUAL - Test the model on the provided data """
-
-        return self
-
-    # Private Interface
-
-    def __resetState(self):
-        """ Reset the state of the experiment """
-        self._randomSeed += 1
-        np.random.seed(self._randomSeed)
-
-        self._trainingBatches   = []
-        self._testingBatches    = []
-
-        return self
     
     def __initializeModel(self):
         """ Initialize the Neural Network Model """
-        self._model = self._config.initializeModel()
+        randomState = self._seed
+        self._model = self._modelLoaderCallback.__call__(randomState)
         return self
 
-    def __executeTrainTestSplit(self):
-        """ Perform train-test split on batches """
-        self._trainingBatches   = self._config.sendTrainBatches(self._runInfo)
-        self._testingBatches    = self._config.sendTestBatches(self._runInfo)
+    def __loadBatch(self,batchIndex):
+        """ Load + Return a Batch of Data """
+        X,Y = self._dataLoaderCallback.__call__(self,batchIndex)
+        return (X,Y)
+
+    def __registerTrainTestBatches(self):
+        """ Determine which batches will be used for training/testing """
+        totalNumBatches = self._runInfo.getNumBatches()
+        numTrainBatches = int(totalNumBatches * self._trainSize)
+
+        batchIndicies = np.random.shuffle(np.arange(totalNumBatches))
+        self._trainingBatches = batchIndicies[0:numTrainBatches]
+        self._testingBatches = batchIndicies[numTrainBatches:]
         return self
+
+    def __preprocessFeatures(self,X):
+        """ Apply a Standard Scaler to Inputs X """
+        return X
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
-        for batch in self._trainingBatches:
-            designMatrices = None
+        for batchIndex in self._trainingBatches:
+            X,Y = self.__loadBatch(batchIndex)
+            X = self.__preprocessFeatures(X)
 
+            # Fit The Batch
+            self._fitParams.batchSize = X.shape[0]
+            self._fitParams.epochs = 4
+
+            # Fit the Model
+            trainingHistory = self._model.fit(
+                x=X,
+                y=Y,
+                batchSize=self._fitParams.batchSize,
+                epochs=self._fitParams.epochs,
+                verbose=self._fitParams.verbose,
+                callbacks=self._fitParams.callbacks,
+                shuffle=self._fitParams.shuffle)
+            self._trainingHistories.append(trainingHistory)
+
+        # Done 
         return self
 
     def __runLoadAndTestSequence(self):
@@ -156,27 +177,15 @@ class __BaseExperiment:
         return self
 
 
-class CrossValidationFoldExperiment(__BaseExperiment):
-    """ Experiment to be used as a apart of a X-Validation set """
+    def __resetState(self):
+        """ Reset the State of the experiment in between iterations """
+        self._seed * (2.0/3.0)
+        self._model = None
+        self._trainingBatches   = np.array([],dtype=np.int32)
+        self._testingBatches    = np.array([],dtype=np.int32)
+        self._trainingHistories.clear()
+        return self
 
-    def __init__(self,
-                 runInfo,
-                 outputPath,
-                 model,
-                 dataloaderCallback,
-                 foldIndex,
-                 numIters=1,
-                 seed=123456789):
-        """ Constructor """
-        super().__init__(runInfo,
-                         outputPath,
-                         model,
-                         dataloaderCallback,
-                         numIters,
-                         seed)
-        self._foldIndex = foldIndex
-        
-    def __del__(self):
-        """ Destructor """
-        super().__del__()
-
+class MultilayerPerceptronExperiment(__BaseExperiment):
+    """ Train + Test Multilater perceptron """
+    pass

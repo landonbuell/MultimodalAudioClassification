@@ -157,7 +157,7 @@ class SignalData:
 
     def getSampleSpace(self):
         """ Get the Sample Spacing """
-        return (1/self._sampleRate)
+        return (1.0 /self._sampleRate)
 
     def getNumAnalysisFramesTime(self):
         """ Get the Number of Time Series analysis frames """
