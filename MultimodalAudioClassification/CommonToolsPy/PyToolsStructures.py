@@ -546,6 +546,10 @@ class RunInformation:
         """ Get a list of the classes that were passed through the pipelines """
         return self._classesInUse[:]
 
+    def getNumClasses(self):
+        """ get the Number of classes """
+        return np.max(self._classesInUse) + 1
+
     def setExpectedNumSamples(self,num):
         """ Set the number of samples expected to process """
         self._numSamplesExpt = num

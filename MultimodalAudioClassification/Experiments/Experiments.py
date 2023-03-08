@@ -53,11 +53,13 @@ class __BaseExperiment:
 
         self._model     = None
         self._fitParams = ModelParams.TensorFlowFitModelParams()
+        self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
 
         self._trainingBatches   = np.array([],dtype=np.int32)
         self._testingBatches    = np.array([],dtype=np.int32)
 
         self._trainingHistories = []
+        self._trainingMetrics = ModelParams.ModelTrainingMetrics()
         
     def __del__(self):
         """ Destructor """
@@ -75,6 +77,10 @@ class __BaseExperiment:
         """ Return a list of the pipelines to load """
         return self._pipelines
 
+    def updateTrainingMetricsWithLog(self,batchLog):
+        """ Return the structure of training metrics """
+        self._trainingMetrics.updateWithBatchLog(batchLog)
+
     # Public Interface
 
     def registerTrainingBatches(self,batches):
@@ -91,11 +97,11 @@ class __BaseExperiment:
     def run(self):
         """ Run the Experiment """
 
-        for ii in range(self._numIters):
+        # Initialize Model + Train Test Split
+        self.__initializeModel()
+        self.__registerTrainTestBatches()
 
-            # Initialize Model + Train Test Split
-            self.__initializeModel()
-            self.__registerTrainTestBatches()
+        for ii in range(self._numIters):
 
             # Load + Train the Model
             self.__runLoadAndTrainSequence()
@@ -151,14 +157,14 @@ class __BaseExperiment:
             X = self.__preprocessFeatures(X)
 
             # Fit The Batch
-            self._fitParams.batchSize = X.shape[0]
-            self._fitParams.epochs = 4
+            self._fitParams.batchSize = X[0].shape[0]
+            self._fitParams.epochs = 1
 
             # Fit the Model
             trainingHistory = self._model.fit(
                 x=X,
                 y=Y,
-                batchSize=self._fitParams.batchSize,
+                batch_size=self._fitParams.batchSize,
                 epochs=self._fitParams.epochs,
                 verbose=self._fitParams.verbose,
                 callbacks=self._fitParams.callbacks,
@@ -174,6 +180,9 @@ class __BaseExperiment:
 
     def __exportExperimentDetails(self,iterCounter):
         """ Export the Details of the experient """
+        # Export Data + Plots on Train Sequence
+        # Export Data + Plots on Test Sequence
+        # Export Model to Disk
         return self
 
 
