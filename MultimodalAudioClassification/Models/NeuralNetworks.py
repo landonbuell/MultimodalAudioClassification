@@ -113,9 +113,20 @@ class NeuralNetworkPresets:
 
     @staticmethod
     def getDefaultModelConvolutionalNeuralNetwork(inputShape,numClasses,name):
-        """ """
-        pass
-
+        """ Get the Default Convolutional Neural Network for Training / Testing """
+        filterSizes     = [64,64,64]
+        kernelSizes     = [(3,3),(3,3),(3,3)]
+        poolSizes       = [(3,3),(3,3),(3,3)]
+        denseLayers    = [64,128,128,64]
+        optimizer       = tf.keras.optimizers.Adam(learning_rate=0.01,beta_1=0.9,beta_2=0.999,epsilon=1e-8)
+        objective       = tf.keras.losses.CategoricalCrossentropy()
+        metrics         = [tf.keras.metrics.Accuracy(),
+                           tf.keras.metrics.Precision(),
+                           tf.keras.metrics.Recall()]
+        modelCNN = NeuralNetworkBuilders.getConvolutional2D(inputShape,
+                        filterSizes,kernelSizes,poolSizes,denseLayers,numClasses)
+        modelCNN.compile(optimizer=optimizer,loss=objective,metrics=metrics)
+        return modelCNN
 
     @staticmethod
     def getDefaultHybridModel(shapeInputA,shapeInputB,numClasses,name):

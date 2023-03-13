@@ -33,17 +33,23 @@ class __BaseExperiment:
                  runInfo,
                  outputPath,
                  modelLoaderCallback,   # <model> = modelLoaderCallback.__call__(self,randomSeed)
-                 dataloaderCallback,    # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
+                 trainDataLoaderCallback,    # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
+                 testDataLoaderCallback,
                  pipelines,
                  trainSize=0.8,
-                 numIters=1,              
+                 numIters=1,    
+                 epochsPerBatch=2,
                  seed=123456789):
         """ Constructor """
         self._runInfo       = runInfo
         self._outputPath    = os.path.abspath(outputPath)
+
+        if (os.path.isdir(self._outputPath) == False):
+            os.makedirs(self._outputPath)
         
-        self._modelLoaderCallback   = modelLoaderCallback
-        self._dataLoaderCallback    = dataloaderCallback
+        self._modelLoaderCallback       = modelLoaderCallback
+        self._trainDataLoaderCallback   = trainDataLoaderCallback
+        self._testDataLoaderCallback    = testDataLoaderCallback
         
         self._numIters      = numIters
         self._seed          = seed
@@ -52,21 +58,25 @@ class __BaseExperiment:
         self._trainSize     = trainSize
 
         self._model     = None
+
         self._fitParams = ModelParams.TensorFlowFitModelParams()
         self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
+        self._fitParams.epochs = epochsPerBatch
+        self._predictParams = ModelParams.TensorFlowPredictModelParams()
+        self._predictParams.callbacks.append(ExperimentCallbacks.TestingLoggerCallback(self))
 
         self._trainingBatches   = np.array([],dtype=np.int32)
         self._testingBatches    = np.array([],dtype=np.int32)
 
         self._trainingHistories = []
-        self._trainingMetrics = ModelParams.ModelTrainingMetrics()
+        self._trainingMetrics   = ModelParams.ModelTrainingMetrics()
+        self._testingMetrics    = ModelParams.ModelTestingMetrics(runInfo.getNumClasses())
         
     def __del__(self):
         """ Destructor """
         self._runInfo   = None
         self._model     = None
 
-        
     # Getters and Setters
 
     def getRunInfo(self):
@@ -78,8 +88,14 @@ class __BaseExperiment:
         return self._pipelines
 
     def updateTrainingMetricsWithLog(self,batchLog):
-        """ Return the structure of training metrics """
+        """ Use a batch log to update training metric data """
         self._trainingMetrics.updateWithBatchLog(batchLog)
+        return None
+
+    def updateTestingPredictionsWithLog(self,batchLog):
+        """ Use a batch log to update prediction data """
+        self._testingMetrics.updateWithBatchLog(batchLog)
+        return None
 
     # Public Interface
 
@@ -93,7 +109,6 @@ class __BaseExperiment:
         self._testingBatches = np.append(self._testingBatches,batches)
         return self
 
-
     def run(self):
         """ Run the Experiment """
 
@@ -101,16 +116,14 @@ class __BaseExperiment:
         self.__initializeModel()
         self.__registerTrainTestBatches()
 
-        for ii in range(self._numIters):
-
-            # Load + Train the Model
+        # Train the Model + Export the Data
+        for ii in range(self._numIters):          
             self.__runLoadAndTrainSequence()
+        self.__exportTrainingDetails()
 
-            # Load + Predict on the Model
-            self.__runLoadAndTestSequence()
-
-            # Export Experiment Details
-            self.__exportExperimentDetails(ii)
+        # Test the Model + Export the Data
+        self.__runLoadAndTestSequence()
+        self.__exportTestingDetails()
 
         return self
 
@@ -120,7 +133,6 @@ class __BaseExperiment:
 
     def predictWithModel(self,X):
         """ Run predictions on Model """
-
         return self
 
     # Protected Interface
@@ -131,10 +143,15 @@ class __BaseExperiment:
         self._model = self._modelLoaderCallback.__call__(self)
         return self
 
-    def __loadBatch(self,batchIndex):
+    def __loadTrainBatch(self,batchIndex):
         """ Load + Return a Batch of Data """
-        X,Y = self._dataLoaderCallback.__call__(self,batchIndex)
+        X,Y = self._trainDataLoaderCallback.__call__(self,batchIndex)
         return (X,Y)
+
+    def __loadTestBatch(self,batchIndex):
+        """ Load + Return a Batch of Data """
+        X,y = self._testDataLoaderCallback.__call__(self,batchIndex)
+        return (X,y)
 
     def __registerTrainTestBatches(self):
         """ Determine which batches will be used for training/testing """
@@ -153,12 +170,11 @@ class __BaseExperiment:
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
         for batchIndex in self._trainingBatches:
-            X,Y = self.__loadBatch(batchIndex)
+            X,Y = self.__loadTrainBatch(batchIndex)
             X = self.__preprocessFeatures(X)
 
-            # Fit The Batch
+            # Set any fit params
             self._fitParams.batchSize = X[0].shape[0]
-            self._fitParams.epochs = 1
 
             # Fit the Model
             trainingHistory = self._model.fit(
@@ -176,15 +192,36 @@ class __BaseExperiment:
 
     def __runLoadAndTestSequence(self):
         """ Run data loading/testing sequence """
+        for batchIndex in self._testingBatches:
+            X,Y_truth = self.__loadTestBatch(batchIndex)
+            X = self.__preprocessFeatures(X)
+
+            # Set any predict Params
+            self._predictParams.batchSize = X[0].shape[0]
+            
+            # predict
+            Y_preds = self._model.predict(
+                x=X,
+                batch_size=self._predictParams.batchSize,
+                callbacks=self._predictParams.callbacks)
+            self._testingMetrics.updateWithPredictionData(Y_truth,Y_preds)
+
+        # Done
         return self
 
-    def __exportExperimentDetails(self,iterCounter):
-        """ Export the Details of the experient """
-        # Export Data + Plots on Train Sequence
-        # Export Data + Plots on Test Sequence
-        # Export Model to Disk
+    def __exportTrainingDetails(self):
+        """ Export the Details of the Training Process """
+        frame = self._trainingMetrics.toDataFrame()
+        exportPath = os.path.join(self._outputPath,"trainingHistory.csv")
+        frame.to_csv(exportPath)
         return self
 
+    def __exportTestingDetails(self):
+        """ Export the Details of the Testing Process """
+        frame = self._testingMetrics.toDataFrame()
+        exportPath = os.path.join(self._outputPath,"testResults.csv")
+        frame.to_csv(exportPath)
+        return self
 
     def __resetState(self):
         """ Reset the State of the experiment in between iterations """
@@ -208,8 +245,33 @@ class MultilayerPerceptronExperiment(__BaseExperiment):
         super().__init__(runInfo,
                          outputPath,
                          modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadMultilayerPerceptron,
-                         dataloaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatch,
+                         trainDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTraining,
+                         testDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTesting,
                          pipelines=[0],
+                         trainSize=trainSize,
+                         numIters=numIters,
+                         seed=seed)
+
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
+
+class ConvolutionalNeuralNetworkExperiment(__BaseExperiment):
+    """ Train + Test Multilater perceptron """
+    
+    def __init__(self,
+                 runInfo,
+                 outputPath,
+                 trainSize=0.8,
+                 numIters=1,              
+                 seed=123456789):
+        """ Constructor """
+        super().__init__(runInfo,
+                         outputPath,
+                         modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadConvolutionalNeuralNetwork,
+                         trainDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTraining,
+                         testDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTesting,
+                         pipelines=[1],
                          trainSize=trainSize,
                          numIters=numIters,
                          seed=seed)
