@@ -21,12 +21,11 @@ import Preprocessors
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
-    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1_processedV1"
+    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV1"
     runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
     # Create + Fit the Scaler Instance
-    scaler = Preprocessors.StandardScaler(runInfo,OUTPUT_PATH)
+    scaler = Preprocessors.StandardScaler(runInfo)
     scaler.fit()
 
 
