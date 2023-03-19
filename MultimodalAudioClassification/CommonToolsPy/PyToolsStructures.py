@@ -12,8 +12,14 @@ Date:           April 2022
 
 import os
 import numpy as np
+import string
 
 import PyToolsIO
+
+        #### CONSTANTS ####
+
+LETTERS_UPPER_CASE = list(string.ascii_uppercase)
+LETTERS_LOWER_CASE = list(string.ascii_lowercase)
 
         #### FUNCTION DEFINITIONS ####
 
@@ -528,6 +534,10 @@ class RunInformation:
         """ Get the size of particular index(es) of batches """
         return self._batchSizes[index]
 
+    def getNumBatches(self):
+        """ Get the number of batched processed """
+        return len(self._batchSizes)
+
     def getExpectedNumSamples(self):
         """ Get the number of samples expected to process """
         return self._numSamplesExpt
@@ -535,6 +545,10 @@ class RunInformation:
     def getClassesInUse(self):
         """ Get a list of the classes that were passed through the pipelines """
         return self._classesInUse[:]
+
+    def getNumClasses(self):
+        """ get the Number of classes """
+        return np.max(self._classesInUse) + 1
 
     def setExpectedNumSamples(self,num):
         """ Set the number of samples expected to process """
@@ -599,14 +613,15 @@ class RunInformation:
         """ Load Samples from Batch for all pipelines """
         result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
         totalNumSamples = self._batchSizes[batchIndex]
-        for ii in range(len(result)):
-            if (self._pipelinesInUse[ii] == False):
+        for pipelineIndex in range(len(result)):
+            if (self._pipelinesInUse[pipelineIndex] == False):
                 # This pipeline is not in use
                 continue
             # If it is in use...
-            pathX = self.__getPathToFile(ii,batchIndex,"X")
-            pathY = self.__getPathToFile(ii,batchIndex,"Y")
-            sampleShape = self._samplesShapes[ii]
+            pipelineIndexLetter = LETTERS_UPPER_CASE[pipelineIndex]
+            pathX = self.__getPathToFile(pipelineIndexLetter,batchIndex,"x")
+            pathY = self.__getPathToFile(pipelineIndexLetter,batchIndex,"y")
+            sampleShape = self._samplesShapes[pipelineIndex]
             # Run the deserializer
             result[ii] = DesignMatrix.deserialize(
                 pathX,pathY,totalNumSamples,sampleShape)
@@ -615,7 +630,7 @@ class RunInformation:
 
     def loadMultipleBatches(self,batchIndices):
         """ Load Samples from multiple batches in all pipelines """
-        result = [None for x in RunInformation.DEFAULT_NUM_PIPELINES]
+        result = [None for x in range(RunInformation.DEFAULT_NUM_PIPELINES)]
         totalNumSamples = 0
         for batchIndex in batchIndices:
             totalNumSamples += self._batchSizes[batchIndex]
@@ -629,13 +644,38 @@ class RunInformation:
 
         return result
 
+    def loadSingleBatchFromPipelines(self,batchIndex,pipelineIndices):
+        """ Load Samples from Batch for all pipelines """
+        result = [None for x in range(RunInformation.DEFAULT_NUM_PIPELINES)]
+        totalNumSamples = self._batchSizes[batchIndex]
+        for pipelineIndex in pipelineIndices:
+            if (self._pipelinesInUse[pipelineIndex] == False):
+                # This pipeline is not in use
+                continue
+            # If it is in use...
+            pipelineIndexLetter = LETTERS_UPPER_CASE[pipelineIndex]
+            pathX = self.__getPathToFeaturesFile(pipelineIndexLetter,batchIndex,"x")
+            pathY = self.__getPathToLabelsFile(batchIndex,"y")
+            sampleShape = self._samplesShapes[pipelineIndex]
+            # Run the deserializer
+            result[pipelineIndex] = DesignMatrix.deserialize(
+                pathX,pathY,totalNumSamples,sampleShape)
+        # Result Array is Populated - Return now
+        return result
+
     # Private Interface
 
-    def __getPathToFile(self,pipelineIndex,batchIndex,strID):
+    def __getPathToFeaturesFile(self,pipelineIndex,batchIndex,strID):
         """ Get a path to the batch of a particular pipeline """
-        fileName = "pipeline{0}Batch{1}{2}.bin".format(
-            pipelineIndex,batchIndex,strID)
-        return os.path.join(self._outputPath,fileName)
+        fileName = "batch{0}{1}-pipeline{2}.bin".format(
+            batchIndex,strID,pipelineIndex)
+        return os.path.join(self._pathOutput,fileName)
+
+    def __getPathToLabelsFile(self,batchIndex,strID):
+        """ Get a path to the batch of a particular pipeline """
+        fileName = "batch{0}{1}.bin".format(
+            batchIndex,strID)
+        return os.path.join(self._pathOutput,fileName)
 
     def __populateLargerMatrices(self,matricesA,matricesB,startIndex):
         """ Populate matrixA w/ contents of matrixB starting at index """

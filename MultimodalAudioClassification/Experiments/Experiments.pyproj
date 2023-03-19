@@ -21,8 +21,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ExperimentCallbacks.py" />
     <Compile Include="Experiments.py" />
+    <Compile Include="KFoldsCrossValidation.py" />
     <Compile Include="main.py" />
+    <Compile Include="ModelParams.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
@@ -34,6 +37,11 @@
     <ProjectReference Include="..\FeatureEngineering\FeatureEngineering.pyproj">
       <Name>FeatureEngineering</Name>
       <Project>{7265b8e0-1dc5-4fe0-a654-e9c4523b7a8d}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Models\Models.pyproj">
+      <Name>Models</Name>
+      <Project>{97232773-19c7-4add-9362-9269985a84cc}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
