@@ -31,10 +31,13 @@ LETTERS_LOWER_CASE = list(string.ascii_lowercase)
 class Preprocessor:
     """ Base class for all preprocessors """
 
-    def __init__(self,runInfo,outputPath):
+    def __init__(self,runInfo,outputFolder):
         """ Constructor """
         self._runInfo       = runInfo
-        self._outputPath    = outputPath
+        self._outputPath    = os.path.join(runInfo.getOutputPath(),outputFolder)
+
+        if (os.path.isdir(self._outputPath) == False):
+            os.makedirs(self._outputPath)
 
     def __del__(self):
         """ Destructor """
@@ -57,9 +60,9 @@ class StandardScaler(Preprocessor):
 
     __NAME    = "standardScaler"
     
-    def __init__(self,runInfo,outputPath):
+    def __init__(self,runInfo):
         """ Constructor """
-        super().__init__(runInfo,outputPath)
+        super().__init__(runInfo,StandardScaler.__NAME)
       
         self._params            = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
         self._featuresAtOnce    = 1024
@@ -70,8 +73,6 @@ class StandardScaler(Preprocessor):
         self._sampleCounter = 0
         self._sampleData    = np.empty(shape=sampleDataShape,dtype=np.float32)
 
-        if (os.path.isdir(self._outputPath) == False):
-            os.makedirs(self._outputPath)
 
     def __del__(self):
         """ Destructor """
@@ -81,7 +82,7 @@ class StandardScaler(Preprocessor):
 
     def getOutFile(self,pipelineIndex):
         """ Get the output file for a particular pipeline """
-        fileName = "pipeline{0}-{1}.txt".format(pipelineIndex,StandardScaler.__NAME) 
+        fileName = "pipeline{0}.txt".format(pipelineIndex) 
         result = os.path.join(self._outputPath,fileName)
         return result
 
@@ -141,8 +142,8 @@ class StandardScaler(Preprocessor):
         featureStartIndex = 0
         featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
 
-        numLoops = np.ceil(self._featuresAtOnce/numFeaturesInPipeline)
-        self.__printProcessingFeaturesMessage(pipelineIndex,featureStartIndex,featureStopIndex)
+        #numLoops = np.ceil(self._featuresAtOnce/numFeaturesInPipeline)
+        #self.__printProcessingFeaturesMessage(pipelineIndex,featureStartIndex,featureStopIndex)
 
         # Process a Group of Features
         while (featureStartIndex < numFeaturesInPipeline):
