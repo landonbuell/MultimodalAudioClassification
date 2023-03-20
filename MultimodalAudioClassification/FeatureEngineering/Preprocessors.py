@@ -114,8 +114,13 @@ class StandardScaler(Preprocessor):
 
     def applyFitToMatrix(self,designMatrix,pipelineIndex):
         """ Apply Fit Params to Design Matrix """
-
-
+        fitParams = self._params[pipelineIndex]
+        if (fitParams.numFeatures != designMatrix.shape[-1]):
+            msg = "Expected {0} features but got {1}".format(fitParams.numFeatures,designMatrix.shape[-1])
+            raise RuntimeError(msg)
+        designMatrix = (designMatrix[ii] -  fitParams.means)
+        means = np.mean(designMatrix,axis=0)
+        varis = np.var(designMatrix,axis=0)
         return self
 
     def exportParams(self,pipelineIndex):
@@ -207,7 +212,6 @@ class StandardScaler(Preprocessor):
             featureStartIndex += self._featuresAtOnce
             featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
             
-
         # All Groups of Features Are processed
         self.exportParams(pipelineIndex)
         return self

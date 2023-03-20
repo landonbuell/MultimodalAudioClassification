@@ -33,10 +33,11 @@ class __BaseExperiment:
     def __init__(self,
                  runInfo,
                  outputPath,
-                 modelLoaderCallback,   # <model> = modelLoaderCallback.__call__(self,randomSeed)
-                 trainDataLoaderCallback,    # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
+                 modelLoaderCallback,       # <model> = modelLoaderCallback.__call__(self,randomSeed)
+                 trainDataLoaderCallback,   # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
                  testDataLoaderCallback,
-                 pipelines,
+                 preprocessCallbacks=[],
+                 pipelines=[],
                  trainSize=0.8,
                  numIters=1,    
                  epochsPerBatch=2,
@@ -51,7 +52,8 @@ class __BaseExperiment:
         self._modelLoaderCallback       = modelLoaderCallback
         self._trainDataLoaderCallback   = trainDataLoaderCallback
         self._testDataLoaderCallback    = testDataLoaderCallback
-        
+        self._preprocessCallbacks       = preprocessCallbacks
+
         self._numIters      = numIters
         self._seed          = seed
 
@@ -174,6 +176,9 @@ class __BaseExperiment:
         if (len(designMatrices) != len(self._pipelines)):
             msg = "Inconsistent number of pipleines + provided design matrices."
             raise RuntimeError(msg)
+        # Apply scaler
+        for (matrix,pipelineIndex) in zip(designMatrices,self._pipelines):
+            self._scaler.applyFitToMatrix(matrix,pipelineIndex)
         return designMatrices
 
     def __runLoadAndTrainSequence(self):
