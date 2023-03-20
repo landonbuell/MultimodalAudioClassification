@@ -19,6 +19,7 @@ import ExperimentCallbacks
 import ModelParams
 
 import PyToolsStructures
+import Preprocessors
 
 
     #### CONSTANTS ####
@@ -58,6 +59,9 @@ class __BaseExperiment:
         self._trainSize     = trainSize
 
         self._model     = None
+        self._scaler    = Preprocessors.StandardScaler(runInfo)
+        for pipelineIndex in self._pipelines:
+            self._scaler.loadParams(pipelineIndex)
 
         self._fitParams = ModelParams.TensorFlowFitModelParams()
         self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
@@ -136,6 +140,8 @@ class __BaseExperiment:
         return self
 
     # Protected Interface
+
+    # Private Interface
     
     def __initializeModel(self):
         """ Initialize the Neural Network Model """
@@ -163,9 +169,12 @@ class __BaseExperiment:
         self._testingBatches = batches[numTrainBatches:]
         return self
 
-    def __preprocessFeatures(self,X):
-        """ Apply a Standard Scaler to Inputs X """
-        return X
+    def __preprocessFeatures(self,designMatrices):
+        """ Apply a Standard Scaler to Inputs designMatrices """
+        if (len(designMatrices) != len(self._pipelines)):
+            msg = "Inconsistent number of pipleines + provided design matrices."
+            raise RuntimeError(msg)
+        return designMatrices
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """

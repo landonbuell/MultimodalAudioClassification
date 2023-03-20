@@ -44,6 +44,14 @@ class Preprocessor:
 
     # Public Interface
 
+    def getRunInfo(self):
+        """ Get ref to run info """
+        return self._runInfo
+
+    def getOutputPath(self) -> str:
+        """ Get output path """
+        self._outputPath
+
     # Protected Interface
 
     def _getNumFeaturesInPipeline(self,pipelineIndex):
@@ -86,6 +94,16 @@ class StandardScaler(Preprocessor):
         result = os.path.join(self._outputPath,fileName)
         return result
 
+    def getParams(self,pipelineIndex):
+        """ Get Parameters for pipeline """
+        return self._params[pipelineIndex]
+
+    def setParams(self,params,pipelineIndex):
+        """ Set Parameters for pipelineIndex """
+        self._params[pipelineIndex] = params
+        return self
+
+
     # Public Interface
 
     def fit(self,pipelines=None):
@@ -93,6 +111,12 @@ class StandardScaler(Preprocessor):
         if (pipelines is None):
             pipelines = self._runInfo.getPipelinesInUse()
         return self.__fitHelper(pipelines)
+
+    def applyFitToMatrix(self,designMatrix,pipelineIndex):
+        """ Apply Fit Params to Design Matrix """
+
+
+        return self
 
     def exportParams(self,pipelineIndex):
         """ Export Learned Params to Disk for later use """
@@ -102,6 +126,23 @@ class StandardScaler(Preprocessor):
             line = "{0:<16}{1:<32}{2:<32}\n".format(ii,m,v)
             outStream.write(line)
         outStream.close()
+        return self
+
+    def loadParams(self,pipelineIndex):
+        """ Import Learned Params to Disk for later use """
+        numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
+        newParams = StandardScaler.__ScalerParams(numFeatures)
+        inputStream = open(self.getOutFile(pipelineIndex),"r")
+        while True:
+            line = inputStream.readline()
+            if not line:
+                break
+            lineTokens = line.split()
+            index = int(lineTokens[0])
+            newParams.means[index] = np.float32(lineTokens[1])
+            newParams.varis[index] = np.float32(lineTokens[2])
+        inputStream.close()
+        self._params[pipelineIndex] = newParams
         return self
 
     # Private Interface
