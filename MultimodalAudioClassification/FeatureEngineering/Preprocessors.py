@@ -118,9 +118,9 @@ class StandardScaler(Preprocessor):
         if (fitParams.numFeatures != designMatrix.shape[-1]):
             msg = "Expected {0} features but got {1}".format(fitParams.numFeatures,designMatrix.shape[-1])
             raise RuntimeError(msg)
-        designMatrix = (designMatrix[ii] -  fitParams.means)
+        designMatrix = (designMatrix -  fitParams.means) / np.sqrt(fitParams.varis)
         means = np.mean(designMatrix,axis=0)
-        varis = np.var(designMatrix,axis=0)
+        varis = np.std(designMatrix,axis=0)
         return self
 
     def exportParams(self,pipelineIndex):
@@ -243,8 +243,8 @@ class StandardScaler(Preprocessor):
         allVaris = np.var(self._sampleData,axis=0)
 
         for ii,featureIndex in enumerate(featureMask):
-            self._params[pipelineIndex].means[featureIndex] = allMeans[ii]
-            self._params[pipelineIndex].varis[featureIndex] = allVaris[ii]
+            self._params[pipelineIndex].means[featureIndex] = allMeans[featureIndex]
+            self._params[pipelineIndex].varis[featureIndex] = allVaris[featureIndex]
 
         return self
         
