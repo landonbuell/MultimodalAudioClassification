@@ -268,8 +268,7 @@ class StandardScalerWrapper(Preprocessor):
         pipelinesInUse = self._runInfo.getPipelinesInUse()
         for pipelineIndex in pipelinesInUse:
             self._scalers[pipelineIndex] = preprocessing.StandardScaler(copy=False)
-
-
+        
     def __del__(self):
         """ Destructor """
         pass
@@ -298,7 +297,7 @@ class StandardScalerWrapper(Preprocessor):
         """ Apply Fit Params to Design Matrix """
         scaler = self._scalers[pipelineIndex]
         designMatrixScaled = designMatrix.copy()
-        designMatrixScaled =  scaler.transform(designMatrixScaled)
+        scaler.transform(designMatrixScaled)
         return designMatrixScaled
 
     def exportParams(self,pipelineIndex):
@@ -315,8 +314,6 @@ class StandardScalerWrapper(Preprocessor):
     def loadParams(self,pipelineIndex):
         """ Import Learned Params to Disk for later use """
         numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
-        self._scalers[pipelineIndex] = preprocessing.StandardScaler(copy=False)
-
         means = np.zeros(shape=(numFeatures,),dtype=np.float32)
         varis = np.zeros(shape=(numFeatures,),dtype=np.float32)
 
@@ -331,8 +328,13 @@ class StandardScalerWrapper(Preprocessor):
             varis[index] = np.float32(lineTokens[2])
         inputStream.close()
         
-        self._scalers[pipelineIndex].mean_ = means
-        self._scalers[pipelineIndex].var_ = varis
+        newScaler = preprocessing.StandardScaler(copy=False)
+        newScaler.mean_  = means
+        newScaler.var_   = varis
+        newScaler.scale_ = np.sqrt(varis)
+        newScaler.n_features_in_ = numFeatures
+        newScaler.n_samples_seen_ = self._runInfo.getActualNumSamples()
+        self._scalers[pipelineIndex] = newScaler
         return self
 
     # Private Interface
