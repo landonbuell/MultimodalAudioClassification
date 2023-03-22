@@ -311,6 +311,25 @@ class StandardScalerWrapper(Preprocessor):
 
     def loadParams(self,pipelineIndex):
         """ Import Learned Params to Disk for later use """
+        numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
+        self._scalers[pipelineIndex] = preprocessing.StandardScaler(copy=False)
+
+        means = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        varis = np.zeros(shape=(numFeatures,),dtype=np.float32)
+
+        inputStream = open(self.getOutFile(pipelineIndex),"r")
+        while True:
+            line = inputStream.readline()
+            if not line:
+                break
+            lineTokens = line.split()
+            index = int(lineTokens[0])
+            means[index] = np.float32(lineTokens[1])
+            varis[index] = np.float32(lineTokens[2])
+        inputStream.close()
+        
+        self._scalers[pipelineIndex].mean_ = means
+        self._scalers[pipelineIndex].var_ = varis
         return self
 
     # Private Interface
