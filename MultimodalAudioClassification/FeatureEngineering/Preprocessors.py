@@ -63,14 +63,14 @@ class Preprocessor:
         return numFeatures
 
 
-class StandardScaler(Preprocessor):
+class CustomStandardScaler(Preprocessor):
     """ Apply Standard Scaling to Design Matrix """
 
     __NAME    = "standardScaler"
     
     def __init__(self,runInfo):
         """ Constructor """
-        super().__init__(runInfo,StandardScaler.__NAME)
+        super().__init__(runInfo,CustomStandardScaler.__NAME)
       
         self._params            = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
         self._featuresAtOnce    = 1024
@@ -130,7 +130,7 @@ class StandardScaler(Preprocessor):
     def loadParams(self,pipelineIndex):
         """ Import Learned Params to Disk for later use """
         numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
-        newParams = StandardScaler.__ScalerParams(numFeatures)
+        newParams = CustomStandardScaler.__ScalerParams(numFeatures)
         inputStream = open(self.getOutFile(pipelineIndex),"r")
         while True:
             line = inputStream.readline()
@@ -177,7 +177,7 @@ class StandardScaler(Preprocessor):
     def __processPipeline(self,pipelineIndex):
         """ Process all the Features in this pipeline """
         numFeaturesInPipeline = self._getNumFeaturesInPipeline(pipelineIndex)
-        self._params[pipelineIndex] = StandardScaler.__ScalerParams(numFeaturesInPipeline)
+        self._params[pipelineIndex] = CustomStandardScaler.__ScalerParams(numFeaturesInPipeline)
 
         featureStartIndex = 0
         featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
@@ -296,7 +296,10 @@ class StandardScalerWrapper(Preprocessor):
 
     def applyFitToMatrix(self,designMatrix,pipelineIndex):
         """ Apply Fit Params to Design Matrix """
-        return self
+        scaler = self._scalers[pipelineIndex]
+        designMatrixScaled = designMatrix.copy()
+        designMatrixScaled =  scaler.transform(designMatrixScaled)
+        return designMatrixScaled
 
     def exportParams(self,pipelineIndex):
         means = self._scalers[pipelineIndex].mean_

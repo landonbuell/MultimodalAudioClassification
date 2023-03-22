@@ -25,7 +25,7 @@ if __name__ == "__main__":
     runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
     # Create + Fit the Scaler Instance
-    #scaler = Preprocessors.StandardScaler(runInfo)
+    #scaler = Preprocessors.CustomStandardScaler(runInfo)
     #scaler.fit()
 
     # Create + Fit the Scaler Wrapper Instance 

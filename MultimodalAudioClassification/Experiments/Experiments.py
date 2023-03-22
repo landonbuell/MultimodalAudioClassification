@@ -61,7 +61,7 @@ class __BaseExperiment:
         self._trainSize     = trainSize
 
         self._model     = None
-        self._scaler    = Preprocessors.StandardScaler(runInfo)
+        self._scaler    = Preprocessors.StandardScalerWrapper(runInfo)
         for pipelineIndex in self._pipelines:
             self._scaler.loadParams(pipelineIndex)
 
@@ -171,15 +171,17 @@ class __BaseExperiment:
         self._testingBatches = batches[numTrainBatches:]
         return self
 
-    def __preprocessFeatures(self,designMatrices):
+    def __preprocessFeatures(self,designMatrices: list):
         """ Apply a Standard Scaler to Inputs designMatrices """
         if (len(designMatrices) != len(self._pipelines)):
             msg = "Inconsistent number of pipleines + provided design matrices."
             raise RuntimeError(msg)
         # Apply scaler
+        designMatricesScaled = []
         for (matrix,pipelineIndex) in zip(designMatrices,self._pipelines):
-            self._scaler.applyFitToMatrix(matrix,pipelineIndex)
-        return designMatrices
+            X = self._scaler.applyFitToMatrix(matrix,pipelineIndex)
+            designMatricesScaled.append(X)
+        return designMatricesScaled
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
