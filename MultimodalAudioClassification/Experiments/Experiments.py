@@ -39,7 +39,7 @@ class __BaseExperiment:
                  preprocessCallbacks=[],
                  pipelines=[],
                  trainSize=0.8,
-                 numIters=1,    
+                 numIters=8,    
                  epochsPerBatch=2,
                  seed=123456789):
         """ Constructor """
