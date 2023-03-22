@@ -124,6 +124,16 @@ class DesignMatrix:
 
     # Getters and Setters
 
+    @property
+    def means(self):
+        """ Get the mean of each feature """
+        return np.mean(self._data,axis=0)
+
+    @property
+    def varis(self):
+        """ GEt the variance of each feature """
+        return np.var(self._data,axis=0)
+
     def getShape(self):
         """ Get Total Shape of Design Matrix """
         shape = [self._numSamples]

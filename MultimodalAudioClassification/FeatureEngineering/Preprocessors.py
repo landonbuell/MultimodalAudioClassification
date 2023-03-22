@@ -44,6 +44,14 @@ class Preprocessor:
 
     # Public Interface
 
+    def getRunInfo(self):
+        """ Get ref to run info """
+        return self._runInfo
+
+    def getOutputPath(self) -> str:
+        """ Get output path """
+        self._outputPath
+
     # Protected Interface
 
     def _getNumFeaturesInPipeline(self,pipelineIndex):
@@ -55,14 +63,14 @@ class Preprocessor:
         return numFeatures
 
 
-class StandardScaler(Preprocessor):
+class CustomStandardScaler(Preprocessor):
     """ Apply Standard Scaling to Design Matrix """
 
     __NAME    = "standardScaler"
     
     def __init__(self,runInfo):
         """ Constructor """
-        super().__init__(runInfo,StandardScaler.__NAME)
+        super().__init__(runInfo,CustomStandardScaler.__NAME)
       
         self._params            = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
         self._featuresAtOnce    = 1024
@@ -86,6 +94,10 @@ class StandardScaler(Preprocessor):
         result = os.path.join(self._outputPath,fileName)
         return result
 
+    def getParams(self,pipelineIndex):
+        """ Get Parameters for pipeline """
+        return self._params[pipelineIndex]
+
     # Public Interface
 
     def fit(self,pipelines=None):
@@ -93,6 +105,17 @@ class StandardScaler(Preprocessor):
         if (pipelines is None):
             pipelines = self._runInfo.getPipelinesInUse()
         return self.__fitHelper(pipelines)
+
+    def applyFitToMatrix(self,designMatrix,pipelineIndex):
+        """ Apply Fit Params to Design Matrix """
+        fitParams = self._params[pipelineIndex]
+        if (fitParams.numFeatures != designMatrix.shape[-1]):
+            msg = "Expected {0} features but got {1}".format(fitParams.numFeatures,designMatrix.shape[-1])
+            raise RuntimeError(msg)
+        designMatrix = (designMatrix -  fitParams.means) / np.sqrt(fitParams.varis)
+        means = np.mean(designMatrix,axis=0)
+        varis = np.std(designMatrix,axis=0)
+        return self
 
     def exportParams(self,pipelineIndex):
         """ Export Learned Params to Disk for later use """
@@ -102,6 +125,23 @@ class StandardScaler(Preprocessor):
             line = "{0:<16}{1:<32}{2:<32}\n".format(ii,m,v)
             outStream.write(line)
         outStream.close()
+        return self
+
+    def loadParams(self,pipelineIndex):
+        """ Import Learned Params to Disk for later use """
+        numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
+        newParams = CustomStandardScaler.__ScalerParams(numFeatures)
+        inputStream = open(self.getOutFile(pipelineIndex),"r")
+        while True:
+            line = inputStream.readline()
+            if not line:
+                break
+            lineTokens = line.split()
+            index = int(lineTokens[0])
+            newParams.means[index] = np.float32(lineTokens[1])
+            newParams.varis[index] = np.float32(lineTokens[2])
+        inputStream.close()
+        self._params[pipelineIndex] = newParams
         return self
 
     # Private Interface
@@ -137,7 +177,7 @@ class StandardScaler(Preprocessor):
     def __processPipeline(self,pipelineIndex):
         """ Process all the Features in this pipeline """
         numFeaturesInPipeline = self._getNumFeaturesInPipeline(pipelineIndex)
-        self._params[pipelineIndex] = StandardScaler.__ScalerParams(numFeaturesInPipeline)
+        self._params[pipelineIndex] = CustomStandardScaler.__ScalerParams(numFeaturesInPipeline)
 
         featureStartIndex = 0
         featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
@@ -166,7 +206,6 @@ class StandardScaler(Preprocessor):
             featureStartIndex += self._featuresAtOnce
             featureStopIndex = min([featureStartIndex + self._featuresAtOnce,numFeaturesInPipeline])
             
-
         # All Groups of Features Are processed
         self.exportParams(pipelineIndex)
         return self
@@ -198,8 +237,8 @@ class StandardScaler(Preprocessor):
         allVaris = np.var(self._sampleData,axis=0)
 
         for ii,featureIndex in enumerate(featureMask):
-            self._params[pipelineIndex].means[featureIndex] = allMeans[ii]
-            self._params[pipelineIndex].varis[featureIndex] = allVaris[ii]
+            self._params[pipelineIndex].means[featureIndex] = allMeans[featureIndex]
+            self._params[pipelineIndex].varis[featureIndex] = allVaris[featureIndex]
 
         return self
         
@@ -217,134 +256,120 @@ class StandardScaler(Preprocessor):
         print(msg.format(pipelineID,start,stop))
         return None
          
-class StandardScalerWrapper:
+class StandardScalerWrapper(Preprocessor):
     """ Apply Standard Scaling to Design Matrix """
 
-    def __init__(self,numFeatures):
+    def __init__(self,runInfo):
         """ Constructor """
-        self._scaler = preprocessing.StandardScaler(copy=False)
+        super().__init__(runInfo,"standardScalerWrapper")
+        self._runInfo = runInfo
+        self._scalers = [None] * PyToolsStructures.RunInformation.DEFAULT_NUM_PIPELINES
 
-
+        pipelinesInUse = self._runInfo.getPipelinesInUse()
+        for pipelineIndex in pipelinesInUse:
+            self._scalers[pipelineIndex] = preprocessing.StandardScaler(copy=False)
+        
     def __del__(self):
         """ Destructor """
         pass
 
-    # Getters and Setters
+   # Getters and Setters
 
-    def getNumSampleSeen(self):
-        """ Return the number of samples seen """
-        return self._scaler.n_samples_seen_
+    def getOutFile(self,pipelineIndex):
+        """ Get the output file for a particular pipeline """
+        fileName = "pipeline{0}.txt".format(pipelineIndex) 
+        result = os.path.join(self._outputPath,fileName)
+        return result
 
-    def getIsFit(self):
-        """ Return T/F if scaler has been fit """
-        return bool(self._scaler.n_samples_seen_)
+    def getParams(self,pipelineIndex):
+        """ Get Parameters for pipeline """
+        return self._params[pipelineIndex]
 
-    def getNumFeatures(self):
-        """ Retutn the number of features seen """
-        return self._scaler.n_features_in_
+    # Public Interface
 
-    def getMeans(self):
-        """ Get the Means for each feature """
-        return self._scaler.mean_
+    def fit(self,pipelines=None):
+        """ Apply Standard scaler to all features """
+        if (pipelines is None):
+            pipelines = self._runInfo.getPipelinesInUse()
+        return self.__fitHelper(pipelines)
 
-    def getVaris(self):
-        """ Get the variances for each feature """
-        return self._scaler.var_
+    def applyFitToMatrix(self,designMatrix,pipelineIndex):
+        """ Apply Fit Params to Design Matrix """
+        scaler = self._scalers[pipelineIndex]
+        designMatrixScaled = designMatrix.copy()
+        scaler.transform(designMatrixScaled)
+        return designMatrixScaled
 
-    def getScale(self):
-        """ Get the scale factor for each feature """
-        return self._scaler.scale_
+    def exportParams(self,pipelineIndex):
+        means = self._scalers[pipelineIndex].mean_
+        varis = self._scalers[pipelineIndex].var_
+        outStream = open(self.getOutFile(pipelineIndex),"w")
+        for ii,(m,v) in enumerate(zip(means,varis)):
+            line = "{0:<16}{1:<32}{2:<32}\n".format(ii,m,v)
+            outStream.write(line)
+        outStream.close()
 
-    # Public InterfaceZ
-
-    def fit(self,designMatrix):
-        """ Fit the Design matrix """   
-        self._scaler.fit(designMatrix.getFeatures())
         return self
 
-    def call(self,designMatrix):
-        """ Apply Scale factor to design matrix """
-        X = self._scaler.transform(designMatrix.getFeatures())
-        designMatrix.setFeatures(X)
-        return X
+    def loadParams(self,pipelineIndex):
+        """ Import Learned Params to Disk for later use """
+        numFeatures = self._getNumFeaturesInPipeline(pipelineIndex)
+        means = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        varis = np.zeros(shape=(numFeatures,),dtype=np.float32)
 
-    def serialize(self,exportPath):
-        """ Write Params to Text File """
-        writer = StandardScalerWrapper.StandardScalerSerializer(self,exportPath)
-        success = writer.call()
-        return success
-
-    @staticmethod
-    def deserialize(importPath):
-        """ Read Params from Text File """
-        reader = StandardScalerWrapper.StandardScalerDeserializer(importPath)
-        result = reader.call()
-        return result
+        inputStream = open(self.getOutFile(pipelineIndex),"r")
+        while True:
+            line = inputStream.readline()
+            if not line:
+                break
+            lineTokens = line.split()
+            index = int(lineTokens[0])
+            means[index] = np.float32(lineTokens[1])
+            varis[index] = np.float32(lineTokens[2])
+        inputStream.close()
+        
+        newScaler = preprocessing.StandardScaler(copy=False)
+        newScaler.mean_  = means
+        newScaler.var_   = varis
+        newScaler.scale_ = np.sqrt(varis)
+        newScaler.n_features_in_ = numFeatures
+        newScaler.n_samples_seen_ = self._runInfo.getActualNumSamples()
+        self._scalers[pipelineIndex] = newScaler
+        return self
 
     # Private Interface
 
-    class StandardScalerSerializer(PyToolsIO.Serializer):
-        """ Class to Serialize StandardScaler """
+    def __fitHelper(self,pipelines):
+        """ helper for fitting """
+        self.__partialFitAllSamples(pipelines)
+        self.__exportParams()
+        return self
 
-        def __init__(self,data,path):
-            """ Constructor """
-            super().__init__(data,path)
+    def __partialFitAllSamples(self,pipelines):
+        """ Apply partial fit to all samples in dataset """
+        numBatches = self._runInfo.getNumBatches()
+        for batchIndex in range(numBatches):
+            msg = "Partial Fitting batch {0}/{1} ...".format(batchIndex,numBatches)
+            print(msg)
+            designMatrices = self._runInfo.loadSingleBatchFromPipelines(batchIndex,pipelines)
 
-        def __del__(self):
-            """ Destructor """
-            super().__del__()
+            for ii,matrix in enumerate(designMatrices):
+                if (matrix is None):
+                    continue
 
-        def call(self):
-            """ Run the serializer """
-            self._outFileStream = open(self._outputPath,"w")
+                # Extract Design Matrix and Apply Partial Fit
+                X = matrix.getFeatures()
+                self._scalers[ii].partial_fit(X)
+        return self
 
-            # Write Num Samples Seen
-            numSamples = str(self._data.getNumSampleSeen())
-            numFeatures = str(self._data.getNumFeatures())
-            self._outFileStream.write( numSamples + " " + numFeatures + "\n")
-
-            # Write Means + Variance
-            means = PyToolsIO.Serializer.listToString(self._data.getMeans())
-            varis = PyToolsIO.Serializer.listToString(self._data.getVaris())
-            scale = PyToolsIO.Serializer.listToString(self._data.getScale())
-            self._outFileStream.write( means + "\n" )
-            self._outFileStream.write( varis + "\n" )
-            self._outFileStream.write( scale + "\n" )
-
-            self._outFileStream.close()
-            return True
-
-    class StandardScalerDeserializer(PyToolsIO.Deserializer):
-        """ Class to Deserialize StandardScaler """
-
-        def __init__(self,path):
-            """ Constructor """
-            super().__init__(path)
-
-        def __del__(self):
-            """ Destructor """
-            super().__del__()
-
-        def call(self):
-            """ Run the Deserializer """
-            fileContents = self._inFileStream.readlines()
-            tokensLine0 = fileContents[0].split()
-            numSamples = int(tokensLine0[0])
-            numFeatures = int(tokensLine0[1])
-            means = PyToolsIO.Deserializer.stringToList(fileContents[1],delimiter=",",outType=float)
-            varis = PyToolsIO.Deserializer.stringToList(fileContents[2],delimiter=",",outType=float)
-            scale = PyToolsIO.Deserializer.stringToList(fileContents[3],delimiter=",",outType=float)
-
-            # Make the Standard Scaler Instance
-            self._data = StandardScalerWrapper(numFeatures)
-            self._data._scaler.n_samples_seen_  = numSamples
-            self._data._scaler.mean_            = means
-            self._data._scaler.var_             = varis
-            self._data._scaler.scale_           = scale
-
-            return self._data
-
-
+    def __exportParams(self):
+        """ Export Parameters """
+        for ii in range(len(self._scalers)):
+            if (self._scalers[ii] is None):
+                continue
+            # Export
+            self.exportParams(ii)
+        return
 
 
 

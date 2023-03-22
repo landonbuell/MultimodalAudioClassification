@@ -19,6 +19,7 @@ import ExperimentCallbacks
 import ModelParams
 
 import PyToolsStructures
+import Preprocessors
 
 
     #### CONSTANTS ####
@@ -32,12 +33,13 @@ class __BaseExperiment:
     def __init__(self,
                  runInfo,
                  outputPath,
-                 modelLoaderCallback,   # <model> = modelLoaderCallback.__call__(self,randomSeed)
-                 trainDataLoaderCallback,    # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
+                 modelLoaderCallback,       # <model> = modelLoaderCallback.__call__(self,randomSeed)
+                 trainDataLoaderCallback,   # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
                  testDataLoaderCallback,
-                 pipelines,
+                 preprocessCallbacks=[],
+                 pipelines=[],
                  trainSize=0.8,
-                 numIters=1,    
+                 numIters=8,    
                  epochsPerBatch=2,
                  seed=123456789):
         """ Constructor """
@@ -50,7 +52,8 @@ class __BaseExperiment:
         self._modelLoaderCallback       = modelLoaderCallback
         self._trainDataLoaderCallback   = trainDataLoaderCallback
         self._testDataLoaderCallback    = testDataLoaderCallback
-        
+        self._preprocessCallbacks       = preprocessCallbacks
+
         self._numIters      = numIters
         self._seed          = seed
 
@@ -58,6 +61,9 @@ class __BaseExperiment:
         self._trainSize     = trainSize
 
         self._model     = None
+        self._scaler    = Preprocessors.StandardScalerWrapper(runInfo)
+        for pipelineIndex in self._pipelines:
+            self._scaler.loadParams(pipelineIndex)
 
         self._fitParams = ModelParams.TensorFlowFitModelParams()
         self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
@@ -136,6 +142,8 @@ class __BaseExperiment:
         return self
 
     # Protected Interface
+
+    # Private Interface
     
     def __initializeModel(self):
         """ Initialize the Neural Network Model """
@@ -163,9 +171,17 @@ class __BaseExperiment:
         self._testingBatches = batches[numTrainBatches:]
         return self
 
-    def __preprocessFeatures(self,X):
-        """ Apply a Standard Scaler to Inputs X """
-        return X
+    def __preprocessFeatures(self,designMatrices: list):
+        """ Apply a Standard Scaler to Inputs designMatrices """
+        if (len(designMatrices) != len(self._pipelines)):
+            msg = "Inconsistent number of pipleines + provided design matrices."
+            raise RuntimeError(msg)
+        # Apply scaler
+        designMatricesScaled = []
+        for (matrix,pipelineIndex) in zip(designMatrices,self._pipelines):
+            X = self._scaler.applyFitToMatrix(matrix,pipelineIndex)
+            designMatricesScaled.append(X)
+        return designMatricesScaled
 
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
