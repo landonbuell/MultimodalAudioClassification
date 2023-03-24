@@ -36,7 +36,7 @@ class __BaseExperiment:
                  modelLoaderCallback,       # <model> = modelLoaderCallback.__call__(self,randomSeed)
                  trainDataLoaderCallback,   # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
                  testDataLoaderCallback,
-                 preprocessCallbacks=[],
+                 preprocessCallbacks=None,
                  pipelines=[],
                  trainSize=0.8,
                  numIters=8,    
@@ -50,9 +50,9 @@ class __BaseExperiment:
             os.makedirs(self._outputPath)
         
         self._modelLoaderCallback       = modelLoaderCallback
-        self._trainDataLoaderCallback   = trainDataLoaderCallback
-        self._testDataLoaderCallback    = testDataLoaderCallback
         self._preprocessCallbacks       = preprocessCallbacks
+        if (preprocessCallbacks is not None):
+            self._preprocessCallbacks = preprocessCallbacks[:]
 
         self._numIters      = numIters
         self._seed          = seed
@@ -78,6 +78,8 @@ class __BaseExperiment:
         self._trainingMetrics   = ModelParams.ModelTrainingMetrics()
         self._testingMetrics    = ModelParams.ModelTestingMetrics(runInfo.getNumClasses())
         
+        self._extraData = dict()    # <str> -> <any>
+
     def __del__(self):
         """ Destructor """
         self._runInfo   = None
@@ -102,6 +104,13 @@ class __BaseExperiment:
         """ Use a batch log to update prediction data """
         self._testingMetrics.updateWithBatchLog(batchLog)
         return None
+
+    def getExtraData(self,extraDataKey: str):
+        """ Fetch any additional data stored in this instance by key """
+        keys = self._extraData.keys()
+        if (extraDataKey not in keys):
+            return None
+        return self._extraData[extraDataKey]
 
     # Public Interface
 
@@ -149,17 +158,31 @@ class __BaseExperiment:
         """ Initialize the Neural Network Model """
         randomState = self._seed
         self._model = self._modelLoaderCallback.__call__(self)
+        if (self._model is None):
+            errMsg = "Got NoneType for model instance"
+            raise RuntimeError(errMsg)
         return self
 
     def __loadTrainBatch(self,batchIndex):
         """ Load + Return a Batch of Data """
-        X,Y = self._trainDataLoaderCallback.__call__(self,batchIndex)
+        pipelinesToLoad = self.getPipelines()
+        numClasses = self.getRunInfo().getNumClasses()
+        designMatrices = self.getRunInfo().loadSingleBatchFromPipelines(
+            batchIndex,pipelinesToLoad)
+        X = [designMatrices[ii].getFeatures() for ii in pipelinesToLoad]
+        Y = [designMatrices[ii].getLabels() for ii in pipelinesToLoad]
+        Y = [oneHotEncode(y,numClasses) for y in Y]
         return (X,Y)
 
     def __loadTestBatch(self,batchIndex):
         """ Load + Return a Batch of Data """
-        X,y = self._testDataLoaderCallback.__call__(self,batchIndex)
-        return (X,y)
+        pipelinesToLoad = self.getPipelines()
+        numClasses = self.getRunInfo().getNumClasses()
+        designMatrices = self.getRunInfo().loadSingleBatchFromPipelines(
+            batchIndex,pipelinesToLoad)
+        X = [designMatrices[ii].getFeatures() for ii in pipelinesToLoad]
+        Y = [designMatrices[ii].getLabels() for ii in pipelinesToLoad]
+        return (X,Y)
 
     def __registerTrainTestBatches(self):
         """ Determine which batches will be used for training/testing """
@@ -171,7 +194,7 @@ class __BaseExperiment:
         self._testingBatches = batches[numTrainBatches:]
         return self
 
-    def __preprocessFeatures(self,designMatrices: list):
+    def __applyStandardScaling(self,designMatrices: list):
         """ Apply a Standard Scaler to Inputs designMatrices """
         if (len(designMatrices) != len(self._pipelines)):
             msg = "Inconsistent number of pipleines + provided design matrices."
@@ -183,11 +206,18 @@ class __BaseExperiment:
             designMatricesScaled.append(X)
         return designMatricesScaled
 
+    def __executePreprocessingCallbacks(self,X: np.ndarray,Y: np.ndarray):
+        """ Execute the list of preprocessing callbacks """
+        for callback in self._preprocessCallbacks:
+            X,Y = callback.__call__(X,Y)
+        return X,Y
+
     def __runLoadAndTrainSequence(self):
         """ Run data loading/training sequence """
         for batchIndex in self._trainingBatches:
             X,Y = self.__loadTrainBatch(batchIndex)
-            X = self.__preprocessFeatures(X)
+            X = self.__applyStandardScaling(X)
+            X,Y = self.__executePreprocessingCallbacks(X,Y)
 
             # Set any fit params
             self._fitParams.batchSize = X[0].shape[0]
@@ -210,7 +240,8 @@ class __BaseExperiment:
         """ Run data loading/testing sequence """
         for batchIndex in self._testingBatches:
             X,Y_truth = self.__loadTestBatch(batchIndex)
-            X = self.__preprocessFeatures(X)
+            X = self.__applyStandardScaling(X)
+            X,Y = self.__executePreprocessingCallbacks(X,Y)
 
             # Set any predict Params
             self._predictParams.batchSize = X[0].shape[0]
@@ -236,7 +267,7 @@ class __BaseExperiment:
         """ Export the Details of the Testing Process """
         frame = self._testingMetrics.toDataFrame()
         exportPath = os.path.join(self._outputPath,"testResults.csv")
-        frame.to_csv(exportPath)
+        frame.to_csv(exportPath,index=None)
         return self
 
     def __resetState(self):
@@ -291,6 +322,8 @@ class ConvolutionalNeuralNetworkExperiment(__BaseExperiment):
                          trainSize=trainSize,
                          numIters=numIters,
                          seed=seed)
+        self._preprocessCallbacks.append(ExperimentCallbacks.DataPreprocessingCallbacks.reshapePipeline2Features)
+        self._extraData["inputShape"] =  
 
     def __del__(self):
         """ Destructor """
