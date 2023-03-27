@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Multilayer Perceptron Experiment
     mlpExp = Experiments.MultilayerPerceptronExperiment(
         runInfo,os.path.join(OUTPUT,"mlp"))
-    mlpExp.run()
+    #mlpExp.run()
     
 
     # Convolutional Neural Network Experiment

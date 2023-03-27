@@ -66,6 +66,8 @@ class __BaseExperiment:
         self._fitParams = ModelParams.TensorFlowFitModelParams()
         self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
         self._fitParams.epochs = epochsPerBatch
+        self._fitParams = 32
+
         self._predictParams = ModelParams.TensorFlowPredictModelParams()
         self._predictParams.callbacks.append(ExperimentCallbacks.TestingLoggerCallback(self))
 
@@ -218,13 +220,13 @@ class __BaseExperiment:
             X,Y = self.__executePreprocessingCallbacks(X,Y)
 
             # Set any fit params
-            self._fitParams.batchSize = X[0].shape[0]
+            #self._fitParams.batchSize = X[0].shape[0]
 
             # Fit the Model
             trainingHistory = self._model.fit(
                 x=X,
                 y=Y,
-                batch_size=self._fitParams.batchSize,
+                batch_size=self._fitParams.32,
                 epochs=self._fitParams.epochs,
                 verbose=self._fitParams.verbose,
                 callbacks=self._fitParams.callbacks,

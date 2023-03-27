@@ -69,7 +69,17 @@ class DataPreprocessingCallbacks:
     @staticmethod
     def reshapePipeline2Features(X,Y):
         """ Reshape the pipeline #2's Features """
-        X = np.reshape(X,newshae=(256,1115))
+        if (len(X) == 1):
+            batchSize = X[0].shape[0]
+            newShape = [batchSize] + [256,1115,1]
+            X[0] = np.reshape(X[0],newshape=newShape)
+        elif (len(X) >= 2):
+            batchSize = X[1].shape[0]
+            newShape = [batchSize] + [256,1115,1]
+            X[1] = np.reshape(X[1],newshape=(256,1115,1))
+        else:
+            errMsg = "Got empty input Array"
+            raise RuntimeError(errMsg)
         return X,Y
 
 
