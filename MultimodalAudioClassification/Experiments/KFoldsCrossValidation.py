@@ -24,8 +24,7 @@ class KFoldsCrossValidation:
                  runInfo,
                  outputPath,
                  numFolds,
-                 modelLoaderCallback,
-                 dataLoaderCallback,
+                 experiment,
                  seed=123456789):
         """ Constructor """
         self._runInfo       = runInfo
@@ -34,12 +33,12 @@ class KFoldsCrossValidation:
         self._numFolds      = numFolds
         self._folds         = [None] * self._numFolds
 
-        self._modelCallback = modelLoaderCallback
-        self._dataCallback  = dataLoaderCallback
+        self._currentExeriment = experiment
 
         self._seed          = seed
         np.random.seed(seed)
 
+        self.__validateRunInfo()
 
     def __del__(self):
         """ Destructor """
@@ -47,49 +46,57 @@ class KFoldsCrossValidation:
 
     # Getters and Setters
 
+
     # Public Interface
 
     def run(self):
         """ Run the K-Folds X-Validations """
-        self.__initFoldExperiments()
-        self.__assignBatchesToExperiments()
+        self.__initializeFolds()
+
+        for ii in range(self._numFolds):
+            self.__overrideExperimentOutputPath(ii)
+            self.__registerBatchesWithExperument(ii)
 
         return self
 
     # Private Interface
 
-    def __initFoldExperiments(self):
-        """ Initialize the Experiment within each fold """
-        for ii in range(self._numFolds):
-            iterSeed = (self._seed * ii)
-            foldOutpath = os.path.join(self._outputPath,"fold{0}".format(ii))
-            #foldModel = self._modelCallback.__call__(iterSeed)
-            foldModel = None
-            foldExperiment = Experiments.CrossValidationFoldExperiment(
-                runInfo=self._runInfo,
-                outputPath=foldOutpath,
-                model=foldModel,
-                dataloaderCallback=self._dataCallback,
-                foldIndex=ii,
-                numIters=1,
-                seed=iterSeed)
-            self._folds[ii] = foldExperiment
-        return self
+    def __validateRunInfo(self) -> None:
+        """ Make sure that the experiment runInfo is the same as the folds info """
+        if (self._currentExperiment.getRunInfo() is not self._runInfo):
+            # Must be the same runInfo instance 
+            errMsg = "Got two different runInfo structs for current experiment and folds experiments"
+            raise RuntimeError(errMsg)
+        return None
 
-    def __assignBatchesToExperiments(self):
-        """ Assign Batches to Each Experiment """
-        numBatches = self._runInfo.getNumBatches()
-        allBatches = np.arange(numBatches,dtype=np.int32)      
-        allBatches = np.random.permutation(allBatches)
-        splits = np.array_split(allBatches,self._numFolds)
-
-        # Use the Splits to populate the Train/Test Batches in the Folds
+    def __initializeFolds(self) -> None:
+        """ Determine which batches go with which folds """
+        batches = range(self._runInfo().getNumBatches())
         for ii in range(self._numFolds):
-            copyOfSplits = splits[:]
-            testBatches = copyOfSplits.pop(ii)
-            trainBatches = copyOfSplits
-            self._folds[ii].registerTestingBatches(testBatches)
-            self._folds[ii].registerTrainingBatches(trainBatches)
-       
-        # All Done! 
-        return self
+            self._folds[ii] = list()
+
+        # Build up the batches that go into each fold
+        while (len(batches > 0)):
+            for ii in range(self._numFolds):
+                batchIndex = batches.pop()
+                self._folds[ii].append(batchIndex)
+            # End for-loop
+        # End while-loop
+
+        return None
+
+    def __overrideExperimentOutputPath(self,foldIndex: int) -> None:
+        """ Override the output path for the current experiment """
+        oldOutputPath = self._currentExeriment.getOutputPath()
+        foldIndexText = "fold{0}".format(foldIndex)
+        newOutputPath = os.path.join(oldOutputPath,foldIndexText)
+        self._currentExeriment.setOutputPath(newOutputPath)
+        return None
+
+    def __registerBatchesWithExperument(self,foldIndex: int) -> None:
+        """ Set rhe training + Testing Batches w/ """
+
+
+
+
+
