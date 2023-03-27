@@ -34,8 +34,6 @@ class __BaseExperiment:
                  runInfo,
                  outputPath,
                  modelLoaderCallback,       # <model> = modelLoaderCallback.__call__(self,randomSeed)
-                 trainDataLoaderCallback,   # <(X,y)> = dataloaderCallback.__call__(self,batchIndex)
-                 testDataLoaderCallback,
                  preprocessCallbacks=None,
                  pipelines=[],
                  trainSize=0.8,
@@ -50,7 +48,7 @@ class __BaseExperiment:
             os.makedirs(self._outputPath)
         
         self._modelLoaderCallback       = modelLoaderCallback
-        self._preprocessCallbacks       = preprocessCallbacks
+        self._preprocessCallbacks       = []
         if (preprocessCallbacks is not None):
             self._preprocessCallbacks = preprocessCallbacks[:]
 
@@ -171,7 +169,7 @@ class __BaseExperiment:
             batchIndex,pipelinesToLoad)
         X = [designMatrices[ii].getFeatures() for ii in pipelinesToLoad]
         Y = [designMatrices[ii].getLabels() for ii in pipelinesToLoad]
-        Y = [oneHotEncode(y,numClasses) for y in Y]
+        Y = [ExperimentCallbacks.oneHotEncode(y,numClasses) for y in Y]
         return (X,Y)
 
     def __loadTestBatch(self,batchIndex):
@@ -241,7 +239,7 @@ class __BaseExperiment:
         for batchIndex in self._testingBatches:
             X,Y_truth = self.__loadTestBatch(batchIndex)
             X = self.__applyStandardScaling(X)
-            X,Y = self.__executePreprocessingCallbacks(X,Y)
+            X,Y_truth = self.__executePreprocessingCallbacks(X,Y_truth)
 
             # Set any predict Params
             self._predictParams.batchSize = X[0].shape[0]
@@ -292,8 +290,6 @@ class MultilayerPerceptronExperiment(__BaseExperiment):
         super().__init__(runInfo,
                          outputPath,
                          modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadMultilayerPerceptron,
-                         trainDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTraining,
-                         testDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTesting,
                          pipelines=[0],
                          trainSize=trainSize,
                          numIters=numIters,
@@ -316,14 +312,11 @@ class ConvolutionalNeuralNetworkExperiment(__BaseExperiment):
         super().__init__(runInfo,
                          outputPath,
                          modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadConvolutionalNeuralNetwork,
-                         trainDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTraining,
-                         testDataLoaderCallback=ExperimentCallbacks.DataLoaderCallbacks.loadPipelineBatchForTesting,
                          pipelines=[1],
                          trainSize=trainSize,
                          numIters=numIters,
                          seed=seed)
         self._preprocessCallbacks.append(ExperimentCallbacks.DataPreprocessingCallbacks.reshapePipeline2Features)
-        self._extraData["inputShape"] =  
 
     def __del__(self):
         """ Destructor """

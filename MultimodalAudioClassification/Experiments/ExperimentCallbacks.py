@@ -57,7 +57,7 @@ class ModelLoaderCallbacks:
         pipelineIndex = 1
         runInfo     = experiment.getRunInfo()
         #inputShape  = runInfo.getSampleShapeOfPipeline(pipelineIndex)
-        inputShape  = experiment.getExtraData("inputShape")
+        inputShape  = (256,1115,1)
         numClasses  = runInfo.getNumClasses()
         model = NeuralNetworks.NeuralNetworkPresets.getDefaultModelConvolutionalNeuralNetwork(
             inputShape,numClasses,"CNN")
