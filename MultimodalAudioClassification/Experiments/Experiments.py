@@ -24,6 +24,26 @@ import Preprocessors
 
     #### CONSTANTS ####
 
+    #### FUNCTION DEFINITIONS ####
+
+def runSingleMultilayerPercepton(runInfo,outputPath,seed=0):
+    """ Run + Export single instance of multilayer perceptron experiment """
+    experiment = MultilayerPerceptronExperiment(runInfo,outputPath,seed=seed)
+    experiment.run()
+    return None
+
+def runSingleConvolutionalNeuralNetworkExperiment(runInfo,outputPath,seed=0):
+    """ Run + Export single instance of convolutional neural network experiment """
+    experiment = ConvolutionalNeuralNetworkExperiment(runInfo,outputPath,seed=seed)
+    experiment.run()
+    return None
+
+def runSingleHybridNeuralNetworkExperiment(runInfo,outputPath,seed=0):
+    """ Run + Export single instace of Hybrid Neural Network experiment """
+    experiment = HybridNeuralNetworkExperiment(runInfo,outputPath,seed=seed)
+    experiment.run()
+    return None
+
 
     #### CLASS DEFINITIONS ####
 
@@ -66,7 +86,7 @@ class __BaseExperiment:
         self._fitParams = ModelParams.TensorFlowFitModelParams()
         self._fitParams.callbacks.append(ExperimentCallbacks.TrainingLoggerCallback(self))
         self._fitParams.epochs = epochsPerBatch
-        self._fitParams = 32
+        self._fitParams.batchSize = 32
 
         self._predictParams = ModelParams.TensorFlowPredictModelParams()
         self._predictParams.callbacks.append(ExperimentCallbacks.TestingLoggerCallback(self))
@@ -226,7 +246,7 @@ class __BaseExperiment:
             trainingHistory = self._model.fit(
                 x=X,
                 y=Y,
-                batch_size=self._fitParams.32,
+                batch_size=self._fitParams.batchSize,
                 epochs=self._fitParams.epochs,
                 verbose=self._fitParams.verbose,
                 callbacks=self._fitParams.callbacks,
@@ -286,7 +306,7 @@ class MultilayerPerceptronExperiment(__BaseExperiment):
                  runInfo,
                  outputPath,
                  trainSize=0.8,
-                 numIters=1,              
+                 numIters=4,              
                  seed=123456789):
         """ Constructor """
         super().__init__(runInfo,
@@ -302,13 +322,13 @@ class MultilayerPerceptronExperiment(__BaseExperiment):
         super().__del__()
 
 class ConvolutionalNeuralNetworkExperiment(__BaseExperiment):
-    """ Train + Test Multilater perceptron """
+    """ Train + Test Convolutional Neural Network """
     
     def __init__(self,
                  runInfo,
                  outputPath,
                  trainSize=0.8,
-                 numIters=1,              
+                 numIters=4,              
                  seed=123456789):
         """ Constructor """
         super().__init__(runInfo,
@@ -324,5 +344,27 @@ class ConvolutionalNeuralNetworkExperiment(__BaseExperiment):
         """ Destructor """
         super().__del__()
 
+class HybridNeuralNetworkExperiment(__BaseExperiment):
+    """ Train + Test Hybrid Neural Network """
+
+    def __init__(self,
+                 runInfo,
+                 outputPath,
+                 trainSize=0.8,
+                 numIters=4,
+                 seed=123456789):
+        """ Constructor """
+        super().__init__(runInfo,
+                         outputPath,
+                         modelLoaderCallback=ExperimentCallbacks.ModelLoaderCallbacks.loadHybridNeuralNetwork,
+                         pipelines=[0,1],
+                         trainSize=trainSize,
+                         numIters=numIters,
+                         seed=seed)
+        self._preprocessCallbacks.append(ExperimentCallbacks.DataPreprocessingCallbacks.reshapePipeline2Features)
+
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
 
 

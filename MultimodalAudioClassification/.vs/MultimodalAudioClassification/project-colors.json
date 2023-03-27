@@ -25,7 +25,12 @@
       "ProjectGuid": "35b127db-9c87-41c3-a9a0-84b432ea764b",
       "DisplayName": "Experiments",
       "ColorIndex": 3
+    },
+    "7265b8e0-1dc5-4fe0-a654-e9c4523b7a8d": {
+      "ProjectGuid": "7265b8e0-1dc5-4fe0-a654-e9c4523b7a8d",
+      "DisplayName": "FeatureEngineering",
+      "ColorIndex": 4
     }
   },
-  "NextColorIndex": 4
+  "NextColorIndex": 5
 }

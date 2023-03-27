@@ -25,6 +25,8 @@ import Experiments
 
     #### MAIN EXECUTABLE ####
 
+def runSingleMultilayerPercepto
+
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
@@ -32,18 +34,7 @@ if __name__ == "__main__":
     OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allSamplesV2"
 
     runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
-    NUM_CLASSES = 4
-
-    # Multilayer Perceptron Experiment
-    mlpExp = Experiments.MultilayerPerceptronExperiment(
-        runInfo,os.path.join(OUTPUT,"mlp"))
-    #mlpExp.run()
-    
-
-    # Convolutional Neural Network Experiment
-    cnnExp = Experiments.ConvolutionalNeuralNetworkExperiment(
-        runInfo,os.path.join(OUTPUT,"cnn"))
-    cnnExp.run()
+    NUM_CLASSES = 32
 
     # Multimodal Nueral Network Experiment
 

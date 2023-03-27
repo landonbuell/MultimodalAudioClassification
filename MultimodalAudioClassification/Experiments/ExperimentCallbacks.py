@@ -63,6 +63,18 @@ class ModelLoaderCallbacks:
             inputShape,numClasses,"CNN")
         return model
 
+    @staticmethod
+    def loadHybridNeuralNetwork(experiment):
+        """ Load in Hybrid NeuralNetwork """
+        runInfo = experiment.getRunInfo()
+        inputShapeA = runInfo.getSampleShapeOfPipeline(0)
+        inputShapeB = (256,1115,1)
+        numClasses = runInfo.getNumClasses()
+        model = NeuralNetworks.NeuralNetworkPresets.getDefaultHybridModel(
+            inputShapeA,inputShapeB,numClasses,"HNN")
+        return model
+            
+
 class DataPreprocessingCallbacks:
     """ Static class with methods used to preprocess data """
 
