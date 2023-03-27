@@ -393,6 +393,7 @@ class FeatureCollectionPipeline:
         self._frameParams   = Structural.AnalysisFramesParameters()
         self._signalPreprocessCallbacks = []
         self._featureVectorPostProcessCallbacks = []
+        self._reshapeCallback = None
 
     def __del__(self):
         """ FeatureCollectionPipeline Destructor """
@@ -413,6 +414,24 @@ class FeatureCollectionPipeline:
         for item in self:
             result += item.getReturnSize()
         return result
+
+    def getReturnShape(self):
+        """ Get the return SHAPE of the pipleine """
+        expectedSize = self.getReturnSize()
+        if (self._reshapeCallback is None):
+            # No reshapper callbacl
+            return expectedSize
+        # Run the callback + Compare that new shape has the right number of elements
+        intendedShape = self._reshapeCallback.__call__(self)
+        intendedShapeSize = 1
+        for axisSize in intendedShape:
+            intendedShapeSize *= axisSize
+        if (intendedShapeSize != expectedSize):
+            errMsg = "Expected rehape shape to have {0} items but new shape {1} has {2} items".format(
+                expectedSize,intendedShape,intendedShapeSize)
+            raise RuntimeError(errMsg)
+        # Othrwise, we're all good - return the new inteded shape
+        return intendedShape
 
     def getAnalysisFrameParams(self):
         """ Get the analysis frame parameters for this pipeline """
@@ -460,6 +479,11 @@ class FeatureCollectionPipeline:
     def registerFeatureVectorPostprocessCallback(self,callback):
         """ Register a Callback for post processing a signal """
         self._featureVectorPostProcessCallbacks.append(callback)
+        return self
+
+    def registerReshapeCallback(self,callback):
+        """ Register a callback that will indicate the intended shape of the pipleine output """
+        self._reshapeCallback = callback
         return self
 
     def resize(self,newSize):
@@ -613,6 +637,6 @@ class FeatureCollectionPipeline:
             pipeline.getAnalysisFrameParams() )
 
         #pipeline.registerFeatureVectorPostprocessCallback( Callbacks.FeatureVectorPostProcessCallbacks.plotSpectrogram )
-
+        pipeline.registerReshapeCallback( Structural.reshapePipelineOutputForSpectrogram )
         # Return the resulting pipeline
         return pipeline

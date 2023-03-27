@@ -603,7 +603,7 @@ class RunInformation:
             return self
         # Is Valid Pipeline...
         self._pipelinesInUse[index] = True
-        self._samplesShapes[index]  = ( pipeline.getReturnSize(), )
+        self._samplesShapes[index]  = ( pipeline.getReturnShape(), )
         return self
 
     def addBatchSize(self,batchSize):
