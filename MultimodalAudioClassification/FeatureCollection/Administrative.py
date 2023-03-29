@@ -283,9 +283,9 @@ class AppSettings:
         """ Build an instance of runtime settings for development """
         result = AppSettings(
             pathsInput=[],
-            pathOutput="..\\..\\..\\..\\audioFeatures\\allsamplesV3",
+            pathOutput="..\\..\\..\\..\\audioFeatures\\allSamplesV3",
             batchSize=32,
-            batchLimit=128,
+            batchLimit=1024,
             shuffleSeed=987654321)
         result.addInputPath("..\\..\\InputFiles\\Y1.csv")
         result.addInputPath("..\\..\\InputFiles\\Y2.csv")
