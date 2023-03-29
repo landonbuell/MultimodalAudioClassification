@@ -21,7 +21,7 @@ import Preprocessors
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV2"
+    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV3"
     runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
 
     # Create + Fit the Scaler Instance

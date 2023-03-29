@@ -388,7 +388,7 @@ class DesignMatrix:
                 return self
 
     class __DesignMatrixDeserializer(PyToolsIO.Deserializer):
-        """ Class to Serialize a DesignMatrix Instance """
+        """ Class to Deserialize a DesignMatrix Instance """
 
         def __init__(self,pathX,pathY,numSamples,sampleShape):
             """ Constructor for DesignMatrixSerializer Instance """
@@ -603,7 +603,7 @@ class RunInformation:
             return self
         # Is Valid Pipeline...
         self._pipelinesInUse[index] = True
-        self._samplesShapes[index]  = ( pipeline.getReturnSize(), )
+        self._samplesShapes[index]  = ( pipeline.getReturnShape(), )
         return self
 
     def addBatchSize(self,batchSize):
