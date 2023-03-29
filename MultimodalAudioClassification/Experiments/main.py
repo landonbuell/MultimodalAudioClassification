@@ -20,6 +20,7 @@ import KFoldsCrossValidation
 import PyToolsStructures
 import Preprocessors
 import Experiments
+import KFoldsCrossValidation
 
     #### FUNCTION DEFINITIONS ####
 
@@ -43,7 +44,9 @@ def runSingleHybridNeuralNetworkExperiment(runInfo,outputPath,seed=0):
 
 def runKfoldsMultilayerPerceptron(runInfo,outputPath,seed=0,folds=10):
     """ Run + Export K-Folds on Multilayer Pereptron """
-
+    experiment = Experiments.MultilayerPerceptronExperiment(runInfo,outputPath,seed=seed)
+    xFoldsValidator = KFoldsCrossValidation.KFoldsCrossValidation(experiment,10)
+    xFoldsValidator.run()
     return None
 
 
@@ -52,12 +55,16 @@ def runKfoldsMultilayerPerceptron(runInfo,outputPath,seed=0,folds=10):
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV2"
-    OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allSamplesV2"
+    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV3"
+    OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allSamplesV3"
 
     runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
-    NUM_CLASSES = 32
 
-    # Multimodal Nueral Network Experiment
+    # K-Folds on Multilayer Perceptron
+    runKfoldsMultilayerPerceptron(runInfo,OUTPUT)
+
+    # K-Folds on Convolutional Neural Network
+
+    # K-Folds on Hybrid Neural Network
 
 

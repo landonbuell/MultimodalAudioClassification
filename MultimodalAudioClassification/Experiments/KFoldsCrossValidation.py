@@ -21,24 +21,17 @@ class KFoldsCrossValidation:
     """ Execute a K-Folds X-Validation Strategy """
 
     def __init__(self,
-                 runInfo,
-                 outputPath,
-                 numFolds,
                  experiment,
+                 numFolds,
                  seed=123456789):
         """ Constructor """
-        self._runInfo       = runInfo
-        self._outputPath    = outputPath 
-
+        self._experiment = experiment 
+        self._headOutputPath = self._experiment.getOutputPath()
         self._numFolds      = numFolds
         self._folds         = [None] * self._numFolds
-
-        self._currentExeriment = experiment
-
         self._seed          = seed
         np.random.seed(seed)
 
-        self.__validateRunInfo()
 
     def __del__(self):
         """ Destructor """
@@ -46,6 +39,13 @@ class KFoldsCrossValidation:
 
     # Getters and Setters
 
+    def getRunInfo(self):
+        """ Get the RunInfo Struct """
+        return self._experiment.getRunInfo()
+
+    def getOutputPath(self):
+        """ Get the K-Folds output Path """
+        return self._experiment.getOutputPath()
 
     # Public Interface
 
@@ -55,47 +55,45 @@ class KFoldsCrossValidation:
 
         for ii in range(self._numFolds):
             self.__overrideExperimentOutputPath(ii)
-            self.__registerBatchesWithExperument(ii)
+            self.__registerBatchesWithExperiment(ii)
+
+            # Execute the Experiment
+            self._experiment.run()
 
         return self
 
     # Private Interface
 
-    def __validateRunInfo(self) -> None:
-        """ Make sure that the experiment runInfo is the same as the folds info """
-        if (self._currentExperiment.getRunInfo() is not self._runInfo):
-            # Must be the same runInfo instance 
-            errMsg = "Got two different runInfo structs for current experiment and folds experiments"
-            raise RuntimeError(errMsg)
-        return None
-
     def __initializeFolds(self) -> None:
         """ Determine which batches go with which folds """
-        batches = range(self._runInfo().getNumBatches())
+        batches = np.arange(self.getRunInfo().getNumBatches(),dtype=np.int16)
+        np.random.shuffle(batches)
         for ii in range(self._numFolds):
-            self._folds[ii] = list()
+            self._folds[ii] = []
 
-        # Build up the batches that go into each fold
-        while (len(batches > 0)):
-            for ii in range(self._numFolds):
-                batchIndex = batches.pop()
-                self._folds[ii].append(batchIndex)
-            # End for-loop
-        # End while-loop
+        for ii,batch in enumerate(batches):
+            foldIndex = np.mod(ii,self._numFolds)
+            self._folds[foldIndex].append( batches[ii] )
 
         return None
 
     def __overrideExperimentOutputPath(self,foldIndex: int) -> None:
         """ Override the output path for the current experiment """
-        oldOutputPath = self._currentExeriment.getOutputPath()
         foldIndexText = "fold{0}".format(foldIndex)
-        newOutputPath = os.path.join(oldOutputPath,foldIndexText)
-        self._currentExeriment.setOutputPath(newOutputPath)
+        newOutputPath = os.path.join(self._headOutputPath,foldIndexText)
+        self._experiment.setOutputPath(newOutputPath)
         return None
 
-    def __registerBatchesWithExperument(self,foldIndex: int) -> None:
-        """ Set rhe training + Testing Batches w/ """
-
+    def __registerBatchesWithExperiment(self,foldIndex: int) -> None:
+        """ Set the training + Testing Batches w/ """
+        for ii in range(self._numFolds):
+            if (ii == foldIndex):
+                self._experiment.registerTestingBatches( self._folds[ii] )
+            else:
+                self._experiment.registerTrainingBatches( self._folds[ii] )
+        # All Batches Registered
+        return self
+            
 
 
 
