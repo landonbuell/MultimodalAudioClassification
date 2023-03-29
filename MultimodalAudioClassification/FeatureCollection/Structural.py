@@ -22,6 +22,13 @@ import Administrative
 import Managers
 import CollectionMethods
 
+        #### FUNCTION DEFINITIONS ####
+
+def reshapePipelineOutputForSpectrogram(pipeline):
+    """ Reshape the output of a pipeline to match that of the freq-analysis frames """
+    freqAnalysisFramesShape = pipeline.getAnalysisFrameParams().getFreqFramesShape()
+    return freqAnalysisFramesShape
+
         #### CLASS DEFINITIONS ####
 
 class SampleIO:
