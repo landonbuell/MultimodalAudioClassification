@@ -21,8 +21,6 @@ import PyToolsStructures
 import Preprocessors
 import Experiments
 
-
-
     #### MAIN EXECUTABLE ####
 
 if __name__ == "__main__":
@@ -34,6 +32,6 @@ if __name__ == "__main__":
     runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
     NUM_CLASSES = 32
 
-    # Multimodal Nueral Network Experiment
+    
 
 

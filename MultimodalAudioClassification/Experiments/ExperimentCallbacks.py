@@ -94,8 +94,6 @@ class DataPreprocessingCallbacks:
             raise RuntimeError(errMsg)
         return X,Y
 
-
-
 class TrainingLoggerCallback(tf.keras.callbacks.Callback):
     """ Logs training data to be saved """
 
