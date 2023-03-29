@@ -25,13 +25,11 @@ import Experiments
 
     #### MAIN EXECUTABLE ####
 
-def runSingleMultilayerPercepto
-
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV2"
-    OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allSamplesV2"
+    FEATURES = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV3"
+    OUTPUT = "C:\\Users\\lando\\Documents\\audioPredictions\\allSamplesV3"
 
     runInfo = PyToolsStructures.RunInformation.deserialize(FEATURES)
     NUM_CLASSES = 32

@@ -125,7 +125,9 @@ class Deserializer:
         for item in self._buffer:
             if (item.startswith(key)):
                 tokens = item.split()
-                vals.append( tokens[-1] )
+                poppedItem = tokens.pop(0)
+                for token in tokens:
+                    vals.append(token)
         return vals
 
     # Static Interface
