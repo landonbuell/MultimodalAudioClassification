@@ -21,22 +21,14 @@ class KFoldsCrossValidation:
     """ Execute a K-Folds X-Validation Strategy """
 
     def __init__(self,
-                 runInfo,
-                 outputPath,
+                 experiment,
                  numFolds,
-                 modelLoaderCallback,
-                 dataLoaderCallback,
                  seed=123456789):
         """ Constructor """
-        self._runInfo       = runInfo
-        self._outputPath    = outputPath 
-
+        self._experiment = experiment 
+        self._headOutputPath = self._experiment.getOutputPath()
         self._numFolds      = numFolds
         self._folds         = [None] * self._numFolds
-
-        self._modelCallback = modelLoaderCallback
-        self._dataCallback  = dataLoaderCallback
-
         self._seed          = seed
         np.random.seed(seed)
 
@@ -47,49 +39,62 @@ class KFoldsCrossValidation:
 
     # Getters and Setters
 
+    def getRunInfo(self):
+        """ Get the RunInfo Struct """
+        return self._experiment.getRunInfo()
+
+    def getOutputPath(self):
+        """ Get the K-Folds output Path """
+        return self._experiment.getOutputPath()
+
     # Public Interface
 
     def run(self):
         """ Run the K-Folds X-Validations """
-        self.__initFoldExperiments()
-        self.__assignBatchesToExperiments()
+        self.__initializeFolds()
+
+        for ii in range(self._numFolds):
+            self.__overrideExperimentOutputPath(ii)
+            self.__registerBatchesWithExperiment(ii)
+
+            # Execute the Experiment
+            self._experiment.run()
 
         return self
 
     # Private Interface
 
-    def __initFoldExperiments(self):
-        """ Initialize the Experiment within each fold """
+    def __initializeFolds(self) -> None:
+        """ Determine which batches go with which folds """
+        batches = np.arange(self.getRunInfo().getNumBatches(),dtype=np.int16)
+        np.random.shuffle(batches)
         for ii in range(self._numFolds):
-            iterSeed = (self._seed * ii)
-            foldOutpath = os.path.join(self._outputPath,"fold{0}".format(ii))
-            #foldModel = self._modelCallback.__call__(iterSeed)
-            foldModel = None
-            foldExperiment = Experiments.CrossValidationFoldExperiment(
-                runInfo=self._runInfo,
-                outputPath=foldOutpath,
-                model=foldModel,
-                dataloaderCallback=self._dataCallback,
-                foldIndex=ii,
-                numIters=1,
-                seed=iterSeed)
-            self._folds[ii] = foldExperiment
-        return self
+            self._folds[ii] = []
 
-    def __assignBatchesToExperiments(self):
-        """ Assign Batches to Each Experiment """
-        numBatches = self._runInfo.getNumBatches()
-        allBatches = np.arange(numBatches,dtype=np.int32)      
-        allBatches = np.random.permutation(allBatches)
-        splits = np.array_split(allBatches,self._numFolds)
+        for ii,batch in enumerate(batches):
+            foldIndex = np.mod(ii,self._numFolds)
+            self._folds[foldIndex].append( batches[ii] )
 
-        # Use the Splits to populate the Train/Test Batches in the Folds
+        return None
+
+    def __overrideExperimentOutputPath(self,foldIndex: int) -> None:
+        """ Override the output path for the current experiment """
+        foldIndexText = "fold{0}".format(foldIndex)
+        newOutputPath = os.path.join(self._headOutputPath,foldIndexText)
+        self._experiment.setOutputPath(newOutputPath)
+        return None
+
+    def __registerBatchesWithExperiment(self,foldIndex: int) -> None:
+        """ Set the training + Testing Batches w/ """
         for ii in range(self._numFolds):
-            copyOfSplits = splits[:]
-            testBatches = copyOfSplits.pop(ii)
-            trainBatches = copyOfSplits
-            self._folds[ii].registerTestingBatches(testBatches)
-            self._folds[ii].registerTrainingBatches(trainBatches)
-       
-        # All Done! 
+            if (ii == foldIndex):
+                self._experiment.registerTestingBatches( self._folds[ii] )
+            else:
+                self._experiment.registerTrainingBatches( self._folds[ii] )
+        # All Batches Registered
         return self
+            
+
+
+
+

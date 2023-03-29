@@ -21,29 +21,7 @@ import ModelParams
 import PyToolsStructures
 import Preprocessors
 
-
     #### CONSTANTS ####
-
-    #### FUNCTION DEFINITIONS ####
-
-def runSingleMultilayerPercepton(runInfo,outputPath,seed=0):
-    """ Run + Export single instance of multilayer perceptron experiment """
-    experiment = MultilayerPerceptronExperiment(runInfo,outputPath,seed=seed)
-    experiment.run()
-    return None
-
-def runSingleConvolutionalNeuralNetworkExperiment(runInfo,outputPath,seed=0):
-    """ Run + Export single instance of convolutional neural network experiment """
-    experiment = ConvolutionalNeuralNetworkExperiment(runInfo,outputPath,seed=seed)
-    experiment.run()
-    return None
-
-def runSingleHybridNeuralNetworkExperiment(runInfo,outputPath,seed=0):
-    """ Run + Export single instace of Hybrid Neural Network experiment """
-    experiment = HybridNeuralNetworkExperiment(runInfo,outputPath,seed=seed)
-    experiment.run()
-    return None
-
 
     #### CLASS DEFINITIONS ####
 
@@ -91,6 +69,7 @@ class __BaseExperiment:
         self._predictParams = ModelParams.TensorFlowPredictModelParams()
         self._predictParams.callbacks.append(ExperimentCallbacks.TestingLoggerCallback(self))
 
+        self._useBatchesAsIs    = False
         self._trainingBatches   = np.array([],dtype=np.int32)
         self._testingBatches    = np.array([],dtype=np.int32)
 
@@ -110,6 +89,15 @@ class __BaseExperiment:
     def getRunInfo(self):
         """ Return the RunInfo Structure """
         return self._runInfo
+
+    def getOutputPath(self) -> str:
+        """ Return the output Path """
+        return self._outputPath
+
+    def setOutputPath(self, path: str):
+        """ Set the Output Path """
+        self._outputPath = path
+        return self
 
     def getPipelines(self):
         """ Return a list of the pipelines to load """
@@ -206,12 +194,17 @@ class __BaseExperiment:
 
     def __registerTrainTestBatches(self):
         """ Determine which batches will be used for training/testing """
+        if (len(self._trainingBatches) > 0) and (len(self._testingBatches) > 0):
+            # Train + Test batches are already set!
+            return self
         totalNumBatches = self._runInfo.getNumBatches()
         numTrainBatches = int(totalNumBatches * self._trainSize)
         batches = np.arange(totalNumBatches)
         np.random.shuffle(batches)
-        self._trainingBatches = batches[0:numTrainBatches]
-        self._testingBatches = batches[numTrainBatches:]
+        if (len(self._trainingBatches) == 0):
+            self._trainingBatches = batches[0:numTrainBatches]
+        if (len(self._testingBatches) == 0):
+            self._testingBatches = batches[numTrainBatches:]
         return self
 
     def __applyStandardScaling(self,designMatrices: list):
@@ -280,6 +273,9 @@ class __BaseExperiment:
         """ Export the Details of the Training Process """
         frame = self._trainingMetrics.toDataFrame()
         exportPath = os.path.join(self._outputPath,"trainingHistory.csv")
+        location = os.path.dirname(exportPath)
+        if (os.path.isdir(location) == False):
+            os.makedirs(location,exist_ok=True)
         frame.to_csv(exportPath)
         return self
 
@@ -290,7 +286,7 @@ class __BaseExperiment:
         frame.to_csv(exportPath,index=None)
         return self
 
-    def __resetState(self):
+    def __resetState(self) -> None:
         """ Reset the State of the experiment in between iterations """
         self._seed * (2.0/3.0)
         self._model = None
@@ -306,7 +302,7 @@ class MultilayerPerceptronExperiment(__BaseExperiment):
                  runInfo,
                  outputPath,
                  trainSize=0.8,
-                 numIters=4,              
+                 numIters=2,              
                  seed=123456789):
         """ Constructor """
         super().__init__(runInfo,
