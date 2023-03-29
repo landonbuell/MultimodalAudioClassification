@@ -64,14 +64,14 @@ class NeuralNetworkBuilders:
             x = tf.keras.layers.Dense(units=shapeOutput,activation='softmax',name='outputMLP')(x)
 
         # Build the Model
-        x = tf.keras.Model(inputs=modelInput,outputs=x,name="MultilayerPerceptron")
-        return x
+        model = tf.keras.Model(inputs=modelInput,outputs=x,name="MultilayerPerceptron")
+        return model
 
     @staticmethod
     def getConvolutional2D(shapeInput,filterSizes,kernelSizes,poolSizes,layerWidths,shapeOutput=None):
         """ Generator 2D Convolutional Neural Network """
         modelInput = tf.keras.layers.Input(shape=shapeInput,name="inputCNN")
-        x = NullLayer(name="N1B")
+        x = NullLayer(name="N1B")(modelInput)
         
         # Add Layer Groups
         for i,(filters,kernel,pool) in enumerate(zip(filterSizes,kernelSizes,poolSizes)):
@@ -87,11 +87,11 @@ class NeuralNetworkBuilders:
                                       name=layerName)(x)
         # If Num Outputs specified
         if (shapeOutput is not None):
-            x = tf.keras.layers.Dense(units=shapeOutput,activations='softmax',name='outputCNN')
+            x = tf.keras.layers.Dense(units=shapeOutput,activation='softmax',name='outputCNN')(x)
 
         # Build the Model
-        x = tf.keras.Model(inputs=modelInput,outputs=x,name="ConvolutionalNeuralNetwork")
-        return x
+        model = tf.keras.Model(inputs=modelInput,outputs=x,name="ConvolutionalNeuralNetwork")
+        return model
 
 
 class NeuralNetworkPresets:

@@ -359,6 +359,11 @@ class StandardScalerWrapper(Preprocessor):
 
                 # Extract Design Matrix and Apply Partial Fit
                 X = matrix.getFeatures()
+                if (X.ndim > 2):
+                    batchSize = self._runInfo.getSizeOfBatch(batchIndex)
+                    numFeatures =  matrix.getNumFeatures()
+                    X = np.reshape(X,newshape=(batchSize,numFeatures))
+
                 self._scalers[ii].partial_fit(X)
         return self
 

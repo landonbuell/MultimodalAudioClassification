@@ -56,40 +56,43 @@ class ModelLoaderCallbacks:
         """ Load in Convolutional Neural Network """
         pipelineIndex = 1
         runInfo     = experiment.getRunInfo()
-        inputShape  = runInfo.getSampleShapeOfPipeline(pipelineIndex)
+        #inputShape  = runInfo.getSampleShapeOfPipeline(pipelineIndex)
+        inputShape  = (256,1115,1)
         numClasses  = runInfo.getNumClasses()
-        model = None
+        model = NeuralNetworks.NeuralNetworkPresets.getDefaultModelConvolutionalNeuralNetwork(
+            inputShape,numClasses,"CNN")
         return model
 
-class DataLoaderCallbacks:
-    """ 
-        Static class of Data Loader Callbacks 
-        Signatures
-            X,Y = func(experiment,batchIndex)        
-    """
+    @staticmethod
+    def loadHybridNeuralNetwork(experiment):
+        """ Load in Hybrid NeuralNetwork """
+        runInfo = experiment.getRunInfo()
+        inputShapeA = runInfo.getSampleShapeOfPipeline(0)
+        inputShapeB = (256,1115,1)
+        numClasses = runInfo.getNumClasses()
+        model = NeuralNetworks.NeuralNetworkPresets.getDefaultHybridModel(
+            inputShapeA,inputShapeB,numClasses,"HNN")
+        return model
+            
+
+class DataPreprocessingCallbacks:
+    """ Static class with methods used to preprocess data """
 
     @staticmethod
-    def loadPipelineBatchForTraining(experiment,batchIndex):
-        """ Load a Batch from a particular pipeline + One Hot Encode"""
-        pipelinesToLoad = experiment.getPipelines()
-        numClasses = experiment.getRunInfo().getNumClasses()
-        designMatrices = experiment.getRunInfo().loadSingleBatchFromPipelines(
-            batchIndex,pipelinesToLoad)
-        X = [designMatrices[ii].getFeatures() for ii in pipelinesToLoad]
-        Y = [designMatrices[ii].getLabels() for ii in pipelinesToLoad]
-        Y = [oneHotEncode(y,numClasses) for y in Y]
-        return (X,Y)
-
-    @staticmethod
-    def loadPipelineBatchForTesting(experiment,batchIndex):
-        """ Load a Batch from a particular pipeline + Do-not One Hot Encode"""
-        pipelinesToLoad = experiment.getPipelines()
-        numClasses = experiment.getRunInfo().getNumClasses()
-        designMatrices = experiment.getRunInfo().loadSingleBatchFromPipelines(
-            batchIndex,pipelinesToLoad)
-        X = [designMatrices[ii].getFeatures() for ii in pipelinesToLoad]
-        Y = [designMatrices[ii].getLabels() for ii in pipelinesToLoad]
-        return (X,Y)
+    def reshapePipeline2Features(X,Y):
+        """ Reshape the pipeline #2's Features """
+        if (len(X) == 1):
+            batchSize = X[0].shape[0]
+            newShape = [batchSize] + [256,1115,1]
+            X[0] = np.reshape(X[0],newshape=newShape)
+        elif (len(X) >= 2):
+            batchSize = X[1].shape[0]
+            newShape = [batchSize] + [256,1115,1]
+            X[1] = np.reshape(X[1],newshape=(256,1115,1))
+        else:
+            errMsg = "Got empty input Array"
+            raise RuntimeError(errMsg)
+        return X,Y
 
 class TrainingLoggerCallback(tf.keras.callbacks.Callback):
     """ Logs training data to be saved """

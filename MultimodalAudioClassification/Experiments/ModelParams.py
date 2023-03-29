@@ -92,11 +92,22 @@ class ModelTrainingMetrics:
 class ModelTestingMetrics:
     """ Stores Array of Testing Predictions """
 
-    def __init__(self,numClasses):
+    def __init__(self,numClasses:int,classNames=None):
         """ Constructor """
         self._numClasses = numClasses
+        self._classNames = None
         self._labels    = np.empty(shape=(0,),dtype=np.uint16)
         self._preds     = np.empty(shape=(0,numClasses),dtype=np.float32)
+    
+        if (classNames is not None):
+            if (len(classNames) != numClasses):
+                msg = "List of class names had {0} items, but expected {1}".format(
+                    len(classNames),numClasses)
+                raise ValueError(msg)
+            self._classNames = classNames[:]
+        else:
+            self._classNames = ["class{0}".format(x) for x in range(numClasses)]
+
 
     def __del__(self):
         """ Destructor """
@@ -120,7 +131,11 @@ class ModelTestingMetrics:
         return None
 
 
-
     def toDataFrame(self) -> pd.DataFrame:
         """ Return this structure as a PD DataFrame """
-        return pd.DataFrame()
+        outFrame = pd.DataFrame(data={"labels":self._labels},index=None)
+        for ii in range(self._numClasses):
+            classScores = self._preds[:,ii]
+            outFrame[self._classNames[ii]] = classScores
+        return outFrame
+

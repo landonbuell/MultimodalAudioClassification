@@ -388,7 +388,7 @@ class DesignMatrix:
                 return self
 
     class __DesignMatrixDeserializer(PyToolsIO.Deserializer):
-        """ Class to Serialize a DesignMatrix Instance """
+        """ Class to Deserialize a DesignMatrix Instance """
 
         def __init__(self,pathX,pathY,numSamples,sampleShape):
             """ Constructor for DesignMatrixSerializer Instance """
