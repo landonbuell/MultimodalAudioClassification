@@ -17,6 +17,8 @@
 import numpy as np
 import scipy.fftpack as fftpack
 
+import signalData
+
         #### CLASS DEFINITIONS ####
 
 class AnalysisFrameParameters:
@@ -81,12 +83,16 @@ class __AbstractAnalysisFrames:
     """ Abstract Base Class for All Analysis Frame Types """
 
     def __init__(self,
+                 signal : signalData.SignalData,
                  frameParams: AnalysisFrameParameters,
                  frameSize: int,
                  dataType: type):
         """ Constructor """
         self._params = frameParams
         self._data   = np.zeros(shape=(frameParams.maxNumFrames,frameSize),dtype=dataType)
+        
+        self._validateSignal(signal)
+        self._populateFrames(signal)
 
     def __del__(self):
         """ Destructor """
@@ -113,8 +119,18 @@ class __AbstractAnalysisFrames:
 
     # Protected Interface
 
-    def _populate(self) -> None:
-        """ VIRTUAL: Populate the analysis frames """
+    def _validateSignal(self,
+                        signal: signalData.SignalData) -> None:
+        """ VIRTUAL: Validate that the input signal has info to work with """
+        if (signal.getNumSamples() == 0):
+            errMsg = "provided signal: {0} has {1} samples.".format(
+                repr(signal),signal.getNumSamples())
+            raise RuntimeError(errMsg)
+        return None
+
+    def _populateFrames(self,
+                        signal: signalData.SignalData) -> None:
+        """ VIRTUAL: Populate the analysis frames """     
         return None
     
     # Magic Methods
@@ -142,22 +158,38 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
     __DATA_TYPE = np.float32
 
     def __init__(self,
+                 signal : signalData.SignalData,
                  frameParams: AnalysisFrameParameters):
         """ Constructor """
-        super().__init__(frameParams,
-                         frameParams.timeFrameSize,
-                         TimeSeriesAnalysisFrames.__DATA_TYPE)
-        self._populate()
+        super().__init__(   signal,
+                            frameParams,
+                            frameParams.timeFrameSize,
+                            TimeSeriesAnalysisFrames.__DATA_TYPE)
 
     def __del__(self):
         """ Destructor """
         pass
 
-    # Protected Interface
+    # Public Interface
 
-    def _populate(self) -> None:
+    def populate(self,
+                 signal: signalData.SignalData ) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        # TODO: Implement this!
+        stepSize = self._params.samplesPerFrame - self._params.sampleOverlap
+        frameStart = 0
+        frameEnd = self._params.samplesPerFrame
+
+        for ii in range(self.getNumFrames()):
+            if (frameEnd > len(signal)):
+                if (frameStart > len(signal)):
+                    break
+                frameEnd = len(signal)
+            # Grab the items
+            frameData = signal[frameStart:frameEnd];
+            self._data[ii,self._params.headPad:self._params.headPad + self._params.samplesPerFrame] = frameData
+            # increment the front + end
+            frameStart += stepSize
+            frameEnd = frameStart + self._params.samplesPerFrame
         return None
 
 
@@ -167,18 +199,26 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     __DATA_TYPE = np.complex64
 
     def __init__(self,
+                 signal : signalData.SignalData,
                  frameParams: AnalysisFrameParameters):
         """ Constructor """
         super().__init__(frameParams,
                          frameParams.freqFrameSize,
                          FreqSeriesAnalysisFrames.__DATA_TYPE)
-        self._populate()
 
     def __del__(self):
         """ Destructor """
         pass
 
-    # Protected Interface
+    # Public Interface
+
+    def _validateSignal(self,
+                        signal: signalData.SignalData) -> None:
+        """ VIRTUAL: Validate that the input signal has info to work with """
+        if (signal.getCachedData().analysisFramesTime == None):
+            # No time-frames yet ... make them!
+            signal.populateTimeSeriesAnalysisFrames()
+        return None
 
     def _populate(self) -> None:
         """ OVERRIDE: Populate the analysis frames """
