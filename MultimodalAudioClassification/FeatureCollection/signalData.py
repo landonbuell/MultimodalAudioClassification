@@ -3,6 +3,8 @@
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollection
     File:       signalData.py
+    Classes:    SignalData, 
+                SignalData.CachedData
 
     Author:     Landon Buell
     Date:       February 2024
@@ -119,4 +121,22 @@ class SignalData:
         return None
 
     # Private Interface
+
+    # Magic Methods
+
+    def __getitem__(self,
+                    key: int) -> np.ndarray:
+        """ Return the frame at the provided value """
+        return self._waveform[key]
+
+    def __setitem__(self,
+                    key: int,
+                    val: np.ndarray) -> None:
+        """ Set the provided value at the provided frame key """
+        self._waveform[key] = val
+        return None
+
+    def __repr__(self) -> str:
+        """ Debug representation """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
