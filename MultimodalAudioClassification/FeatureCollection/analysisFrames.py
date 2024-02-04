@@ -23,7 +23,7 @@ import signalData
 
 class AnalysisFrameParameters:
     """ Stores parameters for analysis frames """
-    
+ 
     def __init__(self,
                  samplesPerFrame=1024,
                  sampleOverlap=768,
@@ -59,6 +59,31 @@ class AnalysisFrameParameters:
         # TODO: Implement this!
         return self.headPad + self.samplesPerFrame + self.tailPad
 
+    @property
+    def freqHighBoundMels(self) -> float:
+        """ Return the frequency high bound in Mels """
+        return AnalysisFrameParameters.hzToMels(self.freqHighBoundHz)
+
+    @property
+    def freqLowBoundMels(self) -> float:
+        """ Return the frequency low bound in Mels """
+        return AnalysisFrameParameters.hzToMels(self.freqLowBoundHz)
+
+    def getUnmaskedFrequencyAxisHz(self) -> np.ndarray:
+        """ Return an uncropped frequency axis """
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate
+        freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
+                                  d=sampleSpacing)
+        return freqAxis
+
+    def getMaskedFrequencyAxisHz(self) -> np.ndarray:
+        """ Return a frequency axis cropped by provided bounds """
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate
+        freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
+                                  d=sampleSpacing)
+        freqMask = (freqAxis >= self.freqLowBoundHz) and (freqAxis <= self.freqHighBoundHz)
+        freqAxis = freqAxis[freqMask]   # apply mask
+        return freqAxis
 
     # Static Interface
 
@@ -71,6 +96,11 @@ class AnalysisFrameParameters:
     def hzToMels(freqHz: np.ndarray) -> np.ndarray:
         """ Cast Hz Frequency to Mels """
         return 2595 * np.log10(1 + (freqHz/700))
+
+    @staticmethod
+    def sampleRate() -> float:
+        """ Return sample Rate """
+        return 44100.0
 
     # Magic Methods
 
@@ -112,10 +142,9 @@ class __AbstractAnalysisFrames:
         """ Get the size of each frame """
         return self._data.shape[1]
 
-    def get(self,
-            index: int) -> np.ndarray:
-        """ Get the Analysis Frame at the provided index """
-        return self._data[index]
+    def rawFrames(self) -> np.ndarray:
+        """ Return the raw underlying analysis frames """
+        return self._data
 
     # Protected Interface
 
@@ -205,6 +234,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         super().__init__(frameParams,
                          frameParams.freqFrameSize,
                          FreqSeriesAnalysisFrames.__DATA_TYPE)
+        self._freqAxis = self._params.getMaskedFrequencyAxisHz()
 
     def __del__(self):
         """ Destructor """
@@ -220,7 +250,11 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
             signal.populateTimeSeriesAnalysisFrames()
         return None
 
-    def _populate(self) -> None:
+    def _populate(self,
+                  signal: signalData.SignalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        # TODO: Implement this!
+        rawTimeFrames = signal.getCachedData().analysisFramesTime.getRawFrames()
+        self._data = np.fft.fft( rawTimeFrames )
+        # TODO: Apply Freq Mask
+        # TODO: Finish this!
         return None
