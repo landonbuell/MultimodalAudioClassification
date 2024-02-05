@@ -25,6 +25,8 @@
     <Compile Include="analysisFrames.py" />
     <Compile Include="Callbacks.py" />
     <Compile Include="CollectionMethods.py" />
+    <Compile Include="featurePipeline.py" />
+    <Compile Include="featureVector.py" />
     <Compile Include="main.py" />
     <Compile Include="Managers.py" />
     <Compile Include="signalData.py" />
