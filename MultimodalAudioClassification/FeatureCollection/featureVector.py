@@ -78,3 +78,10 @@ class FeatureVector:
 
     # Private Interface
    
+    def __len__(self):
+        """ Return the number of items in the pipeline """
+        return self._data.size
+
+    def __repr__(self) -> str:
+        """ Debug representation """
+        return "{0} w/ size {1} @ {2}".format(self.__class__,self._data.size,hex(id(self)))
