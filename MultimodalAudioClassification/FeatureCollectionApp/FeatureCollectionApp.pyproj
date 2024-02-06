@@ -21,10 +21,10 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Administrative.py" />
     <Compile Include="analysisFrames.py" />
     <Compile Include="callbacks.py" />
     <Compile Include="CollectionMethods.py" />
+    <Compile Include="featureCollectionApp.py" />
     <Compile Include="featurePipeline.py" />
     <Compile Include="featureVector.py" />
     <Compile Include="main.py" />
