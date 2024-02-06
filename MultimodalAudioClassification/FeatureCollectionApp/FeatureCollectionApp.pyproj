@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="analysisFrames.py" />
+    <Compile Include="appSettings.py" />
     <Compile Include="callbacks.py" />
     <Compile Include="CollectionMethods.py" />
     <Compile Include="featureCollectionApp.py" />
