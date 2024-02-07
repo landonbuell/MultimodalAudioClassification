@@ -65,6 +65,12 @@ class FeatureCollectionApplication:
         self.__cleanup()
         return self._status
 
+    def logMessage(self,
+                   message : str) -> None:
+        """ Log a message """
+        self._logger.logMessage(message)
+        return None
+
     # Private Interface
 
     def __registerSelfAsSingleton(self) -> None:
