@@ -13,20 +13,19 @@ Date:       June 2022
 
 import sys
 
-import Administrative
+import appSettings
+import featureCollectionApp
 
     #### MAIN EXECUTABLE ####
 
 if __name__ == "__main__":
 
     # Generate App Settings + App Instance
-    settings = Administrative.AppSettings.developmentSettingsInstance()
-    app = Administrative.FeatureCollectionApp.constructApp(settings)
+    settings = appSettings.AppSettings.developmentSettingsInstance()
+    app = featureCollectionApp.FeatureCollectionApplication(settings)
 
-    # Run Applicatin Execution Sequnce
-    app.startup()
-    app.execute()
-    app.shutdown()
+    # Run the application
+    app.run()
 
     # Destroy the app + Exit
     sys.exit(0)
