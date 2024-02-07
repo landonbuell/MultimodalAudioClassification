@@ -14,6 +14,9 @@
 import os
 import sys
 
+import appSettings
+import textLogger
+
         #### CLASS DEFINITIONS ####
 
 class FeatureCollectionApplication:
@@ -21,12 +24,14 @@ class FeatureCollectionApplication:
 
     __instance = None
 
-    def __init__(self):
+    def __init__(self,
+                 settings: appSettings.AppSettings):
         """ Constructor """
         self.__registerSelfAsSingleton()
 
-        self._status = 0
-        
+        self._status    = 0
+        self._settings  = settings
+        self._logger    = textLogger.TextLogger(settings.getTextLogPath())
 
     def __del__(self):
         """ Destructor """
@@ -46,6 +51,10 @@ class FeatureCollectionApplication:
         """ Return the internal status """
         return self._status
 
+    def getSettings(self) -> appSettings.AppSettings:
+        """ Return a ref to the app settings """
+        return self._settings
+
     # Public Interface
 
     def run(self) -> int:
@@ -53,7 +62,7 @@ class FeatureCollectionApplication:
         self.__startup()
         if (self._status == 0):
             self.__execute()
-        self.__execute()
+        self.__cleanup()
         return self._status
 
     # Private Interface

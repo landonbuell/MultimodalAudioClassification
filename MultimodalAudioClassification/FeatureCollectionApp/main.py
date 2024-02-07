@@ -13,6 +13,7 @@ Date:       June 2022
 
 import sys
 
+import appSettings
 import featureCollectionApp
 
     #### MAIN EXECUTABLE ####
@@ -20,10 +21,10 @@ import featureCollectionApp
 if __name__ == "__main__":
 
     # Generate App Settings + App Instance
-    settings = Administrative.AppSettings.developmentSettingsInstance()
+    settings = appSettings.AppSettings.developmentSettingsInstance()
     app = featureCollectionApp.FeatureCollectionApplication(settings)
 
-    # Run Applicatin Execution Sequnce
+    # Run the application
     app.run()
 
     # Destroy the app + Exit

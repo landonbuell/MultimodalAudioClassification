@@ -85,7 +85,7 @@ class AppSettings:
     # Private Interface
 
     def __initInputPaths(self,
-                        listOfInputPaths: list) -> None
+                        listOfInputPaths: list) -> None:
         """ Initialize provided input paths """
         for path in listOfInputPaths:
             absPath = os.path.abspath(path)
@@ -99,3 +99,20 @@ class AppSettings:
         listOfInputPaths.clear()
         return None
      
+    def __initOutputPath(self,
+                         outputPath: str) -> None:
+        """ Initialize provided output path """
+        outputPath = os.path.abspath(outputPath)
+        msg = ""
+        if (os.path.isdir(outputPath) == True):
+            # Is a directory
+            msg = "Provided output path: {0} already exists. Contents may be overwritten".format(outputPath)
+        elif (os.path.isfile(outputPath) == True):
+            # Is a file
+            msg = "Provided output path: {0} already exists. Contents may be overwritten".format(outputPath)
+        else:
+            # Is a directory
+            msg = "Generating new output path at: {0}".format(outputPath)
+        print(msg)
+        self._pathOutput = outputPath
+        return None
