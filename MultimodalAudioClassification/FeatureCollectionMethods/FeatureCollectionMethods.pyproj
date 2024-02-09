@@ -2,15 +2,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>db84ed35-00d7-4cc4-b73b-15f1621b556c</ProjectGuid>
+    <ProjectGuid>4464a516-3dfa-4780-b202-12917ae8b49c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>FeatureCollection</Name>
-    <RootNamespace>FeatureCollection</RootNamespace>
+    <Name>FeatureCollectionMethods</Name>
+    <RootNamespace>FeatureCollectionMethods</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,17 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="analysisFrames.py" />
-    <Compile Include="appSettings.py" />
-    <Compile Include="callbacks.py" />
-    <Compile Include="CollectionMethods.py" />
-    <Compile Include="featureCollectionApp.py" />
-    <Compile Include="featurePipeline.py" />
-    <Compile Include="featureVector.py" />
-    <Compile Include="main.py" />
-    <Compile Include="Managers.py" />
-    <Compile Include="signalData.py" />
-    <Compile Include="__init__.py" />
+    <Compile Include="collectionMethod.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonToolsPy\CommonToolsPy.pyproj">
@@ -39,9 +30,9 @@
       <Project>{7db5e4c8-9e79-41fc-ae9a-67c72be60bd4}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\FeatureCollectionMethods\FeatureCollectionMethods.pyproj">
-      <Name>FeatureCollectionMethods</Name>
-      <Project>{4464a516-3dfa-4780-b202-12917ae8b49c}</Project>
+    <ProjectReference Include="..\FeatureCollectionApp\FeatureCollectionApp.pyproj">
+      <Name>FeatureCollectionApp</Name>
+      <Project>{db84ed35-00d7-4cc4-b73b-15f1621b556c}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
