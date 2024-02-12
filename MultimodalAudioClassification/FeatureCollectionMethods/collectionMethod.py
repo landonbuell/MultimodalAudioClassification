@@ -67,7 +67,8 @@ class AbstractCollectionMethod:
 
     # Protected Interface 
 
-    def _callBody(self) -> bool:
+    def _callBody(self,
+                  signal: signalData.SignalData) -> bool:
         """ VIRTUAL: main body of call function """
         return False
 

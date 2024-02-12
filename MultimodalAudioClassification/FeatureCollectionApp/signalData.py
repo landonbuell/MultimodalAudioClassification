@@ -75,6 +75,11 @@ class SignalData:
         """ Return the waveform """
         return self._waveform
 
+    @property
+    def waveform(self):
+        """ Return the waveform as a property """
+        return self._waveform
+
     def getCachedData(self) -> CachedData:
         """ Return the underlying Cached data for this signal """
         return self._cachedData
