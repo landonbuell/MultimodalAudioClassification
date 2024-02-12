@@ -26,6 +26,7 @@ class AbstractCollectionMethod:
         """ Constructor """
         self._name  = methodName
         self._data  = np.zeros(size=(numFeatures,),dtype=np.float32)
+        self._callbacks = []    # evaluated 
         
     def __del__(self):
         """ Destructor """
@@ -48,9 +49,15 @@ class AbstractCollectionMethod:
     # Public Interface
 
     def call(self,
-             signal: signalData.SignalData) -> None:
+             signal: signalData.SignalData) -> bool:
         """ Evaluate this method on the provided signal """
-        return None
+        if (self.__evaluateCallbacks(signal) == False):
+            return False
+        if (self._callBody(signal) == False):
+            return False
+        if (self.__dataHasNanAndInfs == True):
+            return False
+        return True
 
     def clear(self) -> None:
         """ Zero all features """
@@ -59,3 +66,27 @@ class AbstractCollectionMethod:
         return None
 
     # Protected Interface 
+
+    def _callBody(self) -> bool:
+        """ VIRTUAL: main body of call function """
+        return False
+
+    # Private Interface
+
+    def __evaluateCallbacks(self,
+                            signal: signalData.SignalData) -> bool:
+        """ Evaulate callbacks on input signal. Return T/F if we can procceed """
+        results = [True] * len(self._callbacks)  # Will be emty if len() == 0
+        for ii,item in enumerate(self._callbacks):
+            results[ii] = item.__call__(signal)
+        numPasses = sum(results)
+        return (numPasses == len(self._callbacks))
+
+    def __dataHasNanAndInfs(self) -> bool:
+        """ Check for NaN or +/- Inf Values """
+        sumOfData = np.sum(self._data)
+        if (sumOfData == np.inf) or (sumOfData == -np.inf):
+            return True
+        if (sumOfData == np.nan):
+            return True
+        return False
