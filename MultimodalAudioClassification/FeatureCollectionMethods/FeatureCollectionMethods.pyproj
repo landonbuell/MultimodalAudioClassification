@@ -23,6 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="collectionMethod.py" />
+    <Compile Include="temporalCenterOfMass.py" />
+    <Compile Include="timeDomainEnvelope.py" />
+    <Compile Include="zeroCrossingRate.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonToolsPy\CommonToolsPy.pyproj">
