@@ -1,7 +1,7 @@
 """
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
-    Project:    FeautureCollection
+    Project:    FeautureCollectionMethods
     File:       collectionMethod.py
     Classes:    AbstractCollectionMethod
 

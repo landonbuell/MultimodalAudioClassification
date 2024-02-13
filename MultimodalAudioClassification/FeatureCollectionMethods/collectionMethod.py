@@ -1,7 +1,7 @@
 """
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
-    Project:    FeautureCollection
+    Project:    FeautureCollectionMethods
     File:       collectionMethod.py
     Classes:    AbstractCollectionMethod,
                 CollectionMethodCallbacks
@@ -13,13 +13,24 @@
         #### IMPORTS ####
 
 import numpy as np
+import enum
 
 import signalData
 
         #### CLASS DEFINITIONS ####
 
+class WeightingFunction(enum.IntEnum):
+    """ Enumeration for Weighting Function Type """
+    LINEAR      = 1
+    QUADRATIC   = 2
+
+    LOG_NATURAL = 9
+    LOG_BASE10  = 10
+
 class AbstractCollectionMethod:
     """ Abstract base class for all collection methods """
+
+    DELTA = 1e-8
 
     def __init__(self,
                  methodName: str,
