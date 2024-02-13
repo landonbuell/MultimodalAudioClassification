@@ -13,6 +13,8 @@
 
 import numpy as np
 
+import signalData
+
 import collectionMethod
 
         #### CLASS DEFINITIONS ####

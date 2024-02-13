@@ -3,7 +3,8 @@
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollection
     File:       collectionMethod.py
-    Classes:    AbstractCollectionMethod
+    Classes:    AbstractCollectionMethod,
+                CollectionMethodCallbacks
 
     Author:     Landon Buell
     Date:       February 2024
@@ -65,6 +66,11 @@ class AbstractCollectionMethod:
             self._data[ii] = 0.0
         return None
 
+    def featureNames(self) -> list:
+        """ VIRTUAL: Return a list of the feature names """
+        result = ["{0}{1}".format(self._name,x) for x in range(self._data.size)]
+        return result
+
     # Protected Interface 
 
     def _callBody(self,
@@ -91,3 +97,20 @@ class AbstractCollectionMethod:
         if (sumOfData == np.nan):
             return True
         return False
+
+class CollectionMethodCallbacks:
+    """ Static class of methods with signature:
+
+        [bool] = callback([signalData.SignalData])
+
+    """
+
+    @staticmethod
+    def signalHasAnalysisFramesTime(signal: signalData.SignalData) -> bool:
+        """ Ensure that a provided signal has time-series analysis frames """
+        return (signal.cachedData.analysisFramesTime is not None)
+
+    @staticmethod
+    def signalHasAnalysisFramesFreq(signal: signalData.SignalData) -> bool:
+        """ Ensure that a provided signal has freq-series analysis frames """
+        return (signal.cachedData.analysisFramesFreq is not None)
