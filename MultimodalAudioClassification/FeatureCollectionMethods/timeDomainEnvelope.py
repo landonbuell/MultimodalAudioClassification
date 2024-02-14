@@ -13,8 +13,6 @@
 
 import numpy as np
 
-import signalData
-
 import collectionMethod
 
         #### CLASS DEFINITIONS ####
@@ -45,9 +43,9 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData):
         """ OVERRIDE: Compute TDE's for signal """
-        partitionSize = np.floor(signal.getNumSamples / self.numPartitions)
+        partitionSize = int(np.floor((signal.getNumSamples() / self.numPartitions)))
         startIndex = 0
         for ii in range(self.numPartitions):
             for jj in range(startIndex,startIndex + partitionSize):

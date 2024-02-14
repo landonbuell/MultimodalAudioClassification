@@ -50,7 +50,7 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         if (self._weightKernel.size != signal.waveform.size):
             self.__initWeightsKernel(signal.waveform.size)

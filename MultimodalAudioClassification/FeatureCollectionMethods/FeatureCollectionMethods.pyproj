@@ -4,8 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>4464a516-3dfa-4780-b202-12917ae8b49c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>__main__.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,7 +25,9 @@
     <Compile Include="collectionMethod.py" />
     <Compile Include="temporalCenterOfMass.py" />
     <Compile Include="timeDomainEnvelope.py" />
+    <Compile Include="unitTests.py" />
     <Compile Include="zeroCrossingRate.py" />
+    <Compile Include="__main__.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonToolsPy\CommonToolsPy.pyproj">

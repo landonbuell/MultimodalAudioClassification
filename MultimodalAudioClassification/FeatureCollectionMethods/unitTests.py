@@ -86,7 +86,7 @@ class UnitTestCollectionMethods:
             else:
                 data = method.getFeatures()
             # Add features
-            for jj in range(len(data.size)):
+            for jj in range(data.size):
                 features[featureCounter] = data[jj]
                 featureCounter += 1
         # Done!
@@ -152,8 +152,9 @@ class PresetUnitTests:
     @staticmethod
     def getTestBasicTimeSeriesMethods():
         """ Return test of basic time-series methods """
-        methods = [timeDomainEnvelope.TimeDomainEnvelope(4),]
-        signals = [DummySignals.getLinearRampSignal(),]
+        methods = [timeDomainEnvelope.TimeDomainEnvelope(4),
+                   zeroCrossingRate.TotalZeroCrossings(),]
+        signals = [DummySignals.getNormalWhiteNoise(),]
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 

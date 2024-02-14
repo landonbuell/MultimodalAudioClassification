@@ -40,7 +40,7 @@ class SignalData:
         """ Constructor """
         self._sampleRate    = sampleRate
         self._targetClass   = targetClass
-        self._waveform      = np.zeros(size=(16,),dtype=np.float32)
+        self._waveform      = np.zeros(shape=(4,),dtype=np.float32)
         self._cachedData    = SignalData.CachedData()
         self._sourcePath    = sourcePath
         self._channelIndex  = 0
