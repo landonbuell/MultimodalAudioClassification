@@ -75,6 +75,12 @@ class SignalData:
         """ Return the waveform """
         return self._waveform
 
+    def setWaveform(self,
+                    waveform: np.ndarray) -> None:
+        """ Set the waveform """
+        self._waveform = waveform
+        return None
+
     @property
     def waveform(self):
         """ Return the waveform as a property """
