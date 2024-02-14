@@ -36,6 +36,7 @@ class AbstractCollectionMethod:
                  methodName: str,
                  numFeatures: int):
         """ Constructor """
+        numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
         self._data  = np.zeros(size=(numFeatures,),dtype=np.float32)
         self._callbacks = []    # evaluated 
@@ -83,6 +84,14 @@ class AbstractCollectionMethod:
         return result
 
     # Protected Interface 
+    
+    def _validateNumFeatures(self,numFeatures: int) -> int:
+        """ VIRTUAL: Validate the number of output features """
+        if (numFeatures <= 0):
+            msg = "Error: Cannot have less than 1 output feature per collection method. Defaulting to 1 feature"
+            print(msg)
+            numFeatures = 1
+        return numFeatures
 
     def _callBody(self,
                   signal: signalData.SignalData) -> bool:
@@ -110,7 +119,8 @@ class AbstractCollectionMethod:
         return False
 
 class CollectionMethodCallbacks:
-    """ Static class of methods with signature:
+    """ 
+        Static class of methods with signature:
 
         [bool] = callback([signalData.SignalData])
 

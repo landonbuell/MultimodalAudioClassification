@@ -48,12 +48,12 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                   signal: signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         for ii in range(self.numCoeffs):
-            self.__computeCoefficient(signal,ii)
+            self._data[ii] = self.__computeCoefficient(signal,ii)
         return True
 
     def __computeCoefficient(self,
                              signal: signalData.SignalData,
-                             coeffIndex: int):
+                             coeffIndex: int) -> np.float32:
         """ Compute the Coeff at the provided index """
         sumUpperBound = signal.getNumSamples() - coeffIndex
         sums = np.zeros(shape=(3,),dtype=np.float32)
@@ -64,5 +64,5 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
         # Now Compute the result
         sums[1] = np.sqrt(sums[1])
         sums[2] = np.sqrt(sums[2])
-        self._data[coeffIndex] = sums[0] / (sums[1] * sums[2])
-        return None
+        coeff = sums[0] / (sums[1] * sums[2])
+        return coeff
