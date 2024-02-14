@@ -75,7 +75,13 @@ class SignalData:
         """ Return the waveform """
         return self._waveform
 
-    def getCachedData(self) -> CachedData:
+    @property
+    def waveform(self):
+        """ Return the waveform as a property """
+        return self._waveform
+
+    @property
+    def cachedData(self) -> CachedData:
         """ Return the underlying Cached data for this signal """
         return self._cachedData
 
@@ -119,6 +125,8 @@ class SignalData:
         """ Populate the cached data' frequency series analysis frames """
         # TODO: Implement this!
         return None
+
+    # Public Interface
 
     # Private Interface
 
