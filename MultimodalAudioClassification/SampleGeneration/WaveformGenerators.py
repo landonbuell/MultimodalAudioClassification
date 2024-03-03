@@ -19,24 +19,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as scisig
 import scipy.io.wavfile as sciowav
 
-        #### FUNCTION DEFINITIONS ####
 
-def plotSignal(xData,yData,title):
-    """ Show Time-Series Signal """
-    plt.figure(figsize=(12,8))
-    plt.title(title,fontsize=32,fontweight='bold')
-    plt.xlabel("Time",fontsize=24,fontweight='bold')
-    plt.ylabel("Amplitude",fontsize=24,fontweight='bold')
-
-    plt.plot(xData,yData,label="Signal")
-
-    plt.ylim([-1.1,+1.1])
-    plt.grid()
-    plt.tight_layout()
-    plt.legend()
-
-    plt.show()
-    return None
 
         #### CLASS DEFINITIONS ####
 
@@ -91,68 +74,6 @@ class SimpleWavesforms:
         if (noise is not None):
             y += noise
         return y
-
-class DummySignals:
-    """ Static class of dummy signal getters """
-
-    @staticmethod
-    def getSine440HzSignal():
-        """ Return Signal w/ 440Hz Sine waveform """
-        t = np.arange(88200,dtype=np.float32)
-        waveform = np.sin(2*np.pi*t*440)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getSine880HzSignal():
-        """ Return Signal w/ 880 Hz Sine waveform """
-        t = np.arange(88200,dtype=np.float32)
-        waveform = np.sin(2*np.pi*t*880)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getNormalWhiteNoise():
-        """ Return Signal w/ normalized white noise waveform """
-        waveform = np.random.random(size=88200)
-        waveform /= np.max(np.abs(waveform))
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getConstZeroSignal():
-        """ Return Signal w/ all zero waveform """
-        waveform = np.zeros(shape=(88200,),dtype=np.float32)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getConstOneSignal():
-        """ Return Signal w/ all 1's waveform """
-        waveform = np.zeros(shape=(88200,),dtype=np.float32) + 1
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getLinearRampSignal():
-        """ Return Signal w/ increasing waveform """
-        waveform = np.arange(88200,dtype=np.float32)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-class SimpleNoise:
-
-    @staticmethod
-    def getUniformNoise(numSamples):
-        """ Get Array of Uniform Random Noise """
-        y = (np.random.random(numSamples) - 0.5) / 100.0
-        return y.astype(np.float32)
 
 class DatasetGenerator:
     """ Generate a Collection of Samples """
