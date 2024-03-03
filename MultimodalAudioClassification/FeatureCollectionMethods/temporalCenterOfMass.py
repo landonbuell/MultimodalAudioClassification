@@ -11,7 +11,6 @@
 
         #### IMPORTS ####
 
-from typing import Collection
 import numpy as np
 
 import collectionMethod

@@ -68,6 +68,18 @@ class AnalysisFrameParameters:
     def freqLowBoundMels(self) -> float:
         """ Return the frequency low bound in Mels """
         return AnalysisFrameParameters.hzToMels(self.freqLowBoundHz)
+   
+    def getFreqFramesShape(self) -> tuple:
+        """ Return the SHAPE of the frequency frames """
+        return (self.maxNumFrames,self.freqFrameSize,)
+
+    def getTimeFramesShape(self) -> tuple:
+        """ Return the SHAPE of the time frames """
+        return (self.maxNumFrames,self.timeFrameSize,)
+
+    def getFreqFramesNumFeatures(self) -> int:
+        """ Return the total number of data points in the frequency frames """
+        return (self.maxNumFrames * self.freqFrameSize)
 
     def getUnmaskedFrequencyAxisHz(self) -> np.ndarray:
         """ Return an uncropped frequency axis """
@@ -99,7 +111,7 @@ class AnalysisFrameParameters:
 
     @staticmethod
     def sampleRate() -> float:
-        """ Return sample Rate """
+        """ Return sample Rate. TEMP HARD-CODED """
         return 44100.0
 
     # Magic Methods
@@ -108,6 +120,20 @@ class AnalysisFrameParameters:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
+    def __eq__(self,other) -> bool:
+        """ Implement Equality Operator """
+        eq = (  (self.samplesPerFrame == other.samplesPerFrame) and
+                (self.sampleOverlap == other.sampleOverlap) and
+                (self.headPad == other.headPad) and
+                (self.tailPad == other.tailPad) and 
+                (self.maxNumFrames == other.maxNumFrames) and 
+                (self.freqHighBoundHz == other.freqHighBoundHz) and 
+                (self.freqLowBoundHz == other.freqLowBoundHz))
+        return eq
+
+    def __neq__(self,other) -> bool:
+        """ Implement inequality operator """
+        return not self.__eq__(other)
 
 class __AbstractAnalysisFrames:
     """ Abstract Base Class for All Analysis Frame Types """
@@ -120,9 +146,7 @@ class __AbstractAnalysisFrames:
         """ Constructor """
         self._params = frameParams
         self._data   = np.zeros(shape=(frameParams.maxNumFrames,frameSize),dtype=dataType)
-        
-        self._validateSignal(signal)
-        self._populateFrames(signal)
+        self.populate(signalData)
 
     def __del__(self):
         """ Destructor """
@@ -146,16 +170,33 @@ class __AbstractAnalysisFrames:
         """ Return the raw underlying analysis frames """
         return self._data
 
+    # Public Interface
+    
+    def populate(self,
+                 signal: signalData.SignalData) -> None:
+        """ Populate the analysis frames """
+        success = self._validateSignal(signal)
+        if (success == True):
+            self._populateFrames(signal)
+        return None
+
+    def clear(self) -> None:
+        """ Zero all frame values """
+        for ii in range(self._data.shape[0]):
+            for jj in range(self._data.shape[1]):
+                self._data[ii,jj] = 0.0
+        return None
+
     # Protected Interface
 
     def _validateSignal(self,
-                        signal: signalData.SignalData) -> None:
+                        signal: signalData.SignalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
         if (signal.getNumSamples() == 0):
             errMsg = "provided signal: {0} has {1} samples.".format(
                 repr(signal),signal.getNumSamples())
             raise RuntimeError(errMsg)
-        return None
+        return True
 
     def _populateFrames(self,
                         signal: signalData.SignalData) -> None:
@@ -201,7 +242,22 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     # Public Interface
 
-    def populate(self,
+    def shouldRemakeTimeFrames(self,
+                               signal: signalData.SignalData) -> bool:
+        """ Return T/F if given a signal, we should REMAKE it's time-frames """
+        return self._shouldRemakeTimeFrames(signal)
+
+    # Protected Interface
+
+    def _validateSignal(self,
+                        signal: signalData.SignalData) -> bool:
+        """ VIRTUAL: Validate that the input signal has info to work with """
+        valid = super()._validateSignal(signal)
+        if (valid == True):
+            valid = self._shouldRemakeTimeFrames(signal)
+        return valid
+
+    def _populateFrames(self,
                  signal: signalData.SignalData ) -> None:
         """ OVERRIDE: Populate the analysis frames """
         stepSize = self._params.samplesPerFrame - self._params.sampleOverlap
@@ -221,6 +277,17 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
             frameEnd = frameStart + self._params.samplesPerFrame
         return None
 
+    def _shouldRemakeTimeFrames(self,
+                               signal: signalData.SignalData) -> bool:
+        """ Return T/F if we should remake the time-series analysis frames """
+        remakeFrames = True
+        if (signal.getCachedData().analysisFramesTime is not None):
+            # Frames exist
+            if (signal.getCachedData().analysisFramesTime.getParams() == self._params):
+                # Parmas match
+                remakeFrames = False
+            remakeFrames = True
+        return remakeFrames
 
 class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     """ Stores Short-time-frequency-series analysis frames """
@@ -242,13 +309,21 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     # Public Interface
 
+    def shouldRemakeFreqFrames(self,
+                               signal: signalData.SignalData) -> bool:
+        """ Return T/F if given a signal, we should REMAKE it's time-frames """
+        return self._shouldRemakeFreqFrames(signal)
+
+    # Protected Interface
+
     def _validateSignal(self,
-                        signal: signalData.SignalData) -> None:
+                        signal: signalData.SignalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
-        if (signal.getCachedData().analysisFramesTime == None):
-            # No time-frames yet ... make them!
-            signal.populateTimeSeriesAnalysisFrames()
-        return None
+        valid = super()._validateSignal(signal)
+        if (valid == True):
+            valid = signal.cachedData.analysisFramesTime.shouldRemakeFreqFrames(signal)
+        return valid
+
 
     def _populate(self,
                   signal: signalData.SignalData) -> None:
@@ -258,3 +333,15 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         # TODO: Apply Freq Mask
         # TODO: Finish this!
         return None
+
+    def _shouldRemakeFreqFrames(self,
+                               signal: signalData.SignalData) -> bool:
+        """ Return T/F if we should remake the time-series analysis frames """
+        remakeFrames = True
+        if (signal.getCachedData().analysisFramesFreq is not None):
+            # Frames exist
+            if (signal.getCachedData().analysisFramesFreq.getParams() == self._params):
+                # Parmas match
+                remakeFrames = False
+            remakeFrames = True
+        return remakeFrames

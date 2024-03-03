@@ -52,4 +52,5 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
                 self._data[ii] += (signal.waveform[jj] * signal.waveform[jj])
             self._data[ii] = np.sqrt(self._data[ii] / partitionSize)
             startIndex += partitionSize
+        self._data /= np.max(self._data) # Normalize s.t. the largest value is 1
         return True

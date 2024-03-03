@@ -14,6 +14,8 @@
 
 import numpy as np
 
+import analysisFrames
+
         #### CLASS DEFINITIONS ####
 
 class SignalData:
@@ -126,14 +128,16 @@ class SignalData:
         # TODO: Implement this!
         return None
 
-    def populateTimeSeriesAnalysisFrames(self) -> None:
+    def populateTimeSeriesAnalysisFrames(self,
+                                         analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
         """ Populate the cached data' time series analysis frames """
-        # TODO: Implement this!
+        self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(analysisFrameParams)
         return None
 
-    def populateFreqSeriesAnalysisFrames(self) -> None:
+    def populateFreqSeriesAnalysisFrames(self,
+                                         analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
         """ Populate the cached data' frequency series analysis frames """
-        # TODO: Implement this!
+        self._cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(analysisFrameParams)
         return None
 
     # Public Interface
