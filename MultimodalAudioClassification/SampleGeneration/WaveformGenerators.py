@@ -11,9 +11,7 @@ Date:       January 2023
         #### IMPORTS ####
 
 import os
-import sys
 import enum
-import wave
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,24 +19,7 @@ import matplotlib.pyplot as plt
 import scipy.signal as scisig
 import scipy.io.wavfile as sciowav
 
-        #### FUNCTION DEFINITIONS ####
 
-def plotSignal(xData,yData,title):
-    """ Show Time-Series Signal """
-    plt.figure(figsize=(12,8))
-    plt.title(title,fontsize=32,fontweight='bold')
-    plt.xlabel("Time",fontsize=24,fontweight='bold')
-    plt.ylabel("Amplitude",fontsize=24,fontweight='bold')
-
-    plt.plot(xData,yData,label="Signal")
-
-    plt.ylim([-1.1,+1.1])
-    plt.grid()
-    plt.tight_layout()
-    plt.legend()
-
-    plt.show()
-    return None
 
         #### CLASS DEFINITIONS ####
 
@@ -93,14 +74,6 @@ class SimpleWavesforms:
         if (noise is not None):
             y += noise
         return y
-
-class SimpleNoise:
-
-    @staticmethod
-    def getUniformNoise(numSamples):
-        """ Get Array of Uniform Random Noise """
-        y = (np.random.random(numSamples) - 0.5) / 100.0
-        return y.astype(np.float32)
 
 class DatasetGenerator:
     """ Generate a Collection of Samples """

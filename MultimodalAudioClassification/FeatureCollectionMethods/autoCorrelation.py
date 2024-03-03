@@ -45,14 +45,14 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self, 
-                  signal: signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         for ii in range(self.numCoeffs):
             self._data[ii] = self.__computeCoefficient(signal,ii)
         return True
 
     def __computeCoefficient(self,
-                             signal: signalData.SignalData,
+                             signal: collectionMethod.signalData.SignalData,
                              coeffIndex: int) -> np.float32:
         """ Compute the Coeff at the provided index """
         sumUpperBound = signal.getNumSamples() - coeffIndex

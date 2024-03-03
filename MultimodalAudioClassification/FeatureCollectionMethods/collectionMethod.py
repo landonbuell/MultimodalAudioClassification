@@ -38,7 +38,7 @@ class AbstractCollectionMethod:
         """ Constructor """
         numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
-        self._data  = np.zeros(size=(numFeatures,),dtype=np.float32)
+        self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
         self._callbacks = []    # evaluated 
         
     def __del__(self):

@@ -38,10 +38,10 @@ class TotalZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData):
         """ OVERRIDE: Compute TDE's for signal """
         waveformSign = np.sign(signal.waveform)
-        waveformDiff = np.diff(waveformSign)
+        waveformDiff = np.abs(np.diff(waveformSign))
         self._data[0] = np.sum(waveformDiff) / 2.0
         return True
 
@@ -78,7 +78,7 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData):
         """ OVERRIDE: Compute TDE's for signal """
         zxrs = np.empty(shape=(signal.cachedData.analysisFramesTime.maxNumFrames,),dtype=np.float32)
         for ii in range(signal.cachedData.analysisFramesTime.maxNumFrames):
@@ -95,7 +95,7 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Private Interface
 
     def __computeZeroCrossingRateOfFrame(self,
-                                         signal: signalData.SignalData,
+                                         signal: collectionMethod.signalData.SignalData,
                                          frameIndex: int) -> None:
         """ Compute the zero crossing rate for a chosen frame """
         sign = np.sign(signal.cachedData.analysisFramesTime[frameIndex])

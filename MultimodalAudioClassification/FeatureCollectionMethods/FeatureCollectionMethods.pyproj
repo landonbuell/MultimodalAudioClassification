@@ -4,8 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>4464a516-3dfa-4780-b202-12917ae8b49c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>__main__.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,7 +25,9 @@
     <Compile Include="collectionMethod.py" />
     <Compile Include="temporalCenterOfMass.py" />
     <Compile Include="timeDomainEnvelope.py" />
+    <Compile Include="unitTests.py" />
     <Compile Include="zeroCrossingRate.py" />
+    <Compile Include="__main__.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CommonToolsPy\CommonToolsPy.pyproj">
@@ -37,6 +38,11 @@
     <ProjectReference Include="..\FeatureCollectionApp\FeatureCollectionApp.pyproj">
       <Name>FeatureCollectionApp</Name>
       <Project>{db84ed35-00d7-4cc4-b73b-15f1621b556c}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SampleGeneration\SampleGeneration.pyproj">
+      <Name>SampleGeneration</Name>
+      <Project>{6405f87e-af59-4a5a-9d02-19476f5eab2a}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
