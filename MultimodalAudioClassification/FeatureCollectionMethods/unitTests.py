@@ -29,15 +29,15 @@ class UnitTestCollectionMethods:
 
     def __init__(self,
                  listOfMethods=None,
-                 listOfSignals=None):
+                 listOfWaveforms=None):
         """ Constructor """
-        self._listOfMethods     = []
-        self._listOfSignals     = []
+        self._listOfMethods     = [] # List of feature collection methods
+        self._listOfSignals     = [] # List of np arrays
 
         if (listOfMethods is not None):
             self._listOfMethods = listOfMethods[:]
-        if (listOfSignals is not None):
-            self._listOfSignals = listOfSignals[:]
+        if (listOfWaveforms is not None):
+            self._listOfSignals = listOfWaveforms[:]
 
     def __del__(self):
         """ Destructor """
@@ -45,25 +45,13 @@ class UnitTestCollectionMethods:
 
     # Public Interface
 
-    def registerCollectionMethod(self,
-                                 collectionMethod) -> None:
-        """ Add a collection method to the list to run """
-        self._listOfMethods.append(collectionMethod)
-        return None
-
-    def registerSignalData(self,
-                           signal) -> None:
-        """ Add a signal to the list to run """
-        self._listOfSignals.append(signal)
-        return None
-
     def runAll(self):
         """ Run all signals against all collection methods """
         allFeatureNames = self.__getAllFeatureNames()
         numFeatures = len(allFeatureNames)
-        for ii,signal in enumerate(self._listOfSignals):
+        for ii,waveform in enumerate(self._listOfSignals):
             features = np.zeros(shape=(numFeatures,),dtype=np.float32)
-            self.__evaluateCollectionMethods(signal,features)
+            self.__evaluateCollectionMethods(waveform,features)
         return None
 
     # Private Interface
@@ -76,11 +64,12 @@ class UnitTestCollectionMethods:
         return featureNames
 
     def __evaluateCollectionMethods(self,
-                                    signal,
-                                    features) -> None:
+                                    waveform: np.ndarray,
+                                    features: np.ndarray) -> None:
         """ Evaluate signal against collection methods """
         featureCounter = 0
         for ii,method in enumerate(self._listOfMethods):
+            signal = signalData.SignalData(waveform=waveform)
             success = method.call(signal)
             if (success == False):
                 data = np.full(shape=(method.getNumFeatures,),fill_value=np.NaN)
@@ -101,7 +90,8 @@ class PresetUnitTests:
         """ Return test of basic time-series methods """
         methods = [timeDomainEnvelope.TimeDomainEnvelope(4),
                    zeroCrossingRate.TotalZeroCrossings(),]
-        signals = [WaveformGenerators.DummySignals.getNormalWhiteNoise(),]
+        signals = [WaveformGenerators.dummyWaveforms.getNormalWhiteNoise(),
+                   WaveformGenerators.dummyWaveforms.getSine440HzSignal(),]
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 

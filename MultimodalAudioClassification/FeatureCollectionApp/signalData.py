@@ -36,14 +36,18 @@ class SignalData:
     def __init__(self,
                  sampleRate=44100,
                  targetClass=-1,
+                 waveform=None,
                  sourcePath="NULL_PATH"):
         """ Constructor """
         self._sampleRate    = sampleRate
         self._targetClass   = targetClass
-        self._waveform      = np.zeros(shape=(4,),dtype=np.float32)
+        self._waveform      = waveform
         self._cachedData    = SignalData.CachedData()
         self._sourcePath    = sourcePath
         self._channelIndex  = 0
+
+        if (self._waveform is None):
+            self._waveform = np.array(shape=(1,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
