@@ -14,6 +14,7 @@
 import numpy as np
 
 import signalData
+import WaveformGenerators
 
 import collectionMethod
 import timeDomainEnvelope
@@ -92,60 +93,6 @@ class UnitTestCollectionMethods:
         # Done!
         return None
 
-class DummySignals:
-    """ Static class of dummy signal getters """
-
-    @staticmethod
-    def getSine440HzSignal():
-        """ Return Signal w/ 440Hz Sine waveform """
-        t = np.arange(88200,dtype=np.float32)
-        waveform = np.sin(2*np.pi*t*440)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getSine880HzSignal():
-        """ Return Signal w/ 880 Hz Sine waveform """
-        t = np.arange(88200,dtype=np.float32)
-        waveform = np.sin(2*np.pi*t*880)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getNormalWhiteNoise():
-        """ Return Signal w/ normalized white noise waveform """
-        waveform = np.random.random(size=88200)
-        waveform /= np.max(np.abs(waveform))
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getConstZeroSignal():
-        """ Return Signal w/ all zero waveform """
-        waveform = np.zeros(shape=(88200,),dtype=np.float32)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getConstOneSignal():
-        """ Return Signal w/ all 1's waveform """
-        waveform = np.zeros(shape=(88200,),dtype=np.float32) + 1
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
-    @staticmethod
-    def getLinearRampSignal():
-        """ Return Signal w/ increasing waveform """
-        waveform = np.arange(88200,dtype=np.float32)
-        signal = signalData.SignalData()
-        signal.setWaveform(waveform)
-        return signal
-
 class PresetUnitTests:
     """ Static class of pre-existing unit test """
 
@@ -154,7 +101,7 @@ class PresetUnitTests:
         """ Return test of basic time-series methods """
         methods = [timeDomainEnvelope.TimeDomainEnvelope(4),
                    zeroCrossingRate.TotalZeroCrossings(),]
-        signals = [DummySignals.getNormalWhiteNoise(),]
+        signals = [WaveformGenerators.DummySignals.getNormalWhiteNoise(),]
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 
