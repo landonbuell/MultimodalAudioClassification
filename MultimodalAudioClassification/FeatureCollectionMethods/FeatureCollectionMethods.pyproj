@@ -40,6 +40,11 @@
       <Project>{db84ed35-00d7-4cc4-b73b-15f1621b556c}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\SampleGeneration\SampleGeneration.pyproj">
+      <Name>SampleGeneration</Name>
+      <Project>{6405f87e-af59-4a5a-9d02-19476f5eab2a}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

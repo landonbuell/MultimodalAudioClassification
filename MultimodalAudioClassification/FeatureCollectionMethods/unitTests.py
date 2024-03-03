@@ -14,7 +14,7 @@
 import numpy as np
 
 import signalData
-import WaveformGenerators
+import dummyWaveforms
 
 import collectionMethod
 import timeDomainEnvelope
@@ -89,9 +89,9 @@ class PresetUnitTests:
     def getTestBasicTimeSeriesMethods():
         """ Return test of basic time-series methods """
         methods = [timeDomainEnvelope.TimeDomainEnvelope(4),
-                   zeroCrossingRate.TotalZeroCrossings(),]
-        signals = [WaveformGenerators.dummyWaveforms.getNormalWhiteNoise(),
-                   WaveformGenerators.dummyWaveforms.getSine440HzSignal(),]
+                   zeroCrossingRate.TotalZeroCrossingRate(),]
+        signals = [dummyWaveforms.getUniformWhiteNoise(),
+                   dummyWaveforms.getSine440HzSignal(),]
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 

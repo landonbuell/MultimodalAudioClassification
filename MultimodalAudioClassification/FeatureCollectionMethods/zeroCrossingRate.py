@@ -41,7 +41,7 @@ class TotalZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
                   signal: collectionMethod.signalData.SignalData):
         """ OVERRIDE: Compute TDE's for signal """
         waveformSign = np.sign(signal.waveform)
-        waveformDiff = np.diff(waveformSign)
+        waveformDiff = np.abs(np.diff(waveformSign))
         self._data[0] = np.sum(waveformDiff) / 2.0
         return True
 
