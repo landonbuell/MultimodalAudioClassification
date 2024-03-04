@@ -137,7 +137,6 @@ class SignalData:
     def populateFreqSeriesAnalysisFrames(self,
                                          analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
         """ Populate the cached data' frequency series analysis frames """
-        self._cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(analysisFrameParams)
         return None
 
     # Public Interface
