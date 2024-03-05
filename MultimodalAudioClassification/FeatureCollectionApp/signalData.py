@@ -128,20 +128,43 @@ class SignalData:
         # TODO: Implement this!
         return None
 
-    def populateTimeSeriesAnalysisFrames(self,
-                                         analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+    def makeTimeSeriesAnalysisFrames(self,
+                                     analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
         """ Populate the cached data' time series analysis frames """
-        self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(analysisFrameParams)
+        if (self.__shouldMakeTimeSeriesAnalysisFrames(analysisFrameParams) == True):
+            self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,analysisFrameParams)
         return None
 
-    def populateFreqSeriesAnalysisFrames(self,
-                                         analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+    def makeFreqSeriesAnalysisFrames(self,
+                                     analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
         """ Populate the cached data' frequency series analysis frames """
+        if (self.__shouldMakeFreqSeriesAnalysisFrames(analysisFrameParams) == True):
+            if (self.__shouldMakeTimeSeriesAnalysisFrames(analysisFrameParams) == True):
+                self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,analysisFrameParams)
+            self._cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(self,analysisFrameParams)
         return None
-
-    # Public Interface
 
     # Private Interface
+
+    def __shouldMakeTimeSeriesAnalysisFrames(self,
+                                            analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
+        shouldRemake = False
+        if (self.cachedData.analysisFramesTime is None):
+            shouldRemake = True
+        if (self.cachedData.analysisFramesTime.getParms() != analysisFrameParams):
+            shouldRemake = True
+        return shouldRemake
+
+    def __shouldMakeFreqSeriesAnalysisFrames(self,
+                                            analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
+        shouldRemake = False
+        if (self.cachedData.analysisFramesFreq is None):
+            shouldRemake = True
+        if (self.cachedData.analysisFramesFreq.getParms() != analysisFrameParams):
+            shouldRemake = True
+        return shouldRemake
 
     # Magic Methods
 
