@@ -150,7 +150,8 @@ class __AbstractAnalysisFrames:
 
     def __del__(self):
         """ Destructor """
-        pass
+        self._params = None
+        self._data  = None
 
     # Accessors
 
@@ -238,11 +239,7 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     def __del__(self):
         """ Destructor """
-        pass
-
-    # Public Interface
-
-
+        super().__del__()
 
     # Protected Interface
 
@@ -288,7 +285,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     def __del__(self):
         """ Destructor """
-        pass
+        super().__del__()
 
     # Protected Interface
 
@@ -304,7 +301,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
                   signal: signalData.SignalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
         rawTimeFrames = signal.getCachedData().analysisFramesTime.getRawFrames()
-        self._data = np.fft.fft( rawTimeFrames )
-        # TODO: Apply Freq Mask
-        # TODO: Finish this!
+        maskFreqAxis = self._params.getMaskedFrequencyAxisHz()
+        fftData = np.fft.fft( rawTimeFrames )    
+        self._data = fftData[:,maskFreqAxis] # apply mask
         return None

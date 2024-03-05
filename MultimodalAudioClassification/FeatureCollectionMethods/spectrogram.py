@@ -54,13 +54,7 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     def _callBody(self, 
                   signal: signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
-        if (signal.cachedData.analysisFramesFreq is None):
-            # No frequency space analysis frames DO NOT exist. We need to make them
-            signal.populateFreqSeriesAnalysisFrames(self._params)
-        else:
-            # The frequncy space analysis frames DO exist. Check that the params match
-            pass
-        # Should be a SHALLOW COPY of the signal.cachedData.analysisFramesFreq
-        self._data = signal.cachedData.analysisFramesFreq
+        signal.makeFreqSeriesAnalysisFrames(self._params)
+        self._data = signal.cachedData.analysisFramesFreq.flatten()
         return True
     
