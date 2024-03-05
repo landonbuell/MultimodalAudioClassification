@@ -242,10 +242,7 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     # Public Interface
 
-    def shouldRemakeTimeFrames(self,
-                               signal: signalData.SignalData) -> bool:
-        """ Return T/F if given a signal, we should REMAKE it's time-frames """
-        return self._shouldRemakeTimeFrames(signal)
+
 
     # Protected Interface
 
@@ -253,8 +250,6 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
                         signal: signalData.SignalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
         valid = super()._validateSignal(signal)
-        if (valid == True):
-            valid = self._shouldRemakeTimeFrames(signal)
         return valid
 
     def _populateFrames(self,
@@ -277,18 +272,6 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
             frameEnd = frameStart + self._params.samplesPerFrame
         return None
 
-    def _shouldRemakeTimeFrames(self,
-                               signal: signalData.SignalData) -> bool:
-        """ Return T/F if we should remake the time-series analysis frames """
-        remakeFrames = True
-        if (signal.getCachedData().analysisFramesTime is not None):
-            # Frames exist
-            if (signal.getCachedData().analysisFramesTime.getParams() == self._params):
-                # Parmas match
-                remakeFrames = False
-            remakeFrames = True
-        return remakeFrames
-
 class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     """ Stores Short-time-frequency-series analysis frames """
 
@@ -307,13 +290,6 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         """ Destructor """
         pass
 
-    # Public Interface
-
-    def shouldRemakeFreqFrames(self,
-                               signal: signalData.SignalData) -> bool:
-        """ Return T/F if given a signal, we should REMAKE it's time-frames """
-        return self._shouldRemakeFreqFrames(signal)
-
     # Protected Interface
 
     def _validateSignal(self,
@@ -321,9 +297,8 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         """ VIRTUAL: Validate that the input signal has info to work with """
         valid = super()._validateSignal(signal)
         if (valid == True):
-            valid = signal.cachedData.analysisFramesTime.shouldRemakeFreqFrames(signal)
+            valid = (signal.cachedData.analysisFramesTime is not None)
         return valid
-
 
     def _populate(self,
                   signal: signalData.SignalData) -> None:
@@ -333,15 +308,3 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         # TODO: Apply Freq Mask
         # TODO: Finish this!
         return None
-
-    def _shouldRemakeFreqFrames(self,
-                               signal: signalData.SignalData) -> bool:
-        """ Return T/F if we should remake the time-series analysis frames """
-        remakeFrames = True
-        if (signal.getCachedData().analysisFramesFreq is not None):
-            # Frames exist
-            if (signal.getCachedData().analysisFramesFreq.getParams() == self._params):
-                # Parmas match
-                remakeFrames = False
-            remakeFrames = True
-        return remakeFrames
