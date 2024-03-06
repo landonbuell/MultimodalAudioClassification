@@ -2,9 +2,9 @@
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollectionMethods
-    File:       temporalCenterOfMass.py
+    File:       centerOfMass.py
     Classes:    TemporalCenterOfMass,
-
+                FrequencyCenterOfMass,
     Author:     Landon Buell
     Date:       February 2024
 """
