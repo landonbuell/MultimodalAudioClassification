@@ -28,6 +28,7 @@ class SignalData:
             """ Constructor """
             self.analysisFramesTime = None
             self.analysisFramesFreq = None
+            self.freqCenterOfMasses = None
 
         def __del__(self):
             """ Destructor """
@@ -143,6 +144,22 @@ class SignalData:
                 self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,analysisFrameParams)
             self._cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(self,analysisFrameParams)
         return None
+
+    def makeFrequencyCenterOfMass(self,
+                                  analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+        """ Populate the cached data' frequency center of mass frames """
+        if (self.__shouldMakeFreqSeriesAnalysisFrames(analysisFrameParams) == True):
+            self.makeFreqSeriesAnalysisFrames(analysisFrameParams)
+        # Now that we have the frequency frames, 
+        rawFreqFrames = self.cachedData.analysisFramesFreq.getRawFrames()**2
+        frameSize = self.cachedData.analysisFramesFreq.getFrameSize()
+        if (self._weightKernel.size != frameSize):
+            self.__initWeightsKernel(frameSize)
+        # Compute Center of Mass of each frame
+        numerator = np.dot(rawFreqFrames,self._weightKernel)
+        denominator = np.sum(rawFreqFrames,axis=1) + 1e-8
+        self.cachedData.freqCenterOfMasses = numerator / denominator
+
 
     # Private Interface
 

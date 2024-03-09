@@ -46,6 +46,11 @@ class AnalysisFrameParameters:
         """ Destructor """
         pass
 
+    @staticmethod
+    def defaultFrameParams():
+        """ Return the default analysis frame parameters """
+        return AnalysisFrameParameters()
+
     # Accessors
 
     @property

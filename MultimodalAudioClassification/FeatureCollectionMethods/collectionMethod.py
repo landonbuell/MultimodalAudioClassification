@@ -16,6 +16,7 @@ import numpy as np
 import enum
 
 import signalData
+import analysisFrames
 
         #### CLASS DEFINITIONS ####
 
@@ -135,3 +136,24 @@ class CollectionMethodCallbacks:
     def signalHasAnalysisFramesFreq(signal: signalData.SignalData) -> bool:
         """ Ensure that a provided signal has freq-series analysis frames """
         return (signal.cachedData.analysisFramesFreq is not None)
+
+    @staticmethod
+    def makeDefaultTimeSeriesAnalysisFrames(signal: signalData.SignalData) -> bool:
+        """ Create the time-series analysis frames for the signal using the 'default' params """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+        signal.makeTimeSeriesAnalysisFrames(params)
+        return (signal.cachedData.analysisFramesTime is not None)
+
+    @staticmethod
+    def makeDefaultFreqSeriesAnalysisFrames(signal: signalData.SignalData) -> bool:
+        """ Create the freq-series analysis frames for the signal using the 'default' params """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+        signal.makeFreqSeriesAnalysisFrames(params)
+        return (signal.cachedData.analysisFramesFreq is not None)
+
+     @staticmethod
+    def makeDefaultFreqCenterOfMasses(signal: signalData.SignalData) -> bool:
+        """ Create the freq-series center of mass for each freq-series analysis frame """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+        signal.makeFrequencyCenterOfMass(params)
+        return (signal.cachedData.freqCenterOfMasses is not None)
