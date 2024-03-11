@@ -151,7 +151,7 @@ class CollectionMethodCallbacks:
         signal.makeFreqSeriesAnalysisFrames(params)
         return (signal.cachedData.analysisFramesFreq is not None)
 
-     @staticmethod
+    @staticmethod
     def makeDefaultFreqCenterOfMasses(signal: signalData.SignalData) -> bool:
         """ Create the freq-series center of mass for each freq-series analysis frame """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()

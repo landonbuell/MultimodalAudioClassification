@@ -61,8 +61,7 @@ class AnalysisFrameParameters:
     @property
     def freqFrameSize(self) -> int:
         """ Get the total size of each frame """
-        # TODO: Implement this!
-        return self.headPad + self.samplesPerFrame + self.tailPad
+        return len(self.getMaskedFrequencyAxisHz())
 
     @property
     def freqHighBoundMels(self) -> float:
@@ -88,14 +87,14 @@ class AnalysisFrameParameters:
 
     def getUnmaskedFrequencyAxisHz(self) -> np.ndarray:
         """ Return an uncropped frequency axis """
-        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
         freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
                                   d=sampleSpacing)
         return freqAxis
 
     def getMaskedFrequencyAxisHz(self) -> np.ndarray:
         """ Return a frequency axis cropped by provided bounds """
-        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
         freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
                                   d=sampleSpacing)
         freqMask = (freqAxis >= self.freqLowBoundHz) and (freqAxis <= self.freqHighBoundHz)

@@ -130,48 +130,55 @@ class SignalData:
         return None
 
     def makeTimeSeriesAnalysisFrames(self,
-                                     analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+                                     frameParams: analysisFrames.AnalysisFrameParameters,
+                                     forceMakeFrames=False) -> bool:
         """ Populate the cached data' time series analysis frames """
-        if (self.__shouldMakeTimeSeriesAnalysisFrames(analysisFrameParams) == True):
-            self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,analysisFrameParams)
-        return None
+        if (forceMakeFrames == True):
+            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
+            return True
+        if (self.__shouldMakeTimeSeriesAnalysisFrames(frameParams) == True):
+            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
+            return True
+        return False
 
     def makeFreqSeriesAnalysisFrames(self,
-                                     analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+                                     frameParams: analysisFrames.AnalysisFrameParameters,
+                                     forceMakeFrames=False) -> bool:
         """ Populate the cached data' frequency series analysis frames """
-        if (self.__shouldMakeFreqSeriesAnalysisFrames(analysisFrameParams) == True):
-            if (self.__shouldMakeTimeSeriesAnalysisFrames(analysisFrameParams) == True):
-                self._cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,analysisFrameParams)
-            self._cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(self,analysisFrameParams)
-        return None
+        if (forceMakeFrames == True):
+            self.cachedData.analysisFramesTime = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
+            return True
+        if (self.__shouldMakeFreqSeriesAnalysisFrames(frameParams) == True):
+            self.cachedData.analysisFramesTime = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
+            return True
+        return False
 
-    def makeFrequencyCenterOfMass(self,
-                                  analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> None:
+    def makeFreqCenterOfMasses(self,
+                                  frameParams: analysisFrames.AnalysisFrameParameters,
+                                  forceMakeFrames=False) -> bool:
         """ Populate the cached data' frequency center of mass frames """
-        if (self.__shouldMakeFreqSeriesAnalysisFrames(analysisFrameParams) == True):
-            self.makeFreqSeriesAnalysisFrames(analysisFrameParams)
-        # Now that we have the frequency frames, 
-        rawFreqFrames = self.cachedData.analysisFramesFreq.getRawFrames()**2
-        frameSize = self.cachedData.analysisFramesFreq.getFrameSize()
-        if (self._weightKernel.size != frameSize):
-            self.__initWeightsKernel(frameSize)
-        # Compute Center of Mass of each frame
-        numerator = np.dot(rawFreqFrames,self._weightKernel)
-        denominator = np.sum(rawFreqFrames,axis=1) + 1e-8
-        self.cachedData.freqCenterOfMasses = numerator / denominator
-
+        madeFrames = self.makeFreqSeriesAnalysisFrames(frameParams,forceMakeFrames)
+        weights = np.arange(0,frameParams.freqFrameSize,1)
+        nmrtr = np.dot(self.cachedData.analysisFramesFreq.getRawFrames(),weights)
+        dnmtr = np.sum(np.abs(self.cachedData.analysisFramesFreq.getRawFrames()),axis=1) + 1e-8
+        self.cachedData.freqCenterOfMasses = (nmrtr / dnmtr)
+        if (self.cachedData.freqCenterOfMasses.size != frameParams.maxNumFrames):
+            msg = "Mismatch in number of frames & number of center of Masses"
+            raise RuntimeError(msg)
+        return madeFrames
 
     # Private Interface
 
     def __shouldMakeTimeSeriesAnalysisFrames(self,
-                                            analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+                                            frameParams: analysisFrames.AnalysisFrameParameters) -> bool:
         """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
-        shouldRemake = False
         if (self.cachedData.analysisFramesTime is None):
-            shouldRemake = True
-        if (self.cachedData.analysisFramesTime.getParms() != analysisFrameParams):
-            shouldRemake = True
-        return shouldRemake
+            # Frames do not exist, we should make them
+            return True
+        if (self.cachedData.analysisFramesTime.getParms() != frameParams):
+            # The provided params do not match to existing params
+            return True
+        return False
 
     def __shouldMakeFreqSeriesAnalysisFrames(self,
                                             analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
