@@ -12,15 +12,14 @@
         #### IMPORTS ####
 
 import numpy as np
+import callbacks
 
 import signalData
 import dummyWaveforms
 
-import collectionMethod
 import timeDomainEnvelope
 import zeroCrossingRate
-import temporalCenterOfMass
-import autoCorrelation
+
 
         #### CLASS DEFINTIONS ####
 
@@ -95,4 +94,13 @@ class PresetUnitTests:
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 
+    @staticmethod
+    def getTestCachedData():
+        """ Return test for time-series analysis frames """
+        methods = [callbacks.TestTimeSeriesAnalysisFrames(),
+                   callbacks.TestFreqSeriesAnalysisFrames(),
+                   callbacks.TestFreqCenterOfMass(),]
+        signals = [dummyWaveforms.getLinearRampSignal(),]
+        tests = UnitTestCollectionMethods(methods,signals)
+        return tests
 

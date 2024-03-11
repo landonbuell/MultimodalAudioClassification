@@ -17,8 +17,6 @@
 import numpy as np
 import scipy.fftpack as fftpack
 
-import signalData
-
         #### CLASS DEFINITIONS ####
 
 class AnalysisFrameParameters:
@@ -29,7 +27,7 @@ class AnalysisFrameParameters:
                  sampleOverlap=768,
                  headPad=1024,
                  tailPad=2048,
-                 maxNumFrames=256,
+                 maxNumFrames=1024,
                  freqLowBoundHz=0.0,
                  freqHighBoundHz=12000.0):
         """ Constructor """
@@ -56,10 +54,15 @@ class AnalysisFrameParameters:
     @property
     def timeFrameSize(self) -> int:
         """ Get the total size of each frame """
+        return self.samplesPerFrame
+
+    @property
+    def freqFrameSizeUnCropped(self) -> int:
+        """ Get the number of samples an uncropped frequency spectrum """
         return self.headPad + self.samplesPerFrame + self.tailPad
 
     @property
-    def freqFrameSize(self) -> int:
+    def freqFrameSizeCropped(self) -> int:
         """ Get the total size of each frame """
         return len(self.getMaskedFrequencyAxisHz())
 
@@ -143,13 +146,14 @@ class __AbstractAnalysisFrames:
     """ Abstract Base Class for All Analysis Frame Types """
 
     def __init__(self,
-                 signal : signalData.SignalData,
+                 signalData,
                  frameParams: AnalysisFrameParameters,
                  frameSize: int,
                  dataType: type):
         """ Constructor """
         self._params = frameParams
         self._data   = np.zeros(shape=(frameParams.maxNumFrames,frameSize),dtype=dataType)
+        self._framesInUse = 0
         self.populate(signalData)
 
     def __del__(self):
@@ -163,26 +167,32 @@ class __AbstractAnalysisFrames:
         """ Return the parameters that constructed these analysis frames """
         return self._params
 
-    def getNumFrames(self) -> int:
-        """ Get the number of analysis frames """
+    def getMaxNumFrames(self) -> int:
+        """ Get the MAX number of analysis frames """
         return self._data.shape[0]
+
+    def getNumFramesInUse(self) -> int:
+        """ Get the number of analysis frames in use """
+        return self._framesInUse
 
     def getFrameSize(self) -> int:
         """ Get the size of each frame """
         return self._data.shape[1]
 
-    def rawFrames(self) -> np.ndarray:
+    def rawFrames(self,onlyInUse=False) -> np.ndarray:
         """ Return the raw underlying analysis frames """
+        if (onlyInUse == True):
+            return self._data[0:self._framesInUse]
         return self._data
 
     # Public Interface
     
     def populate(self,
-                 signal: signalData.SignalData) -> None:
+                 signalData) -> None:
         """ Populate the analysis frames """
-        success = self._validateSignal(signal)
+        success = self._validateSignal(signalData)
         if (success == True):
-            self._populateFrames(signal)
+            self._populateFrames(signalData)
         return None
 
     def clear(self) -> None:
@@ -190,21 +200,22 @@ class __AbstractAnalysisFrames:
         for ii in range(self._data.shape[0]):
             for jj in range(self._data.shape[1]):
                 self._data[ii,jj] = 0.0
+        self._framesInUse = 0
         return None
 
     # Protected Interface
 
     def _validateSignal(self,
-                        signal: signalData.SignalData) -> bool:
+                        signalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
-        if (signal.getNumSamples() == 0):
+        if (signalData.getNumSamples() == 0):
             errMsg = "provided signal: {0} has {1} samples.".format(
-                repr(signal),signal.getNumSamples())
+                repr(signalData),signalData.getNumSamples())
             raise RuntimeError(errMsg)
         return True
 
     def _populateFrames(self,
-                        signal: signalData.SignalData) -> None:
+                        signalData) -> None:
         """ VIRTUAL: Populate the analysis frames """     
         return None
     
@@ -233,10 +244,10 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
     __DATA_TYPE = np.float32
 
     def __init__(self,
-                 signal : signalData.SignalData,
+                 signalData,
                  frameParams: AnalysisFrameParameters):
         """ Constructor """
-        super().__init__(   signal,
+        super().__init__(   signalData,
                             frameParams,
                             frameParams.timeFrameSize,
                             TimeSeriesAnalysisFrames.__DATA_TYPE)
@@ -248,29 +259,33 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
     # Protected Interface
 
     def _validateSignal(self,
-                        signal: signalData.SignalData) -> bool:
+                        signalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
-        valid = super()._validateSignal(signal)
+        valid = super()._validateSignal(signalData)
         return valid
 
     def _populateFrames(self,
-                 signal: signalData.SignalData ) -> None:
+                        signalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        stepSize = self._params.samplesPerFrame - self._params.sampleOverlap
-        frameStart = 0
-        frameEnd = self._params.samplesPerFrame
+        stepSize    = self._params.samplesPerFrame - self._params.sampleOverlap
+        frameStart  = 0
+        frameEnd    = 0
 
-        for ii in range(self.getNumFrames()):
-            if (frameEnd > len(signal)):
-                if (frameStart > len(signal)):
-                    break
-                frameEnd = len(signal)
-            # Grab the items
-            frameData = signal[frameStart:frameEnd];
-            self._data[ii,self._params.headPad:self._params.headPad + self._params.samplesPerFrame] = frameData
-            # increment the front + end
-            frameStart += stepSize
+        for ii in range(self.getMaxNumFrames()):
             frameEnd = frameStart + self._params.samplesPerFrame
+            if (frameEnd > len(signalData)):
+                if (frameStart > len(signalData)):
+                    break
+                frameEnd = len(signalData) - 1
+                frameSlice = signalData[frameStart:frameEnd]
+                self._data[ii,0:frameSlice.size] = frameSlice
+            else:
+                # Store the items in the frame
+                self._data[ii] = signalData[frameStart:frameEnd]
+            # increment the front + end
+            frameStart  += stepSize
+            frameEnd    = frameStart + self._params.samplesPerFrame
+            self._framesInUse += 1
         return None
 
 class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
@@ -279,7 +294,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     __DATA_TYPE = np.complex64
 
     def __init__(self,
-                 signal : signalData.SignalData,
+                 signalData,
                  frameParams: AnalysisFrameParameters):
         """ Constructor """
         super().__init__(frameParams,
@@ -294,17 +309,17 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     # Protected Interface
 
     def _validateSignal(self,
-                        signal: signalData.SignalData) -> bool:
+                        signalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
-        valid = super()._validateSignal(signal)
+        valid = super()._validateSignal(signalData)
         if (valid == True):
-            valid = (signal.cachedData.analysisFramesTime is not None)
+            valid = (signalData.cachedData.analysisFramesTime is not None)
         return valid
 
     def _populate(self,
-                  signal: signalData.SignalData) -> None:
+                  signalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        rawTimeFrames = signal.getCachedData().analysisFramesTime.getRawFrames()
+        rawTimeFrames = signalData.getCachedData().analysisFramesTime.getRawFrames()
         maskFreqAxis = self._params.getMaskedFrequencyAxisHz()
         fftData = np.fft.fft( rawTimeFrames )    
         self._data = fftData[:,maskFreqAxis] # apply mask

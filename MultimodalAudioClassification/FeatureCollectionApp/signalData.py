@@ -122,6 +122,11 @@ class SignalData:
         """ Return the number of samples in this waveform """
         return self._waveform.size
 
+    @property
+    def numSamples(self) -> int:
+        """ Return the number of samples in this waveform """
+        return self._waveform.size
+
     # Public Interface
 
     def clearCachedData(self) -> None:
@@ -191,6 +196,10 @@ class SignalData:
         return shouldRemake
 
     # Magic Methods
+
+    def __len__(self) -> int:
+        """ Return the number of samples in the waveform """
+        return self._waveform.size
 
     def __getitem__(self,
                     key: int) -> np.ndarray:

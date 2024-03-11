@@ -21,7 +21,7 @@ import unitTests
 if __name__ == "__main__":
     
     # Create the unit Tests
-    testSuite = unitTests.PresetUnitTests.getTestBasicTimeSeriesMethods()
+    testSuite = unitTests.PresetUnitTests.getTestCachedData()
     testSuite.runAll()
     
 
