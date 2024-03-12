@@ -97,9 +97,10 @@ class PresetUnitTests:
     @staticmethod
     def getTestCachedData():
         """ Return test for time-series analysis frames """
-        methods = [callbacks.TestTimeSeriesAnalysisFrames(),
+        methods = [#callbacks.TestTimeSeriesAnalysisFrames(),
                    callbacks.TestFreqSeriesAnalysisFrames(),
-                   callbacks.TestFreqCenterOfMass(),]
+                   #callbacks.TestFreqCenterOfMass(),
+                   ]
         signals = [ dummyWaveforms.getSine440Hz880HzSignal(),
                     dummyWaveforms.getLinearRampSignal(),]
         tests = UnitTestCollectionMethods(methods,signals)

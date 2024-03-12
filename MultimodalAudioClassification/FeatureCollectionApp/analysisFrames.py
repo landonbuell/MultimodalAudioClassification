@@ -37,8 +37,8 @@ class AnalysisFrameParameters:
         self.tailPad            = tailPad
         self.maxNumFrames       = maxNumFrames
 
-        self.freqHighBoundHz = freqHighBoundHz
-        self.freqLowBoundHz = freqLowBoundHz
+        self.freqHighBoundHz    = freqHighBoundHz
+        self.freqLowBoundHz     = freqLowBoundHz
 
     def __del__(self):
         """ Destructor """
@@ -51,18 +51,15 @@ class AnalysisFrameParameters:
 
     # Accessors
 
-    @property
     def timeFrameSize(self) -> int:
         """ Get the total size of each frame """
         return self.samplesPerFrame
 
-    @property
-    def freqFrameSizeUnCropped(self) -> int:
+    def freqFrameSizeUnmasked(self) -> int:
         """ Get the number of samples an uncropped frequency spectrum """
         return self.headPad + self.samplesPerFrame + self.tailPad
 
-    @property
-    def freqFrameSizeCropped(self) -> int:
+    def freqFrameSizeMasked(self) -> int:
         """ Get the total size of each frame """
         return len(self.getMaskedFrequencyAxisHz())
 
@@ -98,9 +95,9 @@ class AnalysisFrameParameters:
     def getMaskedFrequencyAxisHz(self) -> np.ndarray:
         """ Return a frequency axis cropped by provided bounds """
         sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
-        freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
+        freqAxis = np.fft.fftfreq(n=self.freqFrameSizeUnmasked(),
                                   d=sampleSpacing)
-        freqMask = (freqAxis >= self.freqLowBoundHz) and (freqAxis <= self.freqHighBoundHz)
+        freqMask = np.where((freqAxis>=self.freqLowBoundHz)&(freqAxis<=self.freqHighBoundHz))[0]   # get slices
         freqAxis = freqAxis[freqMask]   # apply mask
         return freqAxis
 
@@ -155,12 +152,12 @@ class __AbstractAnalysisFrames:
         self._params = frameParams
         self._data   = np.zeros(shape=(numFrames,frameSize),dtype=dataType)
         self._framesInUse = 0
-        self.populate(signalData)
+        # Call "self.populate the child constructor
 
     def __del__(self):
         """ Destructor """
-        self._params = None
-        self._data  = None
+        self._params    = None
+        self._data      = None
 
     # Accessors
 
@@ -210,14 +207,15 @@ class __AbstractAnalysisFrames:
                         signalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
         if (signalData.getNumSamples() == 0):
-            errMsg = "provided signal: {0} has {1} samples.".format(
+            errMsg = "Provided signal: {0} has {1} samples.".format(
                 repr(signalData),signalData.getNumSamples())
-            raise RuntimeError(errMsg)
+            raise RuntimeWarning(errMsg)
+            return False
         return True
 
     def _populateFrames(self,
                         signalData) -> None:
-        """ VIRTUAL: Populate the analysis frames """     
+        """ VIRTUAL: Populate the analysis frames """ 
         return None
     
     # Magic Methods
@@ -251,8 +249,9 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
         super().__init__(   signalData,
                             frameParams,
                             frameParams.maxNumFrames,
-                            frameParams.timeFrameSize,
+                            frameParams.timeFrameSize(),
                             TimeSeriesAnalysisFrames.__DATA_TYPE)
+        self.populate(signalData)
 
     def __del__(self):
         """ Destructor """
@@ -299,15 +298,16 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
                  signalData,
                  frameParams: AnalysisFrameParameters,
                  multiThread=False):
-        """ Constructor """
+        """ Constructor """        
         super().__init__(signalData,
                          frameParams,
                          signalData.cachedData.analysisFramesTime.getNumFramesInUse(),
-                         frameParams.freqFrameSize,
+                         frameParams.freqFrameSizeMasked(),
                          FreqSeriesAnalysisFrames.__DATA_TYPE)
         self._freqAxis      = self._params.getMaskedFrequencyAxisHz()
         self._multiThread   = multiThread
-
+        self.populate(signalData)
+        
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -324,17 +324,36 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def _validateSignal(self,
                         signalData) -> bool:
         """ VIRTUAL: Validate that the input signal has info to work with """
-        valid = super()._validateSignal(signalData)
-        if (valid == True):
-            valid = (signalData.cachedData.analysisFramesTime is not None)
+        if (super()._validateSignal(signalData) == False):
+            return False
+        if (signalData.cachedData.analysisFramesTime is None):
+            errMsg = "Provided signal does not have time-series analysis frames"
+            raise RuntimeWarning(errMsg)
+            return False
+        if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
+            errMsg = "Provided signal's time-series analysis frames parmas do NOT match this one's"
+            raise RuntimeWarning(errMsg)
+            return False
         return valid
 
     def _populate(self,
                   signalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        numTimeFrames = signalData.cachedData.analysisFramesTime.getNumFramesInUse()
-        rawTimeFrames = signalData.cachedData.analysisFramesTime.rawFrames()
-        maskFreqAxis = self._params.getMaskedFrequencyAxisHz()
-        fftData = np.fft.fft( rawTimeFrames )    
-        self._data = fftData[:,maskFreqAxis] # apply mask
+        if (self._multiThread == True):
+            self.__populateWithMultipleThreads(signalData)
+        else:
+            self.__populateWithSingleThread(signalData)
         return None
+
+    def __populateWithMultipleThreads(self,
+                                     signalData) -> None:
+        """ Populate frequency series analysis frames in multiple threads """
+        return None
+
+    def __populateWithSingleThread(self,
+                                   signalData) -> None:
+        """ Populate frequency Series analysis frames in a single thread """
+        return None
+
+    def __transform(self,
+                    waveform)

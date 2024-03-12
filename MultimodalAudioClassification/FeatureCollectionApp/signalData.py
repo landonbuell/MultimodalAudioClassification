@@ -150,6 +150,7 @@ class SignalData:
                                      frameParams: analysisFrames.AnalysisFrameParameters,
                                      forceMakeFrames=False) -> bool:
         """ Populate the cached data' frequency series analysis frames """
+        self.makeTimeSeriesAnalysisFrames(frameParams,forceMakeFrames)
         if (forceMakeFrames == True):
             self.cachedData.analysisFramesTime = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
             return True
