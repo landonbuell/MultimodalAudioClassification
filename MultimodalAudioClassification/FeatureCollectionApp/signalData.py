@@ -188,12 +188,13 @@ class SignalData:
     def __shouldMakeFreqSeriesAnalysisFrames(self,
                                             analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
         """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
-        shouldRemake = False
         if (self.cachedData.analysisFramesFreq is None):
-            shouldRemake = True
-        if (self.cachedData.analysisFramesFreq.getParms() != analysisFrameParams):
-            shouldRemake = True
-        return shouldRemake
+            # Frames do not exist, we should make them
+            return True
+        if (self.cachedData.analysisFramesFreq.getParams() != analysisFrameParams):
+            # The provided params do not match to existing params
+            return True
+        return False
 
     # Magic Methods
 

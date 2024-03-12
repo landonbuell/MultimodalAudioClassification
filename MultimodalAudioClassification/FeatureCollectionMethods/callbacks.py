@@ -74,6 +74,10 @@ class TestTimeSeriesAnalysisFrames(collectionMethod.AbstractCollectionMethod):
         """ Destructor """
         super().__del__()
 
+    def _callBody(self,signalData) -> bool:
+        """ OVERRIDE: main body of call function """
+        return True
+
 class TestFreqSeriesAnalysisFrames(collectionMethod.AbstractCollectionMethod):
     """ Class to test Signal Data Callbacks """
 
@@ -88,6 +92,10 @@ class TestFreqSeriesAnalysisFrames(collectionMethod.AbstractCollectionMethod):
         """ Destructor """
         super().__del__()
 
+    def _callBody(self,signalData) -> bool:
+        """ OVERRIDE: main body of call function """
+        return True
+
 class TestFreqCenterOfMass(collectionMethod.AbstractCollectionMethod):
     """ Class to test Signal Data Callbacks """
 
@@ -101,3 +109,7 @@ class TestFreqCenterOfMass(collectionMethod.AbstractCollectionMethod):
     def __del__(self):
         """ Destructor """
         super().__del__()
+
+    def _callBody(self,signalData) -> bool:
+        """ OVERRIDE: main body of call function """
+        return True

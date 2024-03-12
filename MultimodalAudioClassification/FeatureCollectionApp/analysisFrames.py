@@ -27,7 +27,7 @@ class AnalysisFrameParameters:
                  sampleOverlap=768,
                  headPad=1024,
                  tailPad=2048,
-                 maxNumFrames=1024,
+                 maxNumFrames=512,
                  freqLowBoundHz=0.0,
                  freqHighBoundHz=12000.0):
         """ Constructor """
@@ -148,11 +148,12 @@ class __AbstractAnalysisFrames:
     def __init__(self,
                  signalData,
                  frameParams: AnalysisFrameParameters,
+                 numFrames: int,
                  frameSize: int,
                  dataType: type):
         """ Constructor """
         self._params = frameParams
-        self._data   = np.zeros(shape=(frameParams.maxNumFrames,frameSize),dtype=dataType)
+        self._data   = np.zeros(shape=(numFrames,frameSize),dtype=dataType)
         self._framesInUse = 0
         self.populate(signalData)
 
@@ -249,6 +250,7 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
         """ Constructor """
         super().__init__(   signalData,
                             frameParams,
+                            frameParams.maxNumFrames,
                             frameParams.timeFrameSize,
                             TimeSeriesAnalysisFrames.__DATA_TYPE)
 
@@ -295,16 +297,27 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     def __init__(self,
                  signalData,
-                 frameParams: AnalysisFrameParameters):
+                 frameParams: AnalysisFrameParameters,
+                 multiThread=False):
         """ Constructor """
-        super().__init__(frameParams,
+        super().__init__(signalData,
+                         frameParams,
+                         signalData.cachedData.analysisFramesTime.getNumFramesInUse(),
                          frameParams.freqFrameSize,
                          FreqSeriesAnalysisFrames.__DATA_TYPE)
-        self._freqAxis = self._params.getMaskedFrequencyAxisHz()
+        self._freqAxis      = self._params.getMaskedFrequencyAxisHz()
+        self._multiThread   = multiThread
 
     def __del__(self):
         """ Destructor """
         super().__del__()
+
+    # Accessors
+
+    @property
+    def useMultipleThreads(self) -> bool:
+        """ Return T/F if we should use multiple threads """
+        return self._multiThread
 
     # Protected Interface
 
@@ -319,7 +332,8 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def _populate(self,
                   signalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        rawTimeFrames = signalData.getCachedData().analysisFramesTime.getRawFrames()
+        numTimeFrames = signalData.cachedData.analysisFramesTime.getNumFramesInUse()
+        rawTimeFrames = signalData.cachedData.analysisFramesTime.rawFrames()
         maskFreqAxis = self._params.getMaskedFrequencyAxisHz()
         fftData = np.fft.fft( rawTimeFrames )    
         self._data = fftData[:,maskFreqAxis] # apply mask

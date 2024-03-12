@@ -27,6 +27,12 @@ def getSine880HzSignal() -> np.ndarray:
     waveform = np.sin(2*np.pi*t*880)
     return waveform
 
+def getSine440Hz880HzSignal() -> np.ndarray:
+    """ Return Signal w/ 440Hz & 880 Hz Sine waveform """
+    t = np.arange(88200,dtype=np.float32)
+    waveform = np.sin(2*np.pi*t*880) + np.sin(2*np.pi*t*440)
+    return waveform
+
 def getConstZeroSignal() -> np.ndarray:
     """ Return Signal w/ all zero waveform """
     waveform = np.zeros(shape=(88200,),dtype=np.float32)
