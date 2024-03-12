@@ -12,15 +12,14 @@
         #### IMPORTS ####
 
 import numpy as np
+import callbacks
 
 import signalData
 import dummyWaveforms
 
-import collectionMethod
 import timeDomainEnvelope
 import zeroCrossingRate
-import temporalCenterOfMass
-import autoCorrelation
+
 
         #### CLASS DEFINTIONS ####
 
@@ -50,8 +49,9 @@ class UnitTestCollectionMethods:
         allFeatureNames = self.__getAllFeatureNames()
         numFeatures = len(allFeatureNames)
         for ii,waveform in enumerate(self._listOfSignals):
-            features = np.zeros(shape=(numFeatures,),dtype=np.float32)
-            self.__evaluateCollectionMethods(waveform,features)
+            features    = np.zeros(shape=(numFeatures,),dtype=np.float32)
+            signal      = signalData.SignalData(waveform=waveform)
+            self.__evaluateCollectionMethods(signal,features)
         return None
 
     # Private Interface
@@ -64,15 +64,14 @@ class UnitTestCollectionMethods:
         return featureNames
 
     def __evaluateCollectionMethods(self,
-                                    waveform: np.ndarray,
+                                    signal: signalData.SignalData,
                                     features: np.ndarray) -> None:
         """ Evaluate signal against collection methods """
         featureCounter = 0
-        for ii,method in enumerate(self._listOfMethods):
-            signal = signalData.SignalData(waveform=waveform)
+        for ii,method in enumerate(self._listOfMethods):          
             success = method.call(signal)
             if (success == False):
-                data = np.full(shape=(method.getNumFeatures,),fill_value=np.NaN)
+                data = np.full(shape=(method.getNumFeatures(),),fill_value=np.NaN)
             else:
                 data = method.getFeatures()
             # Add features
@@ -95,4 +94,14 @@ class PresetUnitTests:
         tests = UnitTestCollectionMethods(methods,signals)
         return tests
 
+    @staticmethod
+    def getTestCachedData():
+        """ Return test for time-series analysis frames """
+        methods = [callbacks.TestTimeSeriesAnalysisFrames(),
+                   callbacks.TestFreqSeriesAnalysisFrames(),
+                   callbacks.TestFreqCenterOfMass(),]
+        signals = [ dummyWaveforms.getSine440Hz880HzSignal(),
+                    dummyWaveforms.getLinearRampSignal(),]
+        tests = UnitTestCollectionMethods(methods,signals)
+        return tests
 

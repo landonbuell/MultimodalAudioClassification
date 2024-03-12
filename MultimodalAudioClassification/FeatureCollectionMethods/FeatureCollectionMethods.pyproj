@@ -22,6 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="autoCorrelation.py" />
+    <Compile Include="callbacks.py" />
     <Compile Include="centerOfMass.py" />
     <Compile Include="collectionMethod.py" />
     <Compile Include="spectrogram.py" />
