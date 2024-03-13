@@ -15,7 +15,6 @@
         #### IMPORTS ####
 
 import numpy as np
-import scipy.fftpack as fftpack
 
         #### CLASS DEFINITIONS ####
 
@@ -29,7 +28,8 @@ class AnalysisFrameParameters:
                  tailPad=2048,
                  maxNumFrames=512,
                  freqLowBoundHz=0.0,
-                 freqHighBoundHz=12000.0):
+                 freqHighBoundHz=12000.0,
+                 window=np.hanning):
         """ Constructor """
         self.samplesPerFrame    = samplesPerFrame
         self.sampleOverlap      = sampleOverlap
@@ -39,6 +39,8 @@ class AnalysisFrameParameters:
 
         self.freqHighBoundHz    = freqHighBoundHz
         self.freqLowBoundHz     = freqLowBoundHz
+
+        self.window   = window(samplesPerFrame)
 
     def __del__(self):
         """ Destructor """
@@ -51,18 +53,6 @@ class AnalysisFrameParameters:
 
     # Accessors
 
-    def timeFrameSize(self) -> int:
-        """ Get the total size of each frame """
-        return self.samplesPerFrame
-
-    def freqFrameSizeUnmasked(self) -> int:
-        """ Get the number of samples an uncropped frequency spectrum """
-        return self.headPad + self.samplesPerFrame + self.tailPad
-
-    def freqFrameSizeMasked(self) -> int:
-        """ Get the total size of each frame """
-        return len(self.getMaskedFrequencyAxisHz())
-
     @property
     def freqHighBoundMels(self) -> float:
         """ Return the frequency high bound in Mels """
@@ -72,34 +62,53 @@ class AnalysisFrameParameters:
     def freqLowBoundMels(self) -> float:
         """ Return the frequency low bound in Mels """
         return AnalysisFrameParameters.hzToMels(self.freqLowBoundHz)
-   
+
+    def getTimeFrameSize(self) -> int:
+        """ Get the total size of each frame """
+        return self.samplesPerFrame
+
+    def getFreqFrameSizeUnmasked(self) -> int:
+        """ Get the number of samples an uncropped frequency spectrum """
+        return self.headPad + self.samplesPerFrame + self.tailPad
+
+    def getFreqFrameSizeMasked(self) -> int:
+        """ Get the total size of each frame """
+        return self.getFreqAxisMask().size
+
     def getFreqFramesShape(self) -> tuple:
         """ Return the SHAPE of the frequency frames """
-        return (self.maxNumFrames,self.freqFrameSize,)
+        return (self.maxNumFrames,self.freqFrameSize(),)
 
     def getTimeFramesShape(self) -> tuple:
         """ Return the SHAPE of the time frames """
-        return (self.maxNumFrames,self.timeFrameSize,)
+        return (self.maxNumFrames,self.getTimeFrameSize(),)
 
     def getFreqFramesNumFeatures(self) -> int:
         """ Return the total number of data points in the frequency frames """
         return (self.maxNumFrames * self.freqFrameSize)
 
-    def getUnmaskedFrequencyAxisHz(self) -> np.ndarray:
+    def getFreqAxisMask(self) -> np.ndarray:
+        """ Return the mask for the frequency axis """
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
+        freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
+                                  d=sampleSpacing)
+        mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
+        return mask
+
+    def getFreqAxisUnmasked(self) -> np.ndarray:
         """ Return an uncropped frequency axis """
         sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
-        freqAxis = np.fft.fftfreq(n=self.timeFrameSize,
+        freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
                                   d=sampleSpacing)
         return freqAxis
 
-    def getMaskedFrequencyAxisHz(self) -> np.ndarray:
-        """ Return a frequency axis cropped by provided bounds """
-        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
-        freqAxis = np.fft.fftfreq(n=self.freqFrameSizeUnmasked(),
+    def getFreqAxisMasked(self) -> np.ndarray:
+        """ Return a cropped frequency axis """
+        ampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
+        freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
                                   d=sampleSpacing)
-        freqMask = np.where((freqAxis>=self.freqLowBoundHz)&(freqAxis<=self.freqHighBoundHz))[0]   # get slices
-        freqAxis = freqAxis[freqMask]   # apply mask
-        return freqAxis
+        mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
+        return freqAxis[mask]
 
     # Static Interface
 
@@ -132,7 +141,7 @@ class AnalysisFrameParameters:
                 (self.tailPad == other.tailPad) and 
                 (self.maxNumFrames == other.maxNumFrames) and 
                 (self.freqHighBoundHz == other.freqHighBoundHz) and 
-                (self.freqLowBoundHz == other.freqLowBoundHz))
+                (self.freqLowBoundHz == other.freqLowBoundHz) )
         return eq
 
     def __neq__(self,other) -> bool:
@@ -249,7 +258,7 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
         super().__init__(   signalData,
                             frameParams,
                             frameParams.maxNumFrames,
-                            frameParams.timeFrameSize(),
+                            frameParams.getTimeFrameSize(),
                             TimeSeriesAnalysisFrames.__DATA_TYPE)
         self.populate(signalData)
 
@@ -302,9 +311,10 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         super().__init__(signalData,
                          frameParams,
                          signalData.cachedData.analysisFramesTime.getNumFramesInUse(),
-                         frameParams.freqFrameSizeMasked(),
+                         frameParams.getFreqFrameSizeMasked(),
                          FreqSeriesAnalysisFrames.__DATA_TYPE)
-        self._freqAxis      = self._params.getMaskedFrequencyAxisHz()
+        self._framesInUse   = signalData.cachedData.analysisFramesTime.getNumFramesInUse()
+        self._freqMask      = self._params.getFreqAxisMask()
         self._multiThread   = multiThread
         self.populate(signalData)
         
@@ -318,6 +328,10 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def useMultipleThreads(self) -> bool:
         """ Return T/F if we should use multiple threads """
         return self._multiThread
+
+    def getMaskedFrequencyAxisHz(self) -> np.ndarray:
+        """ Return Masked frequency axis """
+        return self._params.getMaskedFrequencyAxisHz()
 
     # Protected Interface
 
@@ -334,12 +348,12 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
             errMsg = "Provided signal's time-series analysis frames parmas do NOT match this one's"
             raise RuntimeWarning(errMsg)
             return False
-        return valid
+        return True
 
-    def _populate(self,
+    def _populateFrames(self,
                   signalData) -> None:
         """ OVERRIDE: Populate the analysis frames """
-        if (self._multiThread == True):
+        if (self.useMultipleThreads == True):
             self.__populateWithMultipleThreads(signalData)
         else:
             self.__populateWithSingleThread(signalData)
@@ -353,7 +367,19 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def __populateWithSingleThread(self,
                                    signalData) -> None:
         """ Populate frequency Series analysis frames in a single thread """
+        for ii in range(self._framesInUse):
+            self._data[ii] = self.__transform(signalData.cachedData.analysisFramesTime[ii])
         return None
 
     def __transform(self,
-                    waveform)
+                    timeFrame: np.ndarray) -> np.ndarray:
+        """ Perform transform on signal """
+        if (timeFrame.size != self._params.samplesPerFrame):
+            msg = "Expected {0} samples in frame but got {1}".format(
+                self._params.samplesPerFrame,timeFrame.size)
+            raise RuntimeError(msg)
+        x = np.zeros(shape=(self._params.getFreqFrameSizeUnmasked(),),dtype=np.float32)
+        timeFrame *= self._params.window
+        x[self._params.headPad:self._params.headPad + timeFrame.size] = timeFrame
+        fftData = np.fft.fft(a=x)
+        return fftData[self._freqMask]

@@ -14,6 +14,8 @@
 
         #### IMPORTS ####
 
+import numpy as np
+
 import analysisFrames
 import collectionMethod
 
@@ -57,6 +59,18 @@ class CollectionMethodCallbacks:
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
         signalData.makeFrequencyCenterOfMass(params)
         return (signalData.cachedData.freqCenterOfMasses is not None)
+
+class WindowFunctions:
+    """ Class of window function callbacks """
+
+    def void(waveform: np.ndarray) -> np.ndarray:
+        """ Apply no window function to provided waveform """
+        return waveform
+
+    @staticmethod
+    def hanning(waveform: np.ndarray) -> np.ndarray:
+        """ Apply a hanning window to the provided waveform """
+        return 0.5 - 0.5*np.cos(2*np.pi*waveform / waveform.size - 1)
 
         #### CLASSES FOR TESTING CALLBACKS ####
 
