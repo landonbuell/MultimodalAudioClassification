@@ -17,19 +17,19 @@ import numpy as np
 
 def getSine440HzSignal() -> np.ndarray:
     """ Return Signal w/ 440Hz Sine waveform """
-    t = np.arange(88200,dtype=np.float32)
+    t = np.arange(88200,dtype=np.float32) / 44100.0
     waveform = np.sin(2*np.pi*t*440)
     return waveform
 
 def getSine880HzSignal() -> np.ndarray:
     """ Return Signal w/ 880 Hz Sine waveform """
-    t = np.arange(88200,dtype=np.float32)
+    t = np.arange(88200,dtype=np.float32) / 44100.0
     waveform = np.sin(2*np.pi*t*880)
     return waveform
 
 def getSine440Hz880HzSignal() -> np.ndarray:
     """ Return Signal w/ 440Hz & 880 Hz Sine waveform """
-    t = np.arange(88200,dtype=np.float32)
+    t = np.arange(88200,dtype=np.float32) / 44100.0
     waveform = np.sin(2*np.pi*t*880) + np.sin(2*np.pi*t*440)
     return waveform
 
@@ -50,7 +50,7 @@ def getLinearRampSignal() -> np.ndarray:
 
 def getNormalWhiteNoise() -> np.ndarray:
     """ Return Signal w/ normalized white noise waveform """
-    waveform = np.random.normal(0,1,size=88200)
+    waveform = np.random.normal(0,1,size=88200) / 44100.0
     return waveform.astype(np.float32)
 
 def getUniformWhiteNoise() -> np.ndarray:
