@@ -54,3 +54,4 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
             startIndex += partitionSize
         self._data /= np.max(self._data) # Normalize s.t. the largest value is 1
         return True
+
