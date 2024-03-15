@@ -16,6 +16,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import threading
 
         #### FUNCTION DEFINITIONS ####
 
@@ -63,7 +64,7 @@ class AnalysisFrameParameters:
                  tailPad=2048,
                  maxNumFrames=512,
                  freqLowBoundHz=0.0,
-                 freqHighBoundHz=12000.0,
+                 freqHighBoundHz=16010.0,
                  window=np.hanning):
         """ Constructor """
         self.samplesPerFrame    = samplesPerFrame
@@ -397,6 +398,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def __populateWithMultipleThreads(self,
                                      signalData) -> None:
         """ Populate frequency series analysis frames in multiple threads """
+        # TODO: Implement this later
         return None
 
     def __populateWithSingleThread(self,
@@ -405,7 +407,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         freqAxis = self._params.getFreqAxisMasked()
         for ii in range(self._framesInUse):
             self._data[ii] = self.__transform(signalData.cachedData.analysisFramesTime[ii])
-            debugPlotXy(freqAxis,self._data[ii],"Freq Frame" + str(ii))
+            #debugPlotXy(freqAxis,self._data[ii],"Freq Frame" + str(ii))
         return None
 
     def __transform(self,
@@ -419,6 +421,5 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         rawTimeFrame *= self._params.window
         paddedFrame[self._params.headPad:self._params.headPad + rawTimeFrame.size] = rawTimeFrame
         fftData = np.fft.fft(a=paddedFrame)
-        fftDataReal = np.array([x.real for x in fftData],dtype=np.float32)
-        fftDataImag = np.array([x.imag for x in fftData],dtype=np.float32)
+        fftData = np.abs(fftData)**2 # Compute "abs" of data and element-wise square
         return fftData[self._freqMask]
