@@ -15,6 +15,42 @@
         #### IMPORTS ####
 
 import numpy as np
+import matplotlib.pyplot as plt
+import threading
+
+        #### FUNCTION DEFINITIONS ####
+
+def debugPlot(yData,title):
+    """ Show Time-Series Signal for quick debugging"""
+    plt.figure(figsize=(12,8))
+    plt.title(title,fontsize=32,fontweight='bold')
+    plt.xlabel("SampleIndex",fontsize=24,fontweight='bold')
+    plt.ylabel("Amplitude",fontsize=24,fontweight='bold')
+
+    plt.plot(yData,label="Data")
+    plt.hlines(y=[0],xmin=0,xmax=yData.size,color='black')
+
+    plt.grid()
+    plt.tight_layout()
+    plt.legend()
+    plt.show()
+    return None
+
+def debugPlotXy(xData,yData,title):
+    """ Show Time-Series Signal for quick debugging"""
+    plt.figure(figsize=(12,8))
+    plt.title(title,fontsize=32,fontweight='bold')
+    plt.xlabel("SampleIndex",fontsize=24,fontweight='bold')
+    plt.ylabel("Amplitude",fontsize=24,fontweight='bold')
+
+    plt.plot(xData,yData,label="Data")
+    plt.hlines(y=[0],xmin=np.min(xData),xmax=np.max(xData),color='black')
+
+    plt.grid()
+    plt.tight_layout()
+    plt.legend()
+    plt.show()
+    return None
 
         #### CLASS DEFINITIONS ####
 
@@ -28,7 +64,7 @@ class AnalysisFrameParameters:
                  tailPad=2048,
                  maxNumFrames=512,
                  freqLowBoundHz=0.0,
-                 freqHighBoundHz=12000.0,
+                 freqHighBoundHz=16010.0,
                  window=np.hanning):
         """ Constructor """
         self.samplesPerFrame    = samplesPerFrame
@@ -104,7 +140,7 @@ class AnalysisFrameParameters:
 
     def getFreqAxisMasked(self) -> np.ndarray:
         """ Return a cropped frequency axis """
-        ampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
+        sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
         freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
                                   d=sampleSpacing)
         mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
@@ -362,24 +398,28 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def __populateWithMultipleThreads(self,
                                      signalData) -> None:
         """ Populate frequency series analysis frames in multiple threads """
+        # TODO: Implement this later
         return None
 
     def __populateWithSingleThread(self,
                                    signalData) -> None:
         """ Populate frequency Series analysis frames in a single thread """
+        freqAxis = self._params.getFreqAxisMasked()
         for ii in range(self._framesInUse):
             self._data[ii] = self.__transform(signalData.cachedData.analysisFramesTime[ii])
+            #debugPlotXy(freqAxis,self._data[ii],"Freq Frame" + str(ii))
         return None
 
     def __transform(self,
-                    timeFrame: np.ndarray) -> np.ndarray:
+                    rawTimeFrame: np.ndarray) -> np.ndarray:
         """ Perform transform on signal """
-        if (timeFrame.size != self._params.samplesPerFrame):
+        if (rawTimeFrame.size != self._params.samplesPerFrame):
             msg = "Expected {0} samples in frame but got {1}".format(
-                self._params.samplesPerFrame,timeFrame.size)
+                self._params.samplesPerFrame,rawTimeFrame.size)
             raise RuntimeError(msg)
-        x = np.zeros(shape=(self._params.getFreqFrameSizeUnmasked(),),dtype=np.float32)
-        timeFrame *= self._params.window
-        x[self._params.headPad:self._params.headPad + timeFrame.size] = timeFrame
-        fftData = np.fft.fft(a=x)
+        paddedFrame = np.zeros(shape=(self._params.getFreqFrameSizeUnmasked(),),dtype=np.float32)
+        rawTimeFrame *= self._params.window
+        paddedFrame[self._params.headPad:self._params.headPad + rawTimeFrame.size] = rawTimeFrame
+        fftData = np.fft.fft(a=paddedFrame)
+        fftData = np.abs(fftData)**2 # Compute "abs" of data and element-wise square
         return fftData[self._freqMask]
