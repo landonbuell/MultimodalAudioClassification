@@ -15,7 +15,7 @@ import os
 import sys
 
 import appSettings
-import textLogger
+import textLogger # CommonToolsPy
 
         #### CLASS DEFINITIONS ####
 
