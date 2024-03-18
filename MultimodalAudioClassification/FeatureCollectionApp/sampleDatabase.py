@@ -26,10 +26,24 @@ class SampleDatabase(componentManager.ComponentManager):
 
     class Status(enum.IntEnum):
         """ Gives the status of the database """
-        DATABASE_STABLE = 0
-        DATABASE_LOCKED = 1
-        DATABASE_FULL   = 2
-        DATABASE_EMPTY  = 3
+        STABLE = 0
+        LOCKED = 1
+        FULL   = 2
+        EMPTY  = 3
+
+    class DequeueResult:
+        """ Is the result of getting the front of the sample database """
+
+        def __init__(self,
+                     sample,
+                     status):
+            """ Constructor """
+            self.sampleData     = sample
+            self.databaseStatus = status
+
+        def __del__(self):
+            """ Destructor """
+            pass
 
     def __init__(self,
                  app: componentManager.featureCollectionApp.FeatureCollectionApplication):
@@ -104,7 +118,7 @@ class SampleDatabase(componentManager.ComponentManager):
             return SampleDatabase.Status.DATABASE_LOCKED
         if (self.isEmpty() == True):
             return SampleDatabase.Status.DATABASE_EMPTY
-        self._database.de
+        sample = self._database.get()
         self._size += 1
         return SampleDatabase.Status.DATABASE_STABLE
 
