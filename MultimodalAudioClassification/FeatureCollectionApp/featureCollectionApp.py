@@ -15,7 +15,9 @@ import os
 import sys
 
 import appSettings
-import textLogger
+import sampleDatabase
+
+import textLogger # CommonToolsPy
 
         #### CLASS DEFINITIONS ####
 
@@ -32,6 +34,8 @@ class FeatureCollectionApplication:
         self._status    = 0
         self._settings  = settings
         self._logger    = textLogger.TextLogger(settings.getTextLogPath())
+
+        self._sampleDatabase = sampleDatabase.SampleDatabase(self)
 
     def __del__(self):
         """ Destructor """
@@ -65,6 +69,12 @@ class FeatureCollectionApplication:
         self.__cleanup()
         return self._status
 
+    def logMessage(self,
+                   message : str) -> None:
+        """ Log a message """
+        self._logger.logMessage(message)
+        return None
+
     # Private Interface
 
     def __registerSelfAsSingleton(self) -> None:
@@ -77,6 +87,8 @@ class FeatureCollectionApplication:
 
     def __startup(self) -> None:
         """ Run the startup """
+        self._sampleDatabase.initialize()
+
         return None
 
     def __execute(self) -> None:
@@ -85,6 +97,7 @@ class FeatureCollectionApplication:
 
     def __cleanup(self) -> None:
         """ Run the cleanup """
+        self._sampleDatabase.teardown()
         return None
 
     # Magic Methods
