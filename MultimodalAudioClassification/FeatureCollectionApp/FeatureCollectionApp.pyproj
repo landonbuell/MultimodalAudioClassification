@@ -38,6 +38,11 @@
       <Project>{7db5e4c8-9e79-41fc-ae9a-67c72be60bd4}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\FeatureCollectionMethods\FeatureCollectionMethods.pyproj">
+      <Name>FeatureCollectionMethods</Name>
+      <Project>{4464a516-3dfa-4780-b202-12917ae8b49c}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

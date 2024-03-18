@@ -36,14 +36,18 @@ class SignalData:
     def __init__(self,
                  sampleRate=44100,
                  targetClass=-1,
+                 waveform=None,
                  sourcePath="NULL_PATH"):
         """ Constructor """
         self._sampleRate    = sampleRate
         self._targetClass   = targetClass
-        self._waveform      = np.zeros(size=(16,),dtype=np.float32)
+        self._waveform      = waveform
         self._cachedData    = SignalData.CachedData()
         self._sourcePath    = sourcePath
         self._channelIndex  = 0
+
+        if (self._waveform is None):
+            self._waveform = np.array(shape=(1,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
@@ -75,7 +79,19 @@ class SignalData:
         """ Return the waveform """
         return self._waveform
 
-    def getCachedData(self) -> CachedData:
+    def setWaveform(self,
+                    waveform: np.ndarray) -> None:
+        """ Set the waveform """
+        self._waveform = waveform
+        return None
+
+    @property
+    def waveform(self):
+        """ Return the waveform as a property """
+        return self._waveform
+
+    @property
+    def cachedData(self) -> CachedData:
         """ Return the underlying Cached data for this signal """
         return self._cachedData
 
@@ -119,6 +135,8 @@ class SignalData:
         """ Populate the cached data' frequency series analysis frames """
         # TODO: Implement this!
         return None
+
+    # Public Interface
 
     # Private Interface
 

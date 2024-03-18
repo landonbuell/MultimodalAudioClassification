@@ -30,7 +30,12 @@
       "ProjectGuid": "7265b8e0-1dc5-4fe0-a654-e9c4523b7a8d",
       "DisplayName": "FeatureEngineering",
       "ColorIndex": 4
+    },
+    "4464a516-3dfa-4780-b202-12917ae8b49c": {
+      "ProjectGuid": "4464a516-3dfa-4780-b202-12917ae8b49c",
+      "DisplayName": "FeatureCollectionMethods",
+      "ColorIndex": 5
     }
   },
-  "NextColorIndex": 5
+  "NextColorIndex": 6
 }

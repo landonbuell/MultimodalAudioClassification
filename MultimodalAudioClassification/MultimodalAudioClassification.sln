@@ -15,6 +15,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Experiments", "Experiments\
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SampleGeneration", "SampleGeneration\SampleGeneration.pyproj", "{6405F87E-AF59-4A5A-9D02-19476F5EAB2A}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "FeatureCollectionMethods", "FeatureCollectionMethods\FeatureCollectionMethods.pyproj", "{4464A516-3DFA-4780-B202-12917AE8B49C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,8 @@ Global
 		{35B127DB-9C87-41C3-A9A0-84B432EA764B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6405F87E-AF59-4A5A-9D02-19476F5EAB2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6405F87E-AF59-4A5A-9D02-19476F5EAB2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4464A516-3DFA-4780-B202-12917AE8B49C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4464A516-3DFA-4780-B202-12917AE8B49C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
