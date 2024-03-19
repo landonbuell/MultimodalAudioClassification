@@ -13,6 +13,8 @@
 
 import componentManager
 import featurePipeline
+import featureVector
+import signalData
 
         #### CLASS DEFINITIONS ####
 
@@ -36,7 +38,7 @@ class PipelineManager(componentManager.ComponentManager):
 
     def getSize(self) -> int:
         """ Return the current size of the database """
-        self._size
+        return len(self._featurePipelines)
 
     # Public Interface
 
@@ -63,6 +65,16 @@ class PipelineManager(componentManager.ComponentManager):
         pipeline.setManager(self)
         return None
 
+    def processSignal(self,
+                      signal: signalData.SignalData) -> list:
+        """ Evalute signal on each pipeline & return list of feature vectors """
+        featureVectors = [None] * len(self._featurePipelines)
+        for ii,pipeline in enumerate(self._featurePipelines):
+            featureVectors[ii] = pipeline.evaluate(signal)
+            # TODO: Export Feature Vector
+        return featureVectors
+            
+            
 
 
 
