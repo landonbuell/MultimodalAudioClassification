@@ -16,6 +16,7 @@ import sys
 
 import appSettings
 import sampleDatabase
+import pipelineManager
 
 import textLogger # CommonToolsPy
 
@@ -35,7 +36,8 @@ class FeatureCollectionApplication:
         self._settings  = settings
         self._logger    = textLogger.TextLogger(settings.getTextLogPath())
 
-        self._sampleDatabase = sampleDatabase.SampleDatabase(self)
+        self._sampleDatabase    = sampleDatabase.SampleDatabase(self)
+        self._pipelineManager   = pipelineManager.PipelineManager(self)
 
     def __del__(self):
         """ Destructor """
