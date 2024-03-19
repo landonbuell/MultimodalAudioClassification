@@ -57,6 +57,15 @@ class FeaturePipeline:
                 numFeatures += method.getNumFeatures()
         return numFeatures
 
+    def getManager(self):
+        """ Return a pointer to the manager that owns this pipeline """
+        return self._ptrPipelineMgr
+
+    def setManager(self,pipelineMgr) -> None:
+        """ Set the pointer to the manager that owns this pipeline """
+        self._ptrPipelineMgr = pipelineMgr
+        return None
+
     # Public Interface
 
     def appendCollectionMethod(self,
@@ -135,3 +144,18 @@ class FeaturePipeline:
     def __repr__(self) -> str:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
+
+
+class DefaultFeaturePipeline:
+    """ Static Class of Default Feature Pipelines """
+
+    def getDefaultPipeline00() -> FeaturePipeline:
+        """ Get the default pipeline 00 """
+        pipeline = FeaturePipeline("Alpha")
+        return pipeline
+
+    def getDefaultPipeline01() -> FeaturePipeline:
+        """ Get the default pipeline 01 """
+        pipeline = FeaturePipeline("Beta")
+        return pipeline
+
