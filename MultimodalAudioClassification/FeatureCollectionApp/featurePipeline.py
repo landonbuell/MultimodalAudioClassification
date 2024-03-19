@@ -25,11 +25,10 @@ class FeaturePipeline:
                  identifier: str):
         """ Constructor """
         self._indentifier = identifier
+        self._methods = []
+
         self._ptrPipelineMgr = None
-
-        self._methods = [None] * FeaturePipeline.__MAX_NUM_COLLECTION_METHODS
-        self._size = 0
-
+        
         self._callbacksPreprocessSignal     = []
         self._callbacksPreprocessFeatures   = []
         self._callbacksPostProcessSignal    = []
@@ -38,6 +37,23 @@ class FeaturePipeline:
     def __del__(self):
         """ Destructor """
         self._methods.clear()
+        self._ptrPipelineMgr = None
+
+    @staticmethod
+    def deepCopy(source,
+                 identifier=None):
+        """ Generate a deep copy of this instance """
+        if (identifier is None):
+            identifier = "copyOf" + source.getName()
+        newPipeline = FeaturePipeline(identifier)
+        # Copy Members
+        newPipeline._methods        = source._methods[:] #Copy copy underlying list
+        newPipeline._ptrPipelineMgr = source._ptrPipelineMgr
+        newPipeline._callbacksPreprocessSignal     = source._callbacksPreprocessSignal[:]
+        newPipeline._callbacksPreprocessFeatures   = source._callbacksPreprocessFeatures[:]
+        newPipeline._callbacksPostProcessSignal    = source._callbacksPostProcessSignal[:]
+        newPipeline._callbacksPostProcessFeatures  = source._callbacksPostProcessFeatures[:]
+        return newPipeline
 
     # Accessors
 
@@ -47,7 +63,7 @@ class FeaturePipeline:
 
     def getSize(self) -> int:
         """ Return the number of items in the pipeline """
-        return len(self._size)
+        return len(self._methods)
 
     def getNumFeatures(self) -> int:
         """ Return the number of features in this pipeline """
@@ -71,20 +87,19 @@ class FeaturePipeline:
     def appendCollectionMethod(self,
                                collectionMethod) -> None:
         """ Append a collection method to this pipeline """
-        self._methods[self._size] = collectionMethod
-        self._size += 1
+        self._methods.append(collectionMethod)
         return None
 
     def evaluate(self,
-                 signal: signalData.SignalData,
-                 vector: featureVector.FeatureVector) -> None:
+                 signal: signalData.SignalData) -> featureVector.FeatureVector:
         """ Evaluate all collection methods and populate the feature vector """
+        features = featureVector.FeatureVector(self.getNumFeatures(),signal.getTarget())
         self.__evaluateSignalPreprocessCallbacks(signal)
-        self.__evaluateFeaturePreprocessCallbacks(vector)
-        self.__evaluateHelper(signal,vector)
+        self.__evaluateFeaturePreprocessCallbacks(features)
+        self.__evaluateHelper(signal,features)
         self.__evaluateSignalPostprocessCallbacks(signal)
-        self.__evaluateFeaturePostprocessCallbacks(vector)
-        return None
+        self.__evaluateFeaturePostprocessCallbacks(features)
+        return features
 
     # Private Interface
 

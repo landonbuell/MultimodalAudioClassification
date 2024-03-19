@@ -84,4 +84,4 @@ class FeatureVector:
 
     def __repr__(self) -> str:
         """ Debug representation """
-        return "{0} w/ size {1} @ {2}".format(self.__class__,self._data.size,hex(id(self)))
+        return "{0} @ {1} w/ size {2}".format(self.__class__,hex(id(self)),self._data.size)
