@@ -15,6 +15,7 @@
 import os
 import threading
 
+import collectionSession
 
         #### CLASS DEFINITIONS ####
 
@@ -22,9 +23,11 @@ class FeatureCollector(threading.Thread):
     """ Represents an object that processes a sample """
 
     def __init__(self,
+                 session: collectionSession.FeatureCollectionSession,
                  name: str):
         """ Constructor """
         super().__init__(group=None,target=None,name=name)
+        self._session   = session
         self._stopEvent = threading.Event()
 
     def __del__(self):
@@ -66,8 +69,13 @@ class FeatureCollector(threading.Thread):
 
     def processNext(self) -> bool:
         """ Collect features for a single sample """
-        
+        sample = self.__pullNextSample()
 
         return 
 
     # Private Interface
+
+    def __pullNextSample(self):
+        """ Get the next sample from the sample database """
+        sample = self._session.getApp().getSampleDatabase().getNext()
+        return sample

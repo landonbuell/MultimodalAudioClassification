@@ -21,7 +21,7 @@ import componentManager
 class SampleDatabase(componentManager.ComponentManager):
     """ Stores a collection of samples to process """
 
-    __NAME = "Sample Database"
+    __NAME = "SampleDatabase"
     __CAPACITY = int(2**16)
 
     class Status(enum.IntEnum):
