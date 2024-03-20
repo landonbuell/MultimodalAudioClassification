@@ -23,8 +23,10 @@
   <ItemGroup>
     <Compile Include="analysisFrames.py" />
     <Compile Include="appSettings.py" />
+    <Compile Include="collectionSession.py" />
     <Compile Include="componentManager.py" />
     <Compile Include="featureCollectionApp.py" />
+    <Compile Include="featureCollector.py" />
     <Compile Include="featurePipeline.py" />
     <Compile Include="featureVector.py" />
     <Compile Include="main.py" />

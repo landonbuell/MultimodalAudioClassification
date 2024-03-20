@@ -95,6 +95,7 @@ class FeatureCollectionApplication:
 
     def __execute(self) -> None:
         """ Run the execution """
+        
         return None
 
     def __cleanup(self) -> None:
