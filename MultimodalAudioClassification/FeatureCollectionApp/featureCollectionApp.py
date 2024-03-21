@@ -66,6 +66,10 @@ class FeatureCollectionApplication:
         """ Return a ref to the sample database """
         return self._sampleDatabase
 
+    def getPipelineManager(self) -> pipelineManager.PipelineManager:
+        """ Return a ref to the pipeline manager """
+        return self._pipelineManager
+
     # Public Interface
 
     def run(self) -> int:

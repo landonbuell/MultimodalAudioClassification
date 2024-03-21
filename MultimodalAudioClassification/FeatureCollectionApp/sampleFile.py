@@ -24,7 +24,8 @@ class SampleFileIO:
 
     def __init__(self,
                  targetClass: int,
-                 sourceFile: str):
+                 sourceFile: str,
+                 channelIndex=0):
         """ Constructor """
         self._target    = targetClass
         self._source    = os.path.abspath(sourceFile)
@@ -54,7 +55,7 @@ class SampleFileIO:
         listOfSignalDatas = []
         if (self._source.endswith(".txt") == True):
             # Is Text File
-            listOfSignalDatas =  self.__decodeTxtFile()
+            listOfSignalDatas = self.__decodeTxtFile()
         elif (self._source.endswith(".wav") == True):
             # Is a WAV file
             listOfSignalDatas = self.__decodeWavFile()
@@ -79,6 +80,7 @@ class SampleFileIO:
                 sampleRate=sampleRate,
                 targetClass=self._target,
                 waveform=channels[ii,:].transpose,
-                sourcePath=self._source)
+                sourcePath=self._source,
+                channelIndex=ii)
             signals.append(newSignal)
         return self

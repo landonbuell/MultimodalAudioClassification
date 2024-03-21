@@ -12,6 +12,7 @@
 
         #### IMPORTS ####
 
+import os
 import numpy as np
 
         #### CLASS DEFINITIONS ####
@@ -31,21 +32,27 @@ class SignalData:
             """ Destructor """
             pass
 
+    # Applies a unique label to each sample
+    __unqiueCounter = 0
+
     # Constructors 
 
     def __init__(self,
                  sampleRate=44100,
                  targetClass=-1,
                  waveform=None,
-                 sourcePath="NULL_PATH"):
+                 sourcePath="NULL_PATH",
+                 channelIndex=0):
         """ Constructor """
         self._sampleRate    = sampleRate
         self._targetClass   = targetClass
         self._waveform      = waveform
         self._cachedData    = SignalData.CachedData()
         self._sourcePath    = sourcePath
-        self._channelIndex  = 0
+        self._channelIndex  = channelIndex
+        self._uniqueID      = SignalData.__unqiueCounter
 
+        SignalData.__unqiueCounter += 1
         if (self._waveform is None):
             self._waveform = np.array(shape=(1,),dtype=np.float32)
 
@@ -119,7 +126,19 @@ class SignalData:
         """ Return the number of samples in this waveform """
         return self._waveform.size
 
+    @property
+    def uniqueID(self) -> int:
+        """ Return the unique counter ID for this signal """
+        return self._uniqueID
+
     # Public Interface
+
+    def exportPathBinary(self,
+                         extension="bin"):
+        """ location within the output path where to export this sample """
+        classFolder = "class{0}".format(self._targetClass)
+        fileName = "sample{0}.{1}".format(self.uniqueID,extension)
+        return os.path.join(pipelineFolder,classFolder,fileName)
 
     def clearCachedData(self) -> None:
         """ Clear the underlying cached data """
