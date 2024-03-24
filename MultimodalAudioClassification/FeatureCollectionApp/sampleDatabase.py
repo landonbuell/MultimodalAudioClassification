@@ -15,13 +15,14 @@ import enum
 import queue
 
 import componentManager
+import sampleFile
 
         #### CLASS DEFINITIONS ####
 
 class SampleDatabase(componentManager.ComponentManager):
     """ Stores a collection of samples to process """
 
-    __NAME = "Sample Database"
+    __NAME = "SampleDatabase"
     __CAPACITY = int(2**16)
 
     class Status(enum.IntEnum):
@@ -110,17 +111,12 @@ class SampleDatabase(componentManager.ComponentManager):
             self._password = ""
             return True
         # Passwords do not match
-        return False
 
-    def getNext(self,sample) -> int:
-        """ Enqueue a sample to the database """
-        if (self.isLocked() == True):
-            return SampleDatabase.Status.DATABASE_LOCKED
-        if (self.isEmpty() == True):
-            return SampleDatabase.Status.DATABASE_EMPTY
-        sample = self._database.get()
-        self._size += 1
-        return SampleDatabase.Status.DATABASE_STABLE
+    def getNext(self) -> sampleFile.SampleFileIO:
+        """ Return the next sample in the queue """
+        result = self._database.get()
+        self._size -= 1
+        return result
 
     # Private Interface
 

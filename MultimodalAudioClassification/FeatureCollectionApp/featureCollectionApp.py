@@ -17,6 +17,7 @@ import sys
 import appSettings
 import sampleDatabase
 import pipelineManager
+import collectionSession
 
 import textLogger # CommonToolsPy
 
@@ -61,6 +62,14 @@ class FeatureCollectionApplication:
         """ Return a ref to the app settings """
         return self._settings
 
+    def getSampleDatabase(self) -> sampleDatabase.SampleDatabase:
+        """ Return a ref to the sample database """
+        return self._sampleDatabase
+
+    def getPipelineManager(self) -> pipelineManager.PipelineManager:
+        """ Return a ref to the pipeline manager """
+        return self._pipelineManager
+
     # Public Interface
 
     def run(self) -> int:
@@ -95,6 +104,9 @@ class FeatureCollectionApplication:
 
     def __execute(self) -> None:
         """ Run the execution """
+        numThreads = self._settings.getNumCollectionThreads()
+        session = collectionSession.FeatureCollectionSession(self,numThreads)
+        session.run()
         return None
 
     def __cleanup(self) -> None:
