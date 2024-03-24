@@ -15,7 +15,11 @@ import os
 import sys
 
 import appSettings
-import textLogger
+import sampleDatabase
+import pipelineManager
+import collectionSession
+
+import textLogger # CommonToolsPy
 
         #### CLASS DEFINITIONS ####
 
@@ -32,6 +36,9 @@ class FeatureCollectionApplication:
         self._status    = 0
         self._settings  = settings
         self._logger    = textLogger.TextLogger(settings.getTextLogPath())
+
+        self._sampleDatabase    = sampleDatabase.SampleDatabase(self)
+        self._pipelineManager   = pipelineManager.PipelineManager(self)
 
     def __del__(self):
         """ Destructor """
@@ -55,6 +62,14 @@ class FeatureCollectionApplication:
         """ Return a ref to the app settings """
         return self._settings
 
+    def getSampleDatabase(self) -> sampleDatabase.SampleDatabase:
+        """ Return a ref to the sample database """
+        return self._sampleDatabase
+
+    def getPipelineManager(self) -> pipelineManager.PipelineManager:
+        """ Return a ref to the pipeline manager """
+        return self._pipelineManager
+
     # Public Interface
 
     def logMessage(self,message: str) -> None:
@@ -70,6 +85,12 @@ class FeatureCollectionApplication:
         self.__cleanup()
         return self._status
 
+    def logMessage(self,
+                   message : str) -> None:
+        """ Log a message """
+        self._logger.logMessage(message)
+        return None
+
     # Private Interface
 
     def __registerSelfAsSingleton(self) -> None:
@@ -82,14 +103,20 @@ class FeatureCollectionApplication:
 
     def __startup(self) -> None:
         """ Run the startup """
+        self._sampleDatabase.initialize()
+
         return None
 
     def __execute(self) -> None:
         """ Run the execution """
+        numThreads = self._settings.getNumCollectionThreads()
+        session = collectionSession.FeatureCollectionSession(self,numThreads)
+        session.run()
         return None
 
     def __cleanup(self) -> None:
         """ Run the cleanup """
+        self._sampleDatabase.teardown()
         return None
 
     # Magic Methods
