@@ -24,12 +24,10 @@
     <Compile Include="analysisFrames.py" />
     <Compile Include="appSettings.py" />
     <Compile Include="callbacks.py" />
-    <Compile Include="CollectionMethods.py" />
     <Compile Include="featureCollectionApp.py" />
     <Compile Include="featurePipeline.py" />
     <Compile Include="featureVector.py" />
     <Compile Include="main.py" />
-    <Compile Include="Managers.py" />
     <Compile Include="signalData.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
