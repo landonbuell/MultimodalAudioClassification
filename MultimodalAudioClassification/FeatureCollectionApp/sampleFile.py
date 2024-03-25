@@ -24,8 +24,7 @@ class SampleFileIO:
 
     def __init__(self,
                  targetClass: int,
-                 sourceFile: str,
-                 channelIndex=0):
+                 sourceFile: str):
         """ Constructor """
         self._target    = targetClass
         self._source    = os.path.abspath(sourceFile)

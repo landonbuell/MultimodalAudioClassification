@@ -57,7 +57,7 @@ class FeatureCollector(threading.Thread):
     # Static interface
 
     @staticmethod
-    def registerSession(session: collectionSession.FeatureCollectionSession) -> None:
+    def registerSession(session) -> None:
         """ Register the active collection session """
         FeatureCollector.__activeCollectionSession = session
         return None
@@ -69,7 +69,7 @@ class FeatureCollector(threading.Thread):
         return None
 
     @staticmethod
-    def getSession() -> collectionSession.FeatureCollectionSession:
+    def getSession():
         """ Return a ref to the collection session """
         if (FeatureCollector.__activeCollectionSession is None):
             msg = "Attempting to acces non-existant collection session"

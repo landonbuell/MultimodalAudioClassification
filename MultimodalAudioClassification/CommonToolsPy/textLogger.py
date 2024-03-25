@@ -47,7 +47,7 @@ class TextLogger:
                      message: str) -> None:
         """ Log a message """
         timeStamp = TextLogger.__getCurrentTimeStamp()
-        formattedMessage = "\t{0<8}{1:<24}{2}".format(self._logCounter,timeStamp,message)
+        formattedMessage = "\t{0:<8}{1:<32}{2}".format(self._logCounter,timeStamp,message)
         if (self._logToConsole):
             print(formattedMessage)
         self.__writeToFile(formattedMessage)
@@ -57,14 +57,18 @@ class TextLogger:
 
     def __writeToFile(self,message:str) -> None:
         """ Write a message to the output file """
-        with open(self._outputPat,"a") as outputStream:
+        with open(self._outputPath,"a") as outputStream:
             outputStream.write(message + "\n")
+        self._logCounter += 1
         return None
 
     @staticmethod
     def __getCurrentTimeStamp():
         """ Get the current time in YYYY.MM.DD.HH.MM.SS.UUUUUU """
-        now = datetime.datetime.now()
+        now = str(datetime.datetime.now())
+        now = now.replace(" ",".")
+        now = now.replace(":",".")
+        now = now.replace("-",".")
         return str(now)
 
 

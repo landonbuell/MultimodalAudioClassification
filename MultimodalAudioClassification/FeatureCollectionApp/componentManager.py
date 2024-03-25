@@ -11,7 +11,7 @@
 
         #### IMPORTS ####
 
-import featureCollectionApp
+
 
         #### CLASS DEFINITIONS ####
 
@@ -20,7 +20,7 @@ class ComponentManager:
 
     def __init__(self,
                  componentName: str,
-                 collectionApp: featureCollectionApp.FeatureCollectionApplication):
+                 collectionApp):
         """ Constructor """
         self._name  = componentName
         self._app   = collectionApp
@@ -35,11 +35,11 @@ class ComponentManager:
         """ Return name of this component """
         return self._name
 
-    def getApp(self) -> featureCollectionApp.FeatureCollectionApplication:
+    def getApp(self):
         """ Return the feature collection app """
         return self._app
 
-    def getSettings(self) -> featureCollectionApp.appSettings.AppSettings:
+    def getSettings(self):
         """ Return the app's settings """
         return self._app.getSettings()
 
