@@ -32,6 +32,8 @@ class FeatureCollectionApplication:
                  settings: appSettings.AppSettings):
         """ Constructor """
         self.__registerSelfAsSingleton()
+        if (os.path.isdir(settings.getOutputPath()) == False):
+            os.makedirs(settings.getOutputPath())
 
         self._status    = 0
         self._settings  = settings

@@ -21,7 +21,7 @@ import featureCollectionApp
 if __name__ == "__main__":
 
     # Generate App Settings + App Instance
-    settings = appSettings.AppSettings.developmentSettingsInstance()
+    settings = appSettings.AppSettings.developmentSettings()
     app = featureCollectionApp.FeatureCollectionApplication(settings)
 
     # Run the application

@@ -24,7 +24,7 @@ class PipelineManager(componentManager.ComponentManager):
     __NAME = "PipelineManager"
 
     def __init__(self,
-                 app: componentManager.featureCollectionApp.FeatureCollectionApplication):
+                 app):
         """ Constructor """
         super().__init__(PipelineManager.__NAME,app)
         self._featurePipelines = []

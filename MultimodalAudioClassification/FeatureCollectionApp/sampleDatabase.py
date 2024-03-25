@@ -11,6 +11,7 @@
 
         #### IMPORTS ####
 
+import os
 import enum
 import queue
 
@@ -47,7 +48,7 @@ class SampleDatabase(componentManager.ComponentManager):
             pass
 
     def __init__(self,
-                 app: componentManager.featureCollectionApp.FeatureCollectionApplication):
+                 app):
         """ Constructor """
         super().__init__(SampleDatabase.__NAME,app)
         self._inputFiles    = queue.Queue()
@@ -87,6 +88,7 @@ class SampleDatabase(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
+        self.__buildSampleDatabase()
         return None
 
     def teardown(self) -> None:
@@ -120,23 +122,76 @@ class SampleDatabase(componentManager.ComponentManager):
 
     # Private Interface
 
-    def __buildInputFileQueue(self) -> None:
+    def __buildSampleDatabase(self) -> None:
         """ Build a queue of input files to read for sample files """
+        listOfInputFiles = self.getSettings().getInputPaths()
+        for item in listOfInputFiles:
+            fullPathToItem = os.path.abspath(item)
+            if (os.path.isdir(fullPathToItem) == True):
+                # Item is a Directory 
+                self.__handleInputDirectory(fullPathToItem,0)
+            elif (os.path.isfile(fullPathToItem) == True):
+                # Item is a file
+                self.__handleInputFile(fullPathToItem)
+            else:
+                # Item is an unknown type
+                pass
         return None
 
-    def __readInputFiles(self) -> None:
-        """ Read all input files to collect sample files """
+    def __handleInputDirectory(self,dirpath: str, currentDepth: int) -> None:
+        """ Handle reading a directory """
+        maxDepth = self.getSettings().getFindFilesRecursionDepth()
+        if (currentDepth >= maxDepth):
+            return None
+        contents = os.listdir(dirpath)
+        for item in contents:
+            fullPathToItem = os.path.abspath(item)
+            if (os.path.isdir(fullPathToItem) == True):
+                # Item is a Directory 
+                self.__handleInputDirectory(fullPathToItem,currentDepth + 1)
+            elif (os.path.isfile(fullPathToItem) == True):
+                # Item is a file
+                self.__handleInputFile(fullPathToItem)
+            else:
+                # Item is an unknown type
+                pass
+        return None
+
+    def __handleInputFile(self, filePath: str) -> None:
+        """ Handle reading a single input file """
+        line = ""
+        lineCounter = 0
+        with open(filePath,"r") as inputStream:
+            while (True):
+                line = inputStream.readline()
+                lineCounter += 1
+                if (lineCounter == 1):
+                    continue
+                if (not line):
+                    break                
+                line = line.strip()
+                # Try to make a sample file instance 
+                try:
+                    lineTokens = line.split(",")
+                    newSample = sampleFile.SampleFileIO(int(lineTokens[1]),lineTokens[0])
+                except Exception as err:
+                    msg = "Could note sample SampleFileIO from {0}, line#{1} for reason: {2}".format(
+                        filePath,lineCounter,str(err))
+                    self.logMessage(msg)
+                    continue
+                # If the instance worked, add it to the queue
+                self.__enqueueSample(newSample)
         return None
     
     def __enqueueSample(self,sample) -> int:
         """ Enqueue a sample to the database """
         if (self.isLocked() == True):
-            return SampleDatabase.Status.DATABASE_LOCKED
+            return SampleDatabase.Status.LOCKED
         if (self.isFull() == True):
-            return SampleDatabase.Status.DATABASE_FULL
+            return SampleDatabase.Status.FULL
         self._database.put(sample)
         self._size += 1
-        return SampleDatabase.Status.DATABASE_STABLE
+        return SampleDatabase.Status.STABLE
 
 
 
