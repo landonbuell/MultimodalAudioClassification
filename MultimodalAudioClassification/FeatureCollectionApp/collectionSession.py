@@ -24,7 +24,7 @@ class FeatureCollectionSession:
     """ Encapsulates a collection session """
 
     def __init__(self,
-                 app: featureCollectionApp.FeatureCollectionApplication,
+                 app,
                  numThreads: int):
         """ Constructor """
         self._app           = app
@@ -39,11 +39,11 @@ class FeatureCollectionSession:
 
     # Accessors
 
-    def getSampleDatabase(self) -> featureCollectionApp.sampleDatabase.SampleDatabase:
+    def getSampleDatabase(self):
         """ Return a ref to the sample database """
         return self._app.getSampleDatabase()
 
-    def getPipelineManager(self) -> featureCollectionApp.pipelineManager.PipelineManager:
+    def getPipelineManager(self):
         """ Return a ref to the pipeline manager """
         return self._app.getPipelineManager()
 

@@ -80,7 +80,13 @@ class AppSettings:
     @staticmethod
     def developmentSettings():
         """ Return settings used for development """
-        return None
+        inputFilesHome = "C:\\Users\\lando\\Documents\\GitHub\\MultimodalAudioClassification\\InputFiles"
+        inputFiles = [  os.path.join(inputFilesHome,"Y1.csv"),
+                        os.path.join(inputFilesHome,"Y2.csv"),
+                        os.path.join(inputFilesHome,"Y3.csv"),
+                        os.path.join(inputFilesHome,"Y4.csv"), ]
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV0"
+        return AppSettings(inputFiles,outputPath)
 
     # Private Interface
 
