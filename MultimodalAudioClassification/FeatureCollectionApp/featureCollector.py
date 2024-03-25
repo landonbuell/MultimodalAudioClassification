@@ -15,7 +15,7 @@
 import os
 import threading
 
-import collectionSession
+import collectionManager
 import signalData
 
         #### CLASS DEFINITIONS ####
@@ -24,7 +24,7 @@ class FeatureCollector(threading.Thread):
     """ Represents an object that processes a sample """
 
     # Stores a static fef to the active collection session
-    __activeCollectionSession = None
+    __collectionManager = None
 
     def __init__(self,
                  name: str):
@@ -57,24 +57,24 @@ class FeatureCollector(threading.Thread):
     # Static interface
 
     @staticmethod
-    def registerSession(session) -> None:
-        """ Register the active collection session """
-        FeatureCollector.__activeCollectionSession = session
+    def registerCollectionManager(session) -> None:
+        """ Register the active collection manager """
+        FeatureCollector.__collectionManager = session
         return None
 
     @staticmethod
-    def deregisterSession() -> None:
-        """ Register the active collection session """
-        FeatureCollector.__activeCollectionSession = None
+    def deregisterCollectionManager() -> None:
+        """ Register the active collection manager """
+        FeatureCollector.__collectionManager = None
         return None
 
     @staticmethod
-    def getSession():
-        """ Return a ref to the collection session """
-        if (FeatureCollector.__activeCollectionSession is None):
+    def getManager():
+        """ Return a ref to the collection manager """
+        if (FeatureCollector.__collectionManager is None):
             msg = "Attempting to acces non-existant collection session"
             raise RuntimeError(msg)
-        return FeatureCollector.__activeCollectionSession
+        return FeatureCollector.__collectionManager
 
     # Public Interface
 
@@ -106,8 +106,8 @@ class FeatureCollector(threading.Thread):
 
     def __getNextSample(self):
         """ Get the next sample from the sample database """
-        if (FeatureCollector.getSession().getSampleDatabase().isEmpty() == False):
-            return FeatureCollector.getSession().getSampleDatabase().getNext()
+        if (FeatureCollector.getManager().getSampleDatabase().isEmpty() == False):
+            return FeatureCollector.getManager().getSampleDatabase().getNext()
         return None
 
     def __pullNextSampleUntilValid(self):
@@ -124,7 +124,7 @@ class FeatureCollector(threading.Thread):
     def __collectFeatures(self,
                          signal: signalData.SignalData) -> list:
         """ Send Signal through each pipeline """
-        pipelineMgr = FeatureCollector.getSession().getApp().getPipelineManager()
+        pipelineMgr = FeatureCollector.getManager().getApp().getPipelineManager()
         listOfFeatureVectors = pipelineMgr.processSignal(signal)
         return listOfFeatureVectors
 
@@ -132,7 +132,7 @@ class FeatureCollector(threading.Thread):
                          signal: signalData.SignalData,
                          listOfFeatureVectors: list) -> None:
         """ Export Feature vectors to appropriate output locations """
-        parentOutputPath = FeatureCollector.getSession().getOutputPath()
+        parentOutputPath = FeatureCollector.getManager().getOutputPath()
         signalOutputPath = signal.exportPathBinary()
         for ii,vector in enumerate(listOfFeatureVectors):
             if (vector is None):

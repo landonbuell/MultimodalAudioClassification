@@ -12,8 +12,8 @@
         #### IMPORTS ####
 
 import componentManager
+
 import featurePipeline
-import featureVector
 import signalData
 
         #### CLASS DEFINITIONS ####

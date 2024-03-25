@@ -15,9 +15,10 @@ import os
 import sys
 
 import appSettings
+
 import sampleDatabase
 import pipelineManager
-import collectionSession
+import collectionManager
 
 import textLogger # CommonToolsPy
 
@@ -41,6 +42,7 @@ class FeatureCollectionApplication:
 
         self._sampleDatabase    = sampleDatabase.SampleDatabase(self)
         self._pipelineManager   = pipelineManager.PipelineManager(self)
+        self._collectionManager = collectionManager.CollectionManager(self)
 
     def __del__(self):
         """ Destructor """
@@ -71,6 +73,10 @@ class FeatureCollectionApplication:
     def getPipelineManager(self) -> pipelineManager.PipelineManager:
         """ Return a ref to the pipeline manager """
         return self._pipelineManager
+
+    def getCollectionManager(self) -> collectionManager.CollectionManager:
+        """ Return a ref to the collection manager """
+        return self._collectionManager
 
     # Public Interface
 
@@ -106,19 +112,20 @@ class FeatureCollectionApplication:
     def __startup(self) -> None:
         """ Run the startup """
         self._sampleDatabase.initialize()
-
+        self._pipelineManager.initialize()
+        self._collectionManager.initialize()
         return None
 
     def __execute(self) -> None:
         """ Run the execution """
-        numThreads = self._settings.getNumCollectionThreads()
-        session = collectionSession.FeatureCollectionSession(self,numThreads)
-        session.run()
+        self._collectionManager.runCollection()
         return None
 
     def __cleanup(self) -> None:
         """ Run the cleanup """
         self._sampleDatabase.teardown()
+        self._pipelineManager.teardown()
+        self._collectionManager.teardown()
         return None
 
     # Magic Methods
