@@ -40,7 +40,7 @@ class AbstractCollectionMethod:
         self._name  = methodName
         self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
         self._callbacks = []    # evaluated 
-        
+  
     def __del__(self):
         """ Destructor """
         pass
@@ -68,7 +68,7 @@ class AbstractCollectionMethod:
             return False
         if (self._callBody(signal) == False):
             return False
-        if (self.__dataHasNanAndInfs == True):
+        if (self.__dataHasNanAndInfs() == True):
             return False
         return True
 
@@ -118,20 +118,4 @@ class AbstractCollectionMethod:
             return True
         return False
 
-class CollectionMethodCallbacks:
-    """ 
-        Static class of methods with signature:
 
-        [bool] = callback([signalData.SignalData])
-
-    """
-
-    @staticmethod
-    def signalHasAnalysisFramesTime(signal: signalData.SignalData) -> bool:
-        """ Ensure that a provided signal has time-series analysis frames """
-        return (signal.cachedData.analysisFramesTime is not None)
-
-    @staticmethod
-    def signalHasAnalysisFramesFreq(signal: signalData.SignalData) -> bool:
-        """ Ensure that a provided signal has freq-series analysis frames """
-        return (signal.cachedData.analysisFramesFreq is not None)

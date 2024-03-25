@@ -15,6 +15,8 @@
 import os
 import numpy as np
 
+import analysisFrames
+
         #### CLASS DEFINITIONS ####
 
 class SignalData:
@@ -27,6 +29,7 @@ class SignalData:
             """ Constructor """
             self.analysisFramesTime = None
             self.analysisFramesFreq = None
+            self.freqCenterOfMasses = None
 
         def __del__(self):
             """ Destructor """
@@ -127,9 +130,15 @@ class SignalData:
         return self._waveform.size
 
     @property
+    def numSamples(self) -> int:
+        """ Return the number of samples in this waveform """
+        return self._waveform.size
+
+    @property
     def uniqueID(self) -> int:
         """ Return the unique counter ID for this signal """
         return self._uniqueID
+
 
     # Public Interface
 
@@ -145,21 +154,74 @@ class SignalData:
         # TODO: Implement this!
         return None
 
-    def populateTimeSeriesAnalysisFrames(self) -> None:
+    def makeTimeSeriesAnalysisFrames(self,
+                                     frameParams: analysisFrames.AnalysisFrameParameters,
+                                     forceMakeFrames=False) -> bool:
         """ Populate the cached data' time series analysis frames """
-        # TODO: Implement this!
-        return None
+        if (forceMakeFrames == True):
+            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
+            return True
+        if (self.__shouldMakeTimeSeriesAnalysisFrames(frameParams) == True):
+            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
+            return True
+        return False
 
-    def populateFreqSeriesAnalysisFrames(self) -> None:
+    def makeFreqSeriesAnalysisFrames(self,
+                                     frameParams: analysisFrames.AnalysisFrameParameters,
+                                     forceMakeFrames=False) -> bool:
         """ Populate the cached data' frequency series analysis frames """
-        # TODO: Implement this!
-        return None
+        self.makeTimeSeriesAnalysisFrames(frameParams,forceMakeFrames)
+        if (forceMakeFrames == True):
+            self.cachedData.analysisFramesTime = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
+            return True
+        if (self.__shouldMakeFreqSeriesAnalysisFrames(frameParams) == True):
+            self.cachedData.analysisFramesTime = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
+            return True
+        return False
 
-    # Public Interface
+    def makeFreqCenterOfMasses(self,
+                                  frameParams: analysisFrames.AnalysisFrameParameters,
+                                  forceMakeFrames=False) -> bool:
+        """ Populate the cached data' frequency center of mass frames """
+        madeFrames = self.makeFreqSeriesAnalysisFrames(frameParams,forceMakeFrames)
+        weights = np.arange(0,frameParams.freqFrameSize,1)
+        nmrtr = np.dot(self.cachedData.analysisFramesFreq.getRawFrames(),weights)
+        dnmtr = np.sum(np.abs(self.cachedData.analysisFramesFreq.getRawFrames()),axis=1) + 1e-8
+        self.cachedData.freqCenterOfMasses = (nmrtr / dnmtr)
+        if (self.cachedData.freqCenterOfMasses.size != frameParams.maxNumFrames):
+            msg = "Mismatch in number of frames & number of center of Masses"
+            raise RuntimeError(msg)
+        return madeFrames
 
     # Private Interface
 
+    def __shouldMakeTimeSeriesAnalysisFrames(self,
+                                            frameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
+        if (self.cachedData.analysisFramesTime is None):
+            # Frames do not exist, we should make them
+            return True
+        if (self.cachedData.analysisFramesTime.getParms() != frameParams):
+            # The provided params do not match to existing params
+            return True
+        return False
+
+    def __shouldMakeFreqSeriesAnalysisFrames(self,
+                                            analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F if we should make or remake analysis time-series analysis frames based on provided params """
+        if (self.cachedData.analysisFramesFreq is None):
+            # Frames do not exist, we should make them
+            return True
+        if (self.cachedData.analysisFramesFreq.getParams() != analysisFrameParams):
+            # The provided params do not match to existing params
+            return True
+        return False
+
     # Magic Methods
+
+    def __len__(self) -> int:
+        """ Return the number of samples in the waveform """
+        return self._waveform.size
 
     def __getitem__(self,
                     key: int) -> np.ndarray:

@@ -2,16 +2,15 @@
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollectionMethods
-    File:       temporalCenterOfMass.py
+    File:       centerOfMass.py
     Classes:    TemporalCenterOfMass,
-
+                FrequencyCenterOfMass,
     Author:     Landon Buell
     Date:       February 2024
 """
 
         #### IMPORTS ####
 
-from typing import Collection
 import numpy as np
 
 import collectionMethod
@@ -78,3 +77,43 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
             self._weightKernel = collectionMethod.WeightingFunction.LINEAR
             raise RuntimeWarning(msg)
         return None
+
+class FrequencyCenterOfMassInfo(collectionMethod.AbstractCollectionMethod):
+    """
+        Compute the frequency center-of-mass for eacg analysis frame
+    """
+
+    __NAME = "FrequencyCenterOfMass"
+    __NUM_FEATURES = 3
+
+    def __init__(self):
+        """ Constructor """
+        super().__init__(FrequencyCenterOfMassInfo.__NAME,
+                         FrequencyCenterOfMassInfo.__NUM_FEATURES)
+        self._callbacks.append( collectionMethod.CollectionMethodCallbacks.makeDefaultFreqCenterOfMasses )
+
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
+
+    # Public Interface
+
+    def featureNames(self) -> list:
+        """ OVERRIDE: Return a list of the feature names """
+        result = [self.getName() + "Mean",
+                  self.getName() + "Variance",
+                  self.getName() + "DiffMinMax",]
+        return result
+
+    # Protected Interface
+
+    def _callBody(self,
+                  signal: collectionMethod.signalData.SignalData) -> bool:
+        """ OVERRIDE: main body of call function """
+        self._data[0]   = np.mean(signal.cachedData.freqCenterOfMasses)
+        self._data[1]   = np.var(signal.cachedData.freqCenterOfMasses)
+        self._data[2]   = (np.max(signal.cachedData.freqCenterOfMasses) - \
+                           np.min(signal.cachedData.freqCenterOfMasses))
+        return True
+
+    # Private Interface

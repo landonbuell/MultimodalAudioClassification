@@ -74,6 +74,11 @@ class FeatureCollectionApplication:
 
     # Public Interface
 
+    def logMessage(self,message: str) -> None:
+        """ Log a message to the text logger """
+        self._logger.logMessage(message)
+        return None
+
     def run(self) -> int:
         """ Run the application """
         self.__startup()

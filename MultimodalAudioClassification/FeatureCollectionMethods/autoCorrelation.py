@@ -29,6 +29,7 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
         """ Constructor """
         super().__init__(AutoCorrelationCoefficients.__NAME,
                          numCoeffs)
+        self._sums = np.zeros(shape=(3,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
@@ -48,6 +49,9 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         for ii in range(self.numCoeffs):
+            self._sums[0] = 0.0
+            self._sums[1] = 0.0
+            self._sums[2] = 0.0
             self._data[ii] = self.__computeCoefficient(signal,ii)
         return True
 
@@ -56,13 +60,13 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                              coeffIndex: int) -> np.float32:
         """ Compute the Coeff at the provided index """
         sumUpperBound = signal.getNumSamples() - coeffIndex
-        sums = np.zeros(shape=(3,),dtype=np.float32)
+        # self._sums is cleared before this method is called
         for ii in range(sumUpperBound):
-            sums[0] += (signal.waveform[ii] * signal.waveform[ii + coeffIndex])
-            sums[1] += (signal.waveform[ii] * signal.waveform[ii])
-            sums[2] += (signal.waveform[ii + coeffIndex] + signal.waveform[ii + coeffIndex])
+            self._sums[0] += (signal.waveform[ii] * signal.waveform[ii + coeffIndex])
+            self._sums[1] += (signal.waveform[ii] * signal.waveform[ii])
+            self._sums[2] += (signal.waveform[ii + coeffIndex] + signal.waveform[ii + coeffIndex])
         # Now Compute the result
-        sums[1] = np.sqrt(sums[1])
-        sums[2] = np.sqrt(sums[2])
-        coeff = sums[0] / (sums[1] * sums[2])
+        self._sums[1] = np.sqrt(self._sums[1])
+        self._sums[2] = np.sqrt(self._sums[2])
+        coeff = self._sums[0] / (self._sums[1] * self._sums[2])
         return coeff
