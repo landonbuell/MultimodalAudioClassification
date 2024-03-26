@@ -33,20 +33,6 @@ class SampleDatabase(componentManager.ComponentManager):
         FULL   = 2
         EMPTY  = 3
 
-    class DequeueResult:
-        """ Is the result of getting the front of the sample database """
-
-        def __init__(self,
-                     sample,
-                     status):
-            """ Constructor """
-            self.sampleData     = sample
-            self.databaseStatus = status
-
-        def __del__(self):
-            """ Destructor """
-            pass
-
     def __init__(self,
                  app):
         """ Constructor """
@@ -96,7 +82,7 @@ class SampleDatabase(componentManager.ComponentManager):
         super().teardown()
         return None
 
-    def lock(self,password: str) -> bool:
+    def requestLock(self,password: str) -> bool:
         """ Attempt to lock the database. Return T/F is successful """
         if (self.isLocked() == True):
             return False
@@ -104,7 +90,7 @@ class SampleDatabase(componentManager.ComponentManager):
         self._password = password
         return True
 
-    def unlock(self, password: str) -> bool:
+    def requestUnlock(self, password: str) -> bool:
         """ Attempt to unlock the database. Return T/F if successful """
         if (self.isLocked() == False):
             return True

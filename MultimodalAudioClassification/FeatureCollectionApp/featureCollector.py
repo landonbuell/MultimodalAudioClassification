@@ -13,24 +13,34 @@
         #### IMPORTS ####
 
 import os
+import enum
+import time
 import threading
+from typing import Container
 
-import collectionManager
-import signalData
 
         #### CLASS DEFINITIONS ####
 
 class FeatureCollector(threading.Thread):
     """ Represents an object that processes a sample """
 
-    # Stores a static fef to the active collection session
-    __collectionManager = None
+    # Static members point to app managers
+    __ptrSampleDatabase    = None
+    __ptrCollectionManager = None
+    
+
+    class Status(enum.IntEnum):
+        """ Gives the status of the collector """
+        NORMAL                  = 0
+        WAITING_FOR_DATABASE    = 1
 
     def __init__(self,
                  name: str):
         """ Constructor """
         super().__init__(group=None,target=None,name=name)
-        self._stopEvent = threading.Event()
+        self._callbackGetNext = GetNextSampleStrategies.getNextSampleSingleThread
+        self._stopFlag      = threading.Event()
+        self._databaseKey   = str(id(self)) # temp use the instance's memory address
 
     def __del__(self):
         """ Destructor """
@@ -50,94 +60,123 @@ class FeatureCollector(threading.Thread):
         """ Returns T/F if this thread is alive """
         return self.is_alive()
 
-    def isStopped(self) -> bool:
+    def stopFlag(self) -> bool:
         """ Return T/F is the stop flag has been raised """
         return self._stopEvent.is_set()
 
-    # Static interface
+    # Static Interface
 
     @staticmethod
-    def registerCollectionManager(session) -> None:
-        """ Register the active collection manager """
-        FeatureCollector.__collectionManager = session
-        return None
-
-    @staticmethod
-    def deregisterCollectionManager() -> None:
-        """ Register the active collection manager """
-        FeatureCollector.__collectionManager = None
-        return None
-
-    @staticmethod
-    def getManager():
-        """ Return a ref to the collection manager """
-        if (FeatureCollector.__collectionManager is None):
-            msg = "Attempting to acces non-existant collection session"
+    def collectionManager() -> object:
+        """ Return a pointer to the sample database """
+        if (FeatureCollector.__ptrCollectionManager is None):
+            msg = "Collection is not registered with FeatureCollector"
             raise RuntimeError(msg)
-        return FeatureCollector.__collectionManager
+        return FeatureCollector.__ptrCollectionManager
+
+    @staticmethod
+    def sampleDatabase() -> object:
+        """ Return a pointer to the sample database """
+        if (FeatureCollector.__ptrSampleDatabase is None):
+            msg = "Sample Database is not registered with FeatureCollector"
+            raise RuntimeError(msg)
+        return FeatureCollector.__ptrSampleDatabase
 
     # Public Interface
 
     def run(self) -> None:
-        """ OVERRIDE: Represents the threads execution logic """        
-        while (self.isStopped() == False):
-            success = self.processNext()
-            if (success == False):
-                self._stopEvent.set()
+        """ OVERRIDE: Represents the threads execution logic """      
+        # Run collection
+        while (self.stopFlag() == False):
+            self.__processNext()
         return None
 
-    def terminate(self) -> None:
+    def logMessage(self,message: str) -> None:
+        """ Log a Message to the collection manager """
+        message = self.getName() + ": " + message
+        if (FeatureCollector.__ptrCollectionManager is None):
+            msg = "Cannot log message: '{0}' because no collection manager is registered with FeatureCollector".formatI(message)
+            raise RuntimeError(msg)
+        FeatureCollector.__ptrCollectionManager.logMessage(message)
+        return None
+
+    def raiseStopFlag(self,reason=None) -> None:
         """ Raise an internal 'stop' this thread event """
+        if (reason is None):
+            reason = "No reason provided"
+        message = "stop flag raised for {0} for reason: {1}".format(
+            self.getName(),reason)
+        self.logMessage(message)
         self._stopEvent.set()
         return None
 
-    def processNext(self) -> bool:
+    def __processNext(self) -> bool:
         """ Collect features for a single sample """
-        sample = self.__pullNextSampleUntilValid()
-        if (sample is None):
-            return False
-        listOfSignals = sample.decode()
-        for signal in listOfSignals:
-            listOfFeatureVectors = self.__collectFeatures(signal)
-            self.__exportFeatures(signal,listOfFeatureVectors)
+        if (self.stopFlag() == False):
+            # Pull Next Sample
+            nextSample = self.__invokeGetNextSample()
+        if (self.stopFlag() == False):
+            # Decode Sample into list of signals
+            listOfSignals = self.__decodeSample(nextSample)
+            if (len(listOfSignals) == 0):
+                return False
+        if (self.stopFlag() == False):
+            # Process List of Signals + Export Features
+            self.__processListOfSignals(listOfSignals)
         return True
 
     # Private Interface
 
-    def __getNextSample(self):
-        """ Get the next sample from the sample database """
-        if (FeatureCollector.getManager().getSampleDatabase().isEmpty() == False):
-            return FeatureCollector.getManager().getSampleDatabase().getNext()
+    def __invokeGetNextSample(self) -> None:
+        """ Pull Next Sample from sample database """
+        if (self._callbackGetNext is None):
+            self.raiseStopFlag(reason="No strategy for getting next sample is selected")
+            return None
+        return self._callbackGetNext.__call__(self)
+
+    def __decodeSample(self, sampleFile) -> list:
+        """ Decode the sample and return a list of signals """
+        try:
+            listOfSignals = sampleFile.decode()
+            return listOfSignals
+        except Exception as err:
+            msg = "Failed to read signals from {0} due to error: {1}".format(
+                str(sampleFile),str(err))
+            self.logMessaage(msg)
+        return []
+
+    def __processListOfSignals(self, listOfSignals: list) -> None:
+        """ Process list of signals and export feature vectors """
+
+        # TODO: THIS!
+
         return None
 
-    def __pullNextSampleUntilValid(self):
-        """ Get the next sample from the sample database """
-        nextSample = None
-        while (True):
-            nextSample = self.__getNextSample()
-            if (nextSample is None):
-                break
-            if (nextSample.isReal() == True):
-                break
-        return nextSample
 
-    def __collectFeatures(self,
-                         signal: signalData.SignalData) -> list:
-        """ Send Signal through each pipeline """
-        pipelineMgr = FeatureCollector.getManager().getApp().getPipelineManager()
-        listOfFeatureVectors = pipelineMgr.processSignal(signal)
-        return listOfFeatureVectors
 
-    def __exportFeatures(self,
-                         signal: signalData.SignalData,
-                         listOfFeatureVectors: list) -> None:
-        """ Export Feature vectors to appropriate output locations """
-        parentOutputPath = FeatureCollector.getManager().getOutputPath()
-        signalOutputPath = signal.exportPathBinary()
-        for ii,vector in enumerate(listOfFeatureVectors):
-            if (vector is None):
-                continue
-            pipelineOutputPath = "pipeline{0}".format(ii)
-            fullOutputPath = os.path.join(parentOutputPath,pipelineOutputPath,signalOutputPath)
-            vector.toBinaryFile(fullOutputPath)
-        return None
+
+class GetNextSampleStrategies:
+    """ Static class of callbacks for getting the next from sample database """
+
+    @staticmethod
+    def getNextSampleSingleThread(collector: FeatureCollector) -> object:
+        """ Pull the next sample from the sample database while on only main thread """
+        if (FeatureCollector.sampleDatabase().isEmpty() == True):
+            collector.raiseStopFlag(reason="Sample database is empty")
+            return None
+        sample = FeatureCollector.sampleDatabase().getNext()
+        message = "Got sample: {0} from database".format(str(sample))
+        collector.logMessage(message)
+        return sample
+
+    @staticmethod
+    def getNextSampleMultiThread(collector: FeatureCollector) -> object:
+        """ Pull the next sample from the sample database in a multithreaded environment """
+        if (FeatureCollector.sampleDatabase().isEmpty() == True):
+            collector.raiseStopFlag(reason="Sample database is empty")
+            return None
+        # TODO: Fix this for multiple threads
+        sample = FeatureCollector.sampleDatabase().getNext()
+        message = "Got sample: {0} from database".format(str(sample))
+        collector.logMessage(message)
+        return sample

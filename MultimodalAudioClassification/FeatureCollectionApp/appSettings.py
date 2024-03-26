@@ -57,7 +57,7 @@ class AppSettings:
 
     def getNumCollectionThreads(self) -> int:
         """ Return the number of collection threads to use """
-        return self.getNumCollectionThreads
+        return self._collectionThreads
 
     def getFindFilesRecursionDepth(self) -> int:
         """ Retur the depth use to recurse directory trees """

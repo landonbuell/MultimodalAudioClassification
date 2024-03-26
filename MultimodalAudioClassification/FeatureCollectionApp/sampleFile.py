@@ -83,3 +83,15 @@ class SampleFileIO:
                 channelIndex=ii)
             signals.append(newSignal)
         return self
+
+    # Magic Methods
+
+    def __str__(self) -> str:
+        """ Cast to string """
+        return "{0} @ {1}".format(self._target,self._source)
+
+    def __repr__(self) -> str:
+        """ Representation for debugging """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))
+
+    

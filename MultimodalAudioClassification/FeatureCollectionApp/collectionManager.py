@@ -15,8 +15,8 @@
 import os
 
 import componentManager
-
 import featureCollector
+
 
         #### CLASS DEFINITIONS ####
 
@@ -48,13 +48,11 @@ class CollectionManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the collection manager """
         super().initialize()     
-        featureCollector.FeatureCollector.registerCollectionManager(self)
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the collection manager """
         super().teardown()
-        featureCollector.FeatureCollector.deregisterCollectionManager()
         return None
 
     def runCollection(self) -> int:
@@ -72,9 +70,9 @@ class CollectionManager(componentManager.ComponentManager):
 
     def __initCollectors(self) -> None:
         """ Initialize all feature collectors """
-        for ii in range(self._collectors):
+        for ii in range(self.numCollectors):
             name = "collector{0}".format(ii)
-            self._collectors[ii] = featureCollector.FeatureCollector(name)
+            self._collectors[ii] = featureCollector.FeatureCollector(name,self)
         return None
 
     def __startCollection(self) -> None:
