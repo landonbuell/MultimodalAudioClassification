@@ -122,3 +122,9 @@ class AppSettings:
         print(msg)
         self._pathOutput = outputPath
         return None
+
+    # Magic Methods
+
+    def __repr__(self) -> str:
+        """ Debug representation """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))

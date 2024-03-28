@@ -99,3 +99,10 @@ class ManagerDatabase:
     def getCollectionManager(self):
         """ Return a ref to the collection manager """
         return self._app.getCollectionManager()
+
+    # Magic Methods
+
+    def __repr__(self) -> str:
+        """ Debug representation """
+        return "{0} @ {1} -> {2}".format(
+            self.__class__,hex(id(self)),repr(self._app))

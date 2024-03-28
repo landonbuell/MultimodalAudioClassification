@@ -48,6 +48,7 @@ class CollectionManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the collection manager """
         super().initialize()     
+        featureCollector.FeatureCollector.registerManagerDatabase(self.getApp())
         return None
 
     def teardown(self) -> None:
@@ -72,7 +73,7 @@ class CollectionManager(componentManager.ComponentManager):
         """ Initialize all feature collectors """
         for ii in range(self.numCollectors):
             name = "collector{0}".format(ii)
-            self._collectors[ii] = featureCollector.FeatureCollector(name,self)
+            self._collectors[ii] = featureCollector.FeatureCollector(name)
         return None
 
     def __startCollection(self) -> None:

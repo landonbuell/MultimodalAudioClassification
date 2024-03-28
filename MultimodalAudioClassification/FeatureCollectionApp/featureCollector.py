@@ -12,9 +12,6 @@
 
         #### IMPORTS ####
 
-import os
-import enum
-import time
 import threading
 
 import componentManager
@@ -26,19 +23,14 @@ class FeatureCollector(threading.Thread):
 
     # Static members point to app managers
     __managerDatabase = None
-    
-    class Status(enum.IntEnum):
-        """ Gives the status of the collector """
-        NORMAL                  = 0
-        WAITING_FOR_DATABASE    = 1
 
     def __init__(self,
                  name: str):
         """ Constructor """
         super().__init__(group=None,target=None,name=name)
-        self._callbackGetNext = GetNextSampleStrategies.getNextSampleSingleThread
-        self._stopFlag      = threading.Event()
-        self._databaseKey   = str(id(self)) # temp use the instance's memory address
+        self._callbackGetNext   = GetNextSampleStrategies.getNextSampleSingleThread
+        self._stopEvent         = threading.Event()
+        self._databaseKey       = str(id(self)) # temp use the instance's memory address
 
     def __del__(self):
         """ Destructor """
@@ -65,9 +57,9 @@ class FeatureCollector(threading.Thread):
     # Static Interface
 
     @staticmethod
-    def registerManagerDatabase(managerDatabase: componentManager.ManagerDatabase) -> None:
+    def registerManagerDatabase(featureCollectionApp) -> None:
         """ Register the component manager """
-        FeatureCollector.__managerDatabase = managerDatabase
+        FeatureCollector.__managerDatabase = componentManager.ManagerDatabase(featureCollectionApp)
         return None
 
     @staticmethod
@@ -114,8 +106,8 @@ class FeatureCollector(threading.Thread):
     def logMessage(self,message: str) -> None:
         """ Log a Message to the collection manager """
         message = self.getName() + ": " + message
-        if (FeatureCollector.__ptrCollectionManager is None):
-            msg = "Cannot log message: '{0}' because no collection manager is registered with FeatureCollector".formatI(message)
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "Cannot log message: '{0}' because no ManagerDatabase is registered with FeatureCollector".formatI(message)
             raise RuntimeError(msg)
         FeatureCollector.collectionManager().logMessage(message)
         return None
