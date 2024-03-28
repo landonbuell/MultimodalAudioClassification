@@ -134,7 +134,6 @@ class SignalData:
         """ Return the number of samples in this waveform """
         return self._waveform.size
 
-    @property
     def uniqueID(self) -> int:
         """ Return the unique counter ID for this signal """
         return self._uniqueID
@@ -142,12 +141,11 @@ class SignalData:
 
     # Public Interface
 
-    def exportPathBinary(self,
-                         extension="bin"):
+    def exportPathBinary(self):
         """ location within the output path where to export this sample """
         classFolder = "class{0}".format(self._targetClass)
-        fileName = "sample{0}.{1}".format(self.uniqueID,extension)
-        return os.path.join(pipelineFolder,classFolder,fileName)
+        fileName    = "sample{0}.bin".format(self.uniqueID)
+        return os.path.join(classFolder,fileName)
 
     def clearCachedData(self) -> None:
         """ Clear the underlying cached data """

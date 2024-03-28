@@ -16,8 +16,8 @@ import os
 import enum
 import time
 import threading
-from typing import Container
 
+import componentManager
 
         #### CLASS DEFINITIONS ####
 
@@ -25,10 +25,8 @@ class FeatureCollector(threading.Thread):
     """ Represents an object that processes a sample """
 
     # Static members point to app managers
-    __ptrSampleDatabase    = None
-    __ptrCollectionManager = None
+    __managerDatabase = None
     
-
     class Status(enum.IntEnum):
         """ Gives the status of the collector """
         NORMAL                  = 0
@@ -67,20 +65,42 @@ class FeatureCollector(threading.Thread):
     # Static Interface
 
     @staticmethod
+    def registerManagerDatabase(managerDatabase: componentManager.ManagerDatabase) -> None:
+        """ Register the component manager """
+        FeatureCollector.__managerDatabase = managerDatabase
+        return None
+
+    @staticmethod
+    def appSettings() -> object:
+        """ Return a pointer to the sample database """
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "ManagerDatabase is not registered with FeatureCollector"
+            raise RuntimeError(msg)
+        return FeatureCollector.__managerDatabase.getAppSettings()
+
+    @staticmethod
     def collectionManager() -> object:
         """ Return a pointer to the sample database """
-        if (FeatureCollector.__ptrCollectionManager is None):
-            msg = "Collection is not registered with FeatureCollector"
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "ManagerDatabase is not registered with FeatureCollector"
             raise RuntimeError(msg)
-        return FeatureCollector.__ptrCollectionManager
+        return FeatureCollector.__managerDatabase.getCollectionManager()
 
     @staticmethod
     def sampleDatabase() -> object:
         """ Return a pointer to the sample database """
-        if (FeatureCollector.__ptrSampleDatabase is None):
-            msg = "Sample Database is not registered with FeatureCollector"
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "ManagerDatabase is not registered with FeatureCollector"
             raise RuntimeError(msg)
-        return FeatureCollector.__ptrSampleDatabase
+        return FeatureCollector.__managerDatabase.getSampleDatabase()
+
+    @staticmethod
+    def pipelineManager() -> object:
+        """ Return a pointer to the sample database """
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "ManagerDatabase is not registered with FeatureCollector"
+            raise RuntimeError(msg)
+        return FeatureCollector.__managerDatabase.getPipelineManager()
 
     # Public Interface
 
@@ -97,7 +117,7 @@ class FeatureCollector(threading.Thread):
         if (FeatureCollector.__ptrCollectionManager is None):
             msg = "Cannot log message: '{0}' because no collection manager is registered with FeatureCollector".formatI(message)
             raise RuntimeError(msg)
-        FeatureCollector.__ptrCollectionManager.logMessage(message)
+        FeatureCollector.collectionManager().logMessage(message)
         return None
 
     def raiseStopFlag(self,reason=None) -> None:
@@ -147,13 +167,39 @@ class FeatureCollector(threading.Thread):
 
     def __processListOfSignals(self, listOfSignals: list) -> None:
         """ Process list of signals and export feature vectors """
-
-        # TODO: THIS!
-
+        pipelineMgr = FeatureCollector.pipelineManager()
+        for signal in listOfSignals:
+            # Process signals and get list of Features for each pipeline
+            listOfFeatureVectors = pipelineMgr.processSignal(signal)
+            self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
 
-
-
+    def __exportListOfFeatureVectors(self, 
+                                     signal: object,
+                                     listOfFeatureVectors: list) -> None:
+        """ Export a list of feature Vectors to binaries """
+        topLevelOutputPath = FeatureCollector.appSettings().getOutputPath()
+        for ii,vector in enumerate(listOfFeatureVectors):
+            # Export
+            if (vector is None):
+                msg = "Got None for feature vector on signal {0}, pipeline {1}".format(
+                    signal.uniqueID(),ii)
+                self.logMessage(msg)
+                continue
+            # Get output Path
+            pipelineFolder = "pipeline{0}".format(ii)
+            fullOutputPath = os.path.join(topLevelOutputPath,pipelineFolder,signal.exportPathBinary())
+            # Export
+            try:
+                vector.toBinaryFile(fullOutputPath)
+                msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)             
+            except RuntimeError as err:
+                msg = str(err)
+            except Exception as err:
+                 msg = "Failed to export sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
+            self.logMessage(msg)
+        # All done!
+        return None
 
 class GetNextSampleStrategies:
     """ Static class of callbacks for getting the next from sample database """

@@ -11,8 +11,6 @@
 
         #### IMPORTS ####
 
-
-
         #### CLASS DEFINITIONS ####
 
 class ComponentManager:
@@ -70,3 +68,34 @@ class ComponentManager:
     def __repr__(self) -> str:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
+
+
+class ManagerDatabase:
+    """ Stores a collection of managers from parent application """
+
+    def __init__(self,
+                 app):
+        """ Constructor """
+        self._app = app
+
+    def __del__(self):
+        """ Destructor """
+        self._app = None
+
+    # Accessors
+
+    def getAppSettings(self):
+        """ Return a ref to the app settings """
+        return self._app.getSettings()
+
+    def getSampleDatabase(self):
+        """ Return a ref to the sample database """
+        return self._app.getSampleDatabase()
+
+    def getPipelineManager(self):
+        """ Return a ref to the pipeline manager """
+        return self._app.getPipelineManager()
+
+    def getCollectionManager(self):
+        """ Return a ref to the collection manager """
+        return self._app.getCollectionManager()
