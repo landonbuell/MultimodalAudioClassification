@@ -71,5 +71,11 @@ class TextLogger:
         now = now.replace("-",".")
         return str(now)
 
+    # Magic Methods
+
+    def __repr__(self) -> str:
+        """ Debug representation """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))
+
 
 

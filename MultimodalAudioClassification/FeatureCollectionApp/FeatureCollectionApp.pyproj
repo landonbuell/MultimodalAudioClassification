@@ -23,9 +23,9 @@
   <ItemGroup>
     <Compile Include="analysisFrames.py" />
     <Compile Include="appSettings.py" />
-    <Compile Include="callbacks.py" />
-    <Compile Include="collectionSession.py" />
+    <Compile Include="collectionManager.py" />
     <Compile Include="componentManager.py" />
+    <Compile Include="coreCallbacks.py" />
     <Compile Include="featureCollectionApp.py" />
     <Compile Include="featureCollector.py" />
     <Compile Include="featurePipeline.py" />

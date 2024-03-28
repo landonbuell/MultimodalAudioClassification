@@ -13,43 +13,30 @@
         #### IMPORTS ####
 
 import os
-import threading
 
-import featureCollectionApp
+import componentManager
 import featureCollector
+
 
         #### CLASS DEFINITIONS ####
 
-class FeatureCollectionSession:
-    """ Encapsulates a collection session """
+class CollectionManager(componentManager.ComponentManager):
+    """ Stores and execute feature collectors """
+
+    __NAME = "CollectionManager"
 
     def __init__(self,
-                 app,
-                 numThreads: int):
+                 app):
         """ Constructor """
-        self._app           = app
-        self._collectors    = [None] * numThreads
-        self._status        = 0
-
+        super().__init__(CollectionManager.__NAME,app)
+        self._collectors = [None] * app.getSettings().getNumCollectionThreads()
         self.__initCollectors()
 
     def __del__(self):
         """ Destructor """
-        pass
+        super().__del__()
 
     # Accessors
-
-    def getSampleDatabase(self):
-        """ Return a ref to the sample database """
-        return self._app.getSampleDatabase()
-
-    def getPipelineManager(self):
-        """ Return a ref to the pipeline manager """
-        return self._app.getPipelineManager()
-
-    def getOutputPath(self) -> str:
-        """ Return the top level output path """
-        return self._app.getSettings().getOutputPath()
 
     @property
     def numCollectors(self) -> int:
@@ -58,11 +45,20 @@ class FeatureCollectionSession:
 
     # Public Interface
 
-    def run(self) -> int:
-        """ Run the Collection Session """
-        featureCollector.FeatureCollector.registerSession(self)
+    def initialize(self) -> None:
+        """ OVERRIDE: Initialize the collection manager """
+        super().initialize()     
+        featureCollector.FeatureCollector.registerManagerDatabase(self.getApp())
+        return None
+
+    def teardown(self) -> None:
+        """ OVERRIDE: Teardown the collection manager """
+        super().teardown()
+        return None
+
+    def runCollection(self) -> int:
+        """ Run the Collection Session """       
         self.__startCollection()  
-        featureCollector.FeatureCollector.deregisterSession()
         return self._status
 
     def logMessage(self,
@@ -75,7 +71,7 @@ class FeatureCollectionSession:
 
     def __initCollectors(self) -> None:
         """ Initialize all feature collectors """
-        for ii in range(self._collectors):
+        for ii in range(self.numCollectors):
             name = "collector{0}".format(ii)
             self._collectors[ii] = featureCollector.FeatureCollector(name)
         return None
