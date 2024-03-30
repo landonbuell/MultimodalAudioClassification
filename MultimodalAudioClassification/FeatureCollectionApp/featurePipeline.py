@@ -161,16 +161,4 @@ class FeaturePipeline:
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
 
-class DefaultFeaturePipeline:
-    """ Static Class of Default Feature Pipelines """
-
-    def getDefaultPipeline00() -> FeaturePipeline:
-        """ Get the default pipeline 00 """
-        pipeline = FeaturePipeline("Alpha")
-        return pipeline
-
-    def getDefaultPipeline01() -> FeaturePipeline:
-        """ Get the default pipeline 01 """
-        pipeline = FeaturePipeline("Beta")
-        return pipeline
 
