@@ -12,6 +12,7 @@
         #### IMPORTS ####
 
 import os
+from typing_extensions import runtime
 import scipy.io.wavfile as sciowav
 
 import signalData
@@ -72,7 +73,13 @@ class SampleFileIO:
     def __decodeWavFile(self) -> list:
         """ Decode a .wav file into a signal data instance """
         (sampleRate,channels) = sciowav.read(self._source)
-        numChannels = channels.shape[1]
+        if (channels.ndim == 1):
+            numChannels = 1
+        elif (channels.ndim == 2):
+            numChannels = channels.shape[1]
+        else:
+            msg = "Cannot handle signal w/ {0} axes".format(channels.ndim)
+            raise RuntimeError(msg)
         signals = []
         for ii in range(numChannels):
             newSignal = signalData.SignalData(

@@ -18,6 +18,7 @@ import featurePipeline
 
 import timeDomainEnvelope
 import zeroCrossingRate
+import centerOfMass
 import autoCorrelation
 
         #### CLASS DEFINTIONS ####
@@ -51,6 +52,8 @@ class DefaultFeaturePipeline:
         pipeline = featurePipeline.FeaturePipeline("Alpha")
         pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
         pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+                                            centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
         pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16) )
 
         return pipeline

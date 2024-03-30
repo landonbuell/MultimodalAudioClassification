@@ -154,7 +154,7 @@ class FeatureCollector(threading.Thread):
         except Exception as err:
             msg = "Failed to read signals from {0} due to error: {1}".format(
                 str(sampleFile),str(err))
-            self.logMessaage(msg)
+            self.logMessage(msg)
         return []
 
     def __processListOfSignals(self, listOfSignals: list) -> None:
