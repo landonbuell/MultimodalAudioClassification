@@ -71,7 +71,6 @@ class PipelineManager(componentManager.ComponentManager):
         featureVectors = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
             featureVectors[ii] = pipeline.evaluate(signal)
-            # TODO: Export Feature Vector
         return featureVectors
             
             
