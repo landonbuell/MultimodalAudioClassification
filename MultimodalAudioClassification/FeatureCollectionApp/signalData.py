@@ -14,6 +14,7 @@
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 import analysisFrames
 
@@ -156,6 +157,27 @@ class SignalData:
         newWaveform = self.waveform.astype(newDataType)
         newWaveform /= np.max(np.abs(newWaveform))
         self._waveform = newWaveform
+        return None
+
+    def show(self) -> None:
+        """ Plot the time-series representation of this waveform """
+        titleText = "{0} \n ch#{1}".format(self.getSourcePath(),str(self.getChannelIndex()))
+        
+        plt.figure(figsize=(16,12))
+        plt.title(titleText,size=24,weight='bold')
+        plt.xlabel("Time [Sample Index]",size=16,weight='bold')
+        plt.ylabel("Amplitude",size=16,weight='bold')
+
+        waveformSlice = self.waveform[:int(2**16)]
+        plt.plot(waveformSlice,color='blue')
+
+        plt.vlines(0,ymin=np.min(waveformSlice),ymax=np.max(waveformSlice),color='black')
+        plt.hlines(0,0,len(waveformSlice),color='black')
+
+        plt.grid()
+        plt.tight_layout()
+
+        plt.show()
         return None
 
     def makeTimeSeriesAnalysisFrames(self,
