@@ -138,7 +138,6 @@ class SignalData:
         """ Return the unique counter ID for this signal """
         return self._uniqueID
 
-
     # Public Interface
 
     def exportPathBinary(self):
@@ -150,6 +149,13 @@ class SignalData:
     def clearCachedData(self) -> None:
         """ Clear the underlying cached data """
         # TODO: Implement this!
+        return None
+
+    def normalizeAmplitude(self,newDataType=np.float32) -> None:
+        """ Normalize ampltiude to +/- 1. Recast to type if applicable """
+        newWaveform = self.waveform.astype(newDataType)
+        newWaveform /= np.max(np.abs(newWaveform))
+        self._waveform = newWaveform
         return None
 
     def makeTimeSeriesAnalysisFrames(self,

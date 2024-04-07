@@ -62,7 +62,7 @@ class AbstractCollectionMethod:
     # Public Interface
 
     def call(self,
-             signal: signalData.SignalData) -> bool:
+             signal: signalData.SignalData) -> np.ndarray:
         """ Evaluate this method on the provided signal """
         if (self.__evaluateCallbacks(signal) == False):
             return False

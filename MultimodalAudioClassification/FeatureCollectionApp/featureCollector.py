@@ -12,6 +12,8 @@
 
         #### IMPORTS ####
 
+import numpy as np
+import matplotlib.pyplot as plt
 import threading
 
 import componentManager
@@ -171,9 +173,16 @@ class FeatureCollector(threading.Thread):
         pipelineMgr = FeatureCollector.pipelineManager()
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
+            signal = self.__preprocessSignal(signal)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
             self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
+
+    def __preprocessSignal(self, signal) -> object:
+        """ Preprocess a single signal """
+        # Cast to new type
+        signal.normalizeAmplitude(np.float32)
+        return signal
 
     def __exportListOfFeatureVectors(self, 
                                      signal: object,
