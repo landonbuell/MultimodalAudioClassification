@@ -111,7 +111,12 @@ class FeaturePipeline:
         for method in self._methods:
             if (method is None):
                 continue
-            features = method.call(signal)
+            success = method.call(signal)
+            if (success == False):
+                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
+                    str(method),method.getNumFeatures(),len(features))
+                raise RuntimeError(msg)
+            features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
                 msg = "Exepected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
