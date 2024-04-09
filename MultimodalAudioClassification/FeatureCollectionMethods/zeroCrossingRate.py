@@ -41,8 +41,8 @@ class TotalZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
                   signal: collectionMethod.signalData.SignalData):
         """ OVERRIDE: Compute TDE's for signal """
         waveformSign = np.sign(signal.waveform)
-        waveformDiff = np.abs(np.diff(waveformSign))
-        self._data[0] = np.sum(waveformDiff) / 2.0
+        waveformDiff = np.abs(np.diff(waveformSign)) * 0.5
+        self._data[0] = np.sum(waveformDiff) / signal.numSamples
         return True
 
 class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
@@ -98,6 +98,6 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
                                          signal: collectionMethod.signalData.SignalData,
                                          frameIndex: int) -> None:
         """ Compute the zero crossing rate for a chosen frame """
-        sign = np.sign(signal.cachedData.analysisFramesTime[frameIndex])
-        diff = np.diff(sign)
-        return np.sum(diff) / 2.0
+        frameSign = np.sign(signal.cachedData.analysisFramesTime[frameIndex])
+        frameDiff = np.diff(frameSign) * 0.5
+        return np.sum(frameDiff) / signal.frameSign.size

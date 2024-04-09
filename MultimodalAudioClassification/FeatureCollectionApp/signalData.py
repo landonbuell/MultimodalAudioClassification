@@ -156,6 +156,7 @@ class SignalData:
         """ Normalize ampltiude to +/- 1. Recast to type if applicable """
         newWaveform = self.waveform.astype(newDataType)
         newWaveform /= np.max(np.abs(newWaveform))
+        newWaveform -= np.mean(newWaveform)
         self._waveform = newWaveform
         return None
 
@@ -168,7 +169,7 @@ class SignalData:
         plt.xlabel("Time [Sample Index]",size=16,weight='bold')
         plt.ylabel("Amplitude",size=16,weight='bold')
 
-        waveformSlice = self.waveform[:int(2**16)]
+        waveformSlice = self.waveform[:int(2**12)]
         plt.plot(waveformSlice,color='blue')
 
         plt.vlines(0,ymin=np.min(waveformSlice),ymax=np.max(waveformSlice),color='black')
