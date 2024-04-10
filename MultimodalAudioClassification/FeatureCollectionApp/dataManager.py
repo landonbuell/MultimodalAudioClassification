@@ -2,11 +2,11 @@
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollection
-    File:       componentManager.py
-    Classes:    ComponentManager
+    File:       dataManager.py
+    Classes:    RundataManager
 
     Author:     Landon Buell
-    Date:       February 2024
+    Date:       April 2024
 """
 
         #### IMPORTS ####
