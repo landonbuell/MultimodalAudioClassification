@@ -12,6 +12,7 @@
         #### IMPORTS ####
 
 import componentManager
+import sessionInformation
 
         #### CLASS DEFINITIONS ####
 
@@ -24,8 +25,8 @@ class RundataManager(componentManager.ComponentManager):
                  app):
         """ Constructor """
         super().__init__(RundataManager.__NAME)
-        self._runInfo   = None
-        self._classInfo = None
+        self._runInfo   = sessionInformation.RunInfo()
+        self._classInfo = sessionInformation.ClassInfoDatabase()
 
     def __del__(self):
         """ Destructor """
@@ -56,9 +57,13 @@ class RundataManager(componentManager.ComponentManager):
         self.__exportClassInfo()
         return None
 
-    def registerSample(self, sampleData) -> None:
+    def registerExpectedSample(self, sampleData: object) -> None:
         """ Register this sample w/ the data manager """
-
+        sampleTargetIndex   = sampleData.getTarget()    
+        if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
+            sampleTargetName    = "UNKNOWN_CLASS_NAME"
+            self._classInfo.registerClass(sampleTargetIndex,sampleTargetName)
+        self._classInfo.incrementExpectedCount(sampleTargetIndex)
         return None
 
     # Private Interface

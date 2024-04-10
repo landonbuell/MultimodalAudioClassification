@@ -175,7 +175,7 @@ class SampleDatabase(componentManager.ComponentManager):
             return SampleDatabase.Status.LOCKED
         if (self.isFull() == True):
             return SampleDatabase.Status.FULL
-        self._app.getDataManager().registerSample(sample)
+        self._app.getDataManager().registerExpectedSample(sample)
         self._database.put(sample)
         self._size += 1
         return SampleDatabase.Status.STABLE

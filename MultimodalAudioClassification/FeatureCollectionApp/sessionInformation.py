@@ -80,6 +80,13 @@ class ClassInfoDatabase:
 
     # Public Interface
 
+    def registerSample(self) -> None:
+        """ Register a sample w/ the Class Info Database """
+
+
+
+        return None
+
     def registerClass(self, classIndex: int, className: str) -> None:
         """ Register a new class to the database """
         if (self.hasClassIndex(classIndex) == False):
