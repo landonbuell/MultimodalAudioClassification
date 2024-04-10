@@ -88,17 +88,21 @@ class ManagerDatabase:
         """ Return a ref to the app settings """
         return self._app.getSettings()
 
-    def getSampleDatabase(self):
+    def getSampleDatabase(self) -> ComponentManager:
         """ Return a ref to the sample database """
         return self._app.getSampleDatabase()
 
-    def getPipelineManager(self):
+    def getPipelineManager(self) -> ComponentManager:
         """ Return a ref to the pipeline manager """
         return self._app.getPipelineManager()
 
-    def getCollectionManager(self):
+    def getCollectionManager(self) -> ComponentManager:
         """ Return a ref to the collection manager """
         return self._app.getCollectionManager()
+
+    def getDataManager(self) -> ComponentManager:
+        """ Return a ref to the data manager """
+        return self._app.getDataManager()
 
     # Magic Methods
 
