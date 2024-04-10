@@ -14,6 +14,7 @@
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 import analysisFrames
 
@@ -138,18 +139,46 @@ class SignalData:
         """ Return the unique counter ID for this signal """
         return self._uniqueID
 
-
     # Public Interface
 
-    def exportPathBinary(self):
+    def exportPathBinary(self) -> str:
         """ location within the output path where to export this sample """
         classFolder = "class{0}".format(self._targetClass)
-        fileName    = "sample{0}.bin".format(self.uniqueID)
+        fileName    = "sample{0}.bin".format(self.uniqueID())
         return os.path.join(classFolder,fileName)
 
     def clearCachedData(self) -> None:
         """ Clear the underlying cached data """
         # TODO: Implement this!
+        return None
+
+    def normalizeAmplitude(self,newDataType=np.float32) -> None:
+        """ Normalize ampltiude to +/- 1. Recast to type if applicable """
+        newWaveform = self.waveform.astype(newDataType)
+        newWaveform -= np.mean(newWaveform)
+        newWaveform /= np.max(np.abs(newWaveform))
+        self._waveform = newWaveform
+        return None
+
+    def show(self) -> None:
+        """ Plot the time-series representation of this waveform """
+        titleText = "{0} \n ch#{1}".format(self.getSourcePath(),str(self.getChannelIndex()))
+        
+        plt.figure(figsize=(16,12))
+        plt.title(titleText,size=24,weight='bold')
+        plt.xlabel("Time [Sample Index]",size=16,weight='bold')
+        plt.ylabel("Amplitude",size=16,weight='bold')
+
+        waveformSlice = self.waveform[:int(2**12)]
+        plt.plot(waveformSlice,color='blue')
+
+        plt.vlines(0,ymin=np.min(waveformSlice),ymax=np.max(waveformSlice),color='black')
+        plt.hlines(0,0,len(waveformSlice),color='black')
+
+        plt.grid()
+        plt.tight_layout()
+
+        plt.show()
         return None
 
     def makeTimeSeriesAnalysisFrames(self,

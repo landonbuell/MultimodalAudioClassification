@@ -12,9 +12,9 @@
         #### IMPORTS ####
 
 import componentManager
-
 import featurePipeline
 import signalData
+import coreCallbacks
 
         #### CLASS DEFINITIONS ####
 
@@ -45,8 +45,8 @@ class PipelineManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
-        self.registerPipeline( featurePipeline.DefaultFeaturePipeline.getDefaultPipeline00() )
-        self.registerPipeline( featurePipeline.DefaultFeaturePipeline.getDefaultPipeline01() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )
         return None
 
     def teardown(self) -> None:
@@ -71,7 +71,6 @@ class PipelineManager(componentManager.ComponentManager):
         featureVectors = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
             featureVectors[ii] = pipeline.evaluate(signal)
-            # TODO: Export Feature Vector
         return featureVectors
             
             

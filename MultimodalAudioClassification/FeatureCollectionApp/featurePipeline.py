@@ -111,7 +111,12 @@ class FeaturePipeline:
         for method in self._methods:
             if (method is None):
                 continue
-            features = method.call(signal)
+            success = method.call(signal)
+            if (success == False):
+                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
+                    str(method),method.getNumFeatures(),len(features))
+                raise RuntimeError(msg)
+            features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
                 msg = "Exepected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
@@ -139,14 +144,14 @@ class FeaturePipeline:
     def __evaluateSignalPostprocessCallbacks(self,
                                             signal: signalData.SignalData) -> None:
         """ Evaluate all of the signal preprocessing callbacks """
-        for callback in self._callbacksPostprocessSignal:
+        for callback in self._callbacksPostProcessSignal:
             callback.__call__(signal,self)
         return None
 
     def __evaluateFeaturePostprocessCallbacks(self,
                                              vector: featureVector.FeatureVector) -> None:
         """ Evaluate all of the signal preprocessing callbacks """
-        for callback in self._callbacksPostprocessFeatures:
+        for callback in self._callbacksPostProcessFeatures:
             callback.__call__(vector,self)
         return None
 
@@ -161,16 +166,4 @@ class FeaturePipeline:
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
 
-class DefaultFeaturePipeline:
-    """ Static Class of Default Feature Pipelines """
-
-    def getDefaultPipeline00() -> FeaturePipeline:
-        """ Get the default pipeline 00 """
-        pipeline = FeaturePipeline("Alpha")
-        return pipeline
-
-    def getDefaultPipeline01() -> FeaturePipeline:
-        """ Get the default pipeline 01 """
-        pipeline = FeaturePipeline("Beta")
-        return pipeline
 

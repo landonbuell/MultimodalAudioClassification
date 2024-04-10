@@ -39,7 +39,7 @@ class AbstractCollectionMethod:
         numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
         self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
-        self._callbacks = []    # evaluated 
+        self._callbacks = []    # called in __evaluateCallbacks() 
   
     def __del__(self):
         """ Destructor """
@@ -62,7 +62,7 @@ class AbstractCollectionMethod:
     # Public Interface
 
     def call(self,
-             signal: signalData.SignalData) -> bool:
+             signal: signalData.SignalData) -> np.ndarray:
         """ Evaluate this method on the provided signal """
         if (self.__evaluateCallbacks(signal) == False):
             return False

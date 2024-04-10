@@ -12,6 +12,7 @@
         #### IMPORTS ####
 
 import os
+import numpy as np
 import scipy.io.wavfile as sciowav
 
 import signalData
@@ -71,18 +72,40 @@ class SampleFileIO:
 
     def __decodeWavFile(self) -> list:
         """ Decode a .wav file into a signal data instance """
-        (sampleRate,channels) = sciowav.read(self._source)
-        numChannels = channels.shape[1]
+        (sampleRate,wavData) = sciowav.read(self._source)   
         signals = []
-        for ii in range(numChannels):
+        # wavData.shape = (Nsamples, Nchannels)
+
+        if (wavData.ndim == 1):
+            # 1D Array - single channel
             newSignal = signalData.SignalData(
                 sampleRate=sampleRate,
                 targetClass=self._target,
-                waveform=channels[ii,:].transpose,
+                waveform=wavData,
                 sourcePath=self._source,
-                channelIndex=ii)
+                channelIndex=0)
             signals.append(newSignal)
-        return self
+
+        elif (wavData.ndim == 2):
+            # 2D Array - Multiple channels
+            numChannels = wavData.shape[1]
+            signals = [None] * numChannels
+            for ii in range(numChannels):
+                channelData = np.squeeze(wavData[:,ii])
+                newSignal = signalData.SignalData(
+                    sampleRate=sampleRate,
+                    targetClass=self._target,
+                    waveform=channelData,
+                    sourcePath=self._source,
+                    channelIndex=ii)
+                signals.append(newSignal)
+
+        else:
+            msg = "Cannot handle signal w/ {0} axes".format(wavData.ndim)
+            raise RuntimeError(msg)
+
+        return signals
+
 
     # Magic Methods
 

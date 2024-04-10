@@ -76,8 +76,17 @@ class FeatureVector:
             raise RuntimeWarning(msg)
         return success
 
-    # Private Interface
-   
+    def __getitem__(self,index: int) -> np.float32:
+        """ Index operator """
+        return self._data[index]
+
+    def __setitem__(self,index: int, value: np.float32) -> None:
+        """ Index operator """
+        self._data[index] = value
+        return None
+
+    # Magic Methods
+    
     def __len__(self):
         """ Return the number of items in the pipeline """
         return self._data.size

@@ -48,10 +48,9 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
         partitionSize = int(np.floor((signal.getNumSamples() / self.numPartitions)))
         startIndex = 0
         for ii in range(self.numPartitions):
-            for jj in range(startIndex,startIndex + partitionSize):
-                self._data[ii] += (signal.waveform[jj] * signal.waveform[jj])
-            self._data[ii] = np.sqrt(self._data[ii] / partitionSize)
+            stopIndex    = np.min([startIndex + partitionSize,signal.getNumSamples()])
+            partitionSlice  = signal.waveform[startIndex:stopIndex]
+            self._data[ii] = np.sum(partitionSlice * partitionSlice) / partitionSize
             startIndex += partitionSize
         self._data /= np.max(self._data) # Normalize s.t. the largest value is 1
         return True
-

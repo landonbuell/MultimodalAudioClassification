@@ -12,6 +12,14 @@
     Date:       February 2024
 """
 
+        #### IMPORTS ####
+
+import featurePipeline
+
+import timeDomainEnvelope
+import zeroCrossingRate
+import centerOfMass
+import autoCorrelation
 
         #### CLASS DEFINTIONS ####
 
@@ -35,3 +43,22 @@ class SignalDataPreprocessCallbacks:
 class FeatureVectorPostProcessCallbacks:
     """ Static Class - Make no Instance """
     pass
+
+class DefaultFeaturePipeline:
+    """ Static Class of Default Feature Pipelines """
+
+    def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
+        """ Get the default pipeline 00 """
+        pipeline = featurePipeline.FeaturePipeline("Alpha")
+        pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
+        pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+                                            centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
+        pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
+
+        return pipeline
+
+    def getDefaultPipeline01() -> featurePipeline.FeaturePipeline:
+        """ Get the default pipeline 01 """
+        pipeline = featurePipeline.FeaturePipeline("Beta")
+        return pipeline

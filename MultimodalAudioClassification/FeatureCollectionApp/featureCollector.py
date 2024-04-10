@@ -11,10 +11,12 @@
 
 
         #### IMPORTS ####
-
+import os
+import numpy as np
 import threading
 
 import componentManager
+import sampleFile
 
         #### CLASS DEFINITIONS ####
 
@@ -107,7 +109,7 @@ class FeatureCollector(threading.Thread):
         """ Log a Message to the collection manager """
         message = self.getName() + ": " + message
         if (FeatureCollector.__managerDatabase is None):
-            msg = "Cannot log message: '{0}' because no ManagerDatabase is registered with FeatureCollector".formatI(message)
+            msg = "Cannot log message: '{0}' because no ManagerDatabase is registered with FeatureCollector".format(message)
             raise RuntimeError(msg)
         FeatureCollector.collectionManager().logMessage(message)
         return None
@@ -127,6 +129,8 @@ class FeatureCollector(threading.Thread):
         if (self.stopFlag() == False):
             # Pull Next Sample
             nextSample = self.__invokeGetNextSample()
+        if (nextSample is None):
+            return False
         if (self.stopFlag() == False):
             # Decode Sample into list of signals
             listOfSignals = self.__decodeSample(nextSample)
@@ -139,12 +143,18 @@ class FeatureCollector(threading.Thread):
 
     # Private Interface
 
-    def __invokeGetNextSample(self) -> None:
+    def __invokeGetNextSample(self) -> sampleFile.SampleFileIO:
         """ Pull Next Sample from sample database """
         if (self._callbackGetNext is None):
             self.raiseStopFlag(reason="No strategy for getting next sample is selected")
             return None
-        return self._callbackGetNext.__call__(self)
+        while(True):
+           nextSample = self._callbackGetNext.__call__(self)
+           if (nextSample is None):
+               return None
+           if (nextSample.isReal() == True):
+               return nextSample
+        return None
 
     def __decodeSample(self, sampleFile) -> list:
         """ Decode the sample and return a list of signals """
@@ -154,7 +164,7 @@ class FeatureCollector(threading.Thread):
         except Exception as err:
             msg = "Failed to read signals from {0} due to error: {1}".format(
                 str(sampleFile),str(err))
-            self.logMessaage(msg)
+            self.logMessage(msg)
         return []
 
     def __processListOfSignals(self, listOfSignals: list) -> None:
@@ -162,9 +172,17 @@ class FeatureCollector(threading.Thread):
         pipelineMgr = FeatureCollector.pipelineManager()
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
+            signal = self.__preprocessSignal(signal)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
             self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
+
+    def __preprocessSignal(self, signal) -> object:
+        """ Preprocess a single signal """
+        # Cast to new type
+        signal.normalizeAmplitude(np.float32)
+        #signal.show()
+        return signal
 
     def __exportListOfFeatureVectors(self, 
                                      signal: object,
@@ -203,7 +221,7 @@ class GetNextSampleStrategies:
             collector.raiseStopFlag(reason="Sample database is empty")
             return None
         sample = FeatureCollector.sampleDatabase().getNext()
-        message = "Got sample: {0} from database".format(str(sample))
+        message = "Got sample ({0}) from database".format(str(sample))
         collector.logMessage(message)
         return sample
 
@@ -215,6 +233,6 @@ class GetNextSampleStrategies:
             return None
         # TODO: Fix this for multiple threads
         sample = FeatureCollector.sampleDatabase().getNext()
-        message = "Got sample: {0} from database".format(str(sample))
+        message = "Got sample ({0}) from database".format(str(sample))
         collector.logMessage(message)
         return sample
