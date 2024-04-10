@@ -54,7 +54,7 @@ class DefaultFeaturePipeline:
         pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
                                             centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
-        pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16) )
+        pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
 
         return pipeline
 

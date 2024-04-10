@@ -144,14 +144,14 @@ class FeaturePipeline:
     def __evaluateSignalPostprocessCallbacks(self,
                                             signal: signalData.SignalData) -> None:
         """ Evaluate all of the signal preprocessing callbacks """
-        for callback in self._callbacksPostprocessSignal:
+        for callback in self._callbacksPostProcessSignal:
             callback.__call__(signal,self)
         return None
 
     def __evaluateFeaturePostprocessCallbacks(self,
                                              vector: featureVector.FeatureVector) -> None:
         """ Evaluate all of the signal preprocessing callbacks """
-        for callback in self._callbacksPostprocessFeatures:
+        for callback in self._callbacksPostProcessFeatures:
             callback.__call__(vector,self)
         return None
 

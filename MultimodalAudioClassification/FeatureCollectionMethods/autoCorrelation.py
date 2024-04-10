@@ -25,10 +25,12 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
     __NAME = "AutoCorrelationCoefficients"
 
     def __init__(self,
-                 numCoeffs: int):
+                 numCoeffs: int,
+                 coeffStepSize=1):
         """ Constructor """
         super().__init__(AutoCorrelationCoefficients.__NAME,
                          numCoeffs)
+        self._stepSize = coeffStepSize
         self._sums = np.zeros(shape=(3,),dtype=np.float32)
 
     def __del__(self):
@@ -49,9 +51,6 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         for ii in range(self.numCoeffs):
-            self._sums[0] = 0.0
-            self._sums[1] = 0.0
-            self._sums[2] = 0.0
             self._data[ii] = self.__computeCoefficient(signal,ii)
         return True
 
@@ -59,12 +58,16 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                              signal: collectionMethod.signalData.SignalData,
                              coeffIndex: int) -> np.float32:
         """ Compute the Coeff at the provided index """
-        sumUpperBound = signal.getNumSamples() - coeffIndex
-        # self._sums is cleared before this method is called
-        for ii in range(sumUpperBound):
-            self._sums[0] += (signal.waveform[ii] * signal.waveform[ii + coeffIndex])
-            self._sums[1] += (signal.waveform[ii] * signal.waveform[ii])
-            self._sums[2] += (signal.waveform[ii + coeffIndex] + signal.waveform[ii + coeffIndex])
+        coeffScaled      = (coeffIndex * self._stepSize)
+        sliceSize       = signal.getNumSamples() - coeffScaled
+        waveformFirstK  = signal.waveform[0 : sliceSize]
+        waveformLastK   = signal.waveform[coeffScaled : coeffScaled + sliceSize] 
+
+        # Compute Sums
+        self._sums[0] = np.dot(waveformFirstK,waveformLastK)
+        self._sums[1] = np.dot(waveformFirstK,waveformFirstK)
+        self._sums[2] = np.dot(waveformLastK,waveformLastK)
+
         # Now Compute the result
         self._sums[1] = np.sqrt(self._sums[1])
         self._sums[2] = np.sqrt(self._sums[2])

@@ -141,10 +141,10 @@ class SignalData:
 
     # Public Interface
 
-    def exportPathBinary(self):
+    def exportPathBinary(self) -> str:
         """ location within the output path where to export this sample """
         classFolder = "class{0}".format(self._targetClass)
-        fileName    = "sample{0}.bin".format(self.uniqueID)
+        fileName    = "sample{0}.bin".format(self.uniqueID())
         return os.path.join(classFolder,fileName)
 
     def clearCachedData(self) -> None:
@@ -155,8 +155,8 @@ class SignalData:
     def normalizeAmplitude(self,newDataType=np.float32) -> None:
         """ Normalize ampltiude to +/- 1. Recast to type if applicable """
         newWaveform = self.waveform.astype(newDataType)
-        newWaveform /= np.max(np.abs(newWaveform))
         newWaveform -= np.mean(newWaveform)
+        newWaveform /= np.max(np.abs(newWaveform))
         self._waveform = newWaveform
         return None
 
