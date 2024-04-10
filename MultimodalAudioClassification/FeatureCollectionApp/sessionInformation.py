@@ -32,7 +32,8 @@ class ClassInfoDatabase:
             self.index      = classInt
             self.name       = classStr
             self.expectedCount = 0
-            self.actualCount   = 0
+            self.processedCount = 0
+            self.exportedCount = 0
 
         def __del__(self):
             """ Destructor """
@@ -52,20 +53,25 @@ class ClassInfoDatabase:
         """ Return the name of the class based on the integer index """
         return self._classMap[classIndex].name
 
-    def getExpectedCounts(self, classIndex: int) -> int:
-        """ Return the number of times we expected to process this class """
-        return self._classMap[classIndex].expectedCount
-
-    def getActualCount(self, classIndex: int) -> int:
-        """ Return the number of times we actually processed this class """
-        return self._classMap[classIndex].actualCount
-
     def getClassIndex(self, className: str) -> int:
         """ Return the index of the class based on it's name """
         for (key,val) in self._classMap.items():
             if (val == className):
                 return key
         return -1
+
+    def getExpectedCounts(self, classIndex: int) -> int:
+        """ Return the number of times we expected to process this class """
+        return self._classMap[classIndex].expectedCount
+
+    def getProcessedCount(self, classIndex: int) -> int:
+        """ Return the number of times we actually processed this class """
+        return self._classMap[classIndex].processedCount
+
+    def getExportedCount(self, classIndex: int) -> int:
+        """ Return the number of times we actually exported this class's features """
+        return self._classMap[classIndex].exportedCount
+
 
     def hasClassIndex(self, classIndex: int):
         """ Return T/F if data for this class index already exists """
@@ -74,18 +80,9 @@ class ClassInfoDatabase:
     def hasClassName(self, className: str):
         """ Return T/F if data for this class name alread exists """
         index = self.getClassIndex(className)
-        if (index == -1):
-            return False
-        return True
+        return (index != -1)
 
     # Public Interface
-
-    def registerSample(self) -> None:
-        """ Register a sample w/ the Class Info Database """
-
-
-
-        return None
 
     def registerClass(self, classIndex: int, className: str) -> None:
         """ Register a new class to the database """
@@ -98,9 +95,13 @@ class ClassInfoDatabase:
         self._classMap[classIndex].expectedCount += 1
         return None
 
-    def incrementActualCount(self, classIndex: int) -> None:
+    def incrementProcessedCount(self, classIndex: int) -> None:
         """ Increment the number of times we've processed this class """
-        self._classMap[classIndex].actualCount += 1
+        self._classMap[classIndex].processedCount += 1
         return None
 
+    def incrementExportedCount(self, classIndex: int) -> None:
+        """ Increment the number of times we've exported this class's features """
+        self._classMap[classIndex].exportedCount += 1
+        return None
 

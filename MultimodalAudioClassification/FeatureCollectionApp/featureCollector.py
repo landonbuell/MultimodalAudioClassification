@@ -96,6 +96,14 @@ class FeatureCollector(threading.Thread):
             raise RuntimeError(msg)
         return FeatureCollector.__managerDatabase.getPipelineManager()
 
+    @staticmethod
+    def dataManager() -> object:
+        """ Return a point to the rundata manager """
+        if (FeatureCollector.__managerDatabase is None):
+            msg = "ManagerDatabase is not registered with FeatureCollector"
+            raise RuntimeError(msg)
+        return FeatureCollector.__managerDatabase.getDataManager()
+
     # Public Interface
 
     def run(self) -> None:
@@ -173,6 +181,7 @@ class FeatureCollector(threading.Thread):
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
             signal = self.__preprocessSignal(signal)
+            FeatureCollector.dataManager().registerProcessedSample(signal)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
             self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
@@ -203,6 +212,7 @@ class FeatureCollector(threading.Thread):
             try:
                 vector.toBinaryFile(fullOutputPath)
                 msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)             
+                FeatureCollector.dataManager().registerExportedSample(vector)
             except RuntimeError as err:
                 msg = str(err)
             except Exception as err:

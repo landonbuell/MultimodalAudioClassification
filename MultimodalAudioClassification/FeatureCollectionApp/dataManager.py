@@ -47,7 +47,6 @@ class RundataManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
-        
         return None
 
     def teardown(self) -> None:
@@ -64,6 +63,26 @@ class RundataManager(componentManager.ComponentManager):
             sampleTargetName    = "UNKNOWN_CLASS_NAME"
             self._classInfo.registerClass(sampleTargetIndex,sampleTargetName)
         self._classInfo.incrementExpectedCount(sampleTargetIndex)
+        return None
+
+    def registerProcessedSample(self, signalData: object) -> None:
+        """ Register a processed sample w/ the data manager """  
+        sampleTargetIndex   = signalData.getTarget()    
+        if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
+            msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
+                sampleTargetIndex)
+            raise RuntimeError(msg)
+        self._classInfo.incrementProcessedCount(sampleTargetIndex)
+        return None
+
+    def registerExportedSample(self, featureVector: object) -> None:
+        """ Register a processed sample w/ the data manager """  
+        sampleTargetIndex   = featureVector.getTarget()    
+        if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
+            msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
+                sampleTargetIndex)
+            raise RuntimeError(msg)
+        self._classInfo.incrementExportedCount(sampleTargetIndex)
         return None
 
     # Private Interface
