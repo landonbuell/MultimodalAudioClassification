@@ -45,6 +45,22 @@ class ClassInfoDatabase:
             """ Destructor """
             pass
 
+        def __repr__(self) -> str:
+            """ Return instance as string """
+            return "{0}:{1} - ({2},{3},{4})".format(
+                self.index,self.name,
+                self.expectedCount,
+                self.processedCount,
+                self.exportedCount)
+
+        def __str__(self) -> str:
+            """ Return instance as string """
+            return "{0:<8}{1:<24}{2:<8}{3:<8}{4:<8}".format(
+                self.index,self.name,
+                self.expectedCount,
+                self.processedCount,
+                self.exportedCount)
+
     def __init__(self):
         """ Constructor """
         self._classMap  = dict()
