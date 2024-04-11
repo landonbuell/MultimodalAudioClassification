@@ -211,7 +211,6 @@ class FeatureCollector(threading.Thread):
             try:
                 vector.toBinaryFile(fullOutputPath)
                 msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
-                self.logMessage(msg)
                 FeatureCollector.dataManager().registerExportedSample(vector)
             except RuntimeError as err:
                 msg = str(err)
