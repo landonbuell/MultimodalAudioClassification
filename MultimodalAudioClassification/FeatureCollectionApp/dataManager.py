@@ -11,6 +11,8 @@
 
         #### IMPORTS ####
 
+import os
+
 import componentManager
 import sessionInformation
 
@@ -24,7 +26,7 @@ class RundataManager(componentManager.ComponentManager):
     def __init__(self,
                  app):
         """ Constructor """
-        super().__init__(RundataManager.__NAME)
+        super().__init__(RundataManager.__NAME,app)
         self._runInfo   = sessionInformation.RunInfo()
         self._classInfo = sessionInformation.ClassInfoDatabase()
 
@@ -42,11 +44,23 @@ class RundataManager(componentManager.ComponentManager):
         """ Return a ref to the class info structure """
         return self._classInfo
 
+    def getExportLocation(self,
+                      pipelineIndex: int,
+                      classIndex: int) -> str:
+        """ Return the export location (but not file name) for a sample """
+        topLevelOutputPath = self.getSettings().getOutputPath()
+        pipelinePath = "pipeline{0}".format(pipelineIndex)
+        classPath = "class{0}".format(classIndex)
+        return os.path.join(topLevelOutputPath,pipelinePath,classPath)
+
     # Public Interface
 
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
+        self.__initRunInfo()
+        self.__initClassInfo()
+        self.__initPipelineOutputPaths()
         return None
 
     def teardown(self) -> None:
@@ -62,7 +76,10 @@ class RundataManager(componentManager.ComponentManager):
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
             sampleTargetName    = "UNKNOWN_CLASS_NAME"
             self._classInfo.registerClass(sampleTargetIndex,sampleTargetName)
+            msg = "Adding class#{0} to expected samples".format(sampleTargetIndex)
+            self.logMessage(msg)
         self._classInfo.incrementExpectedCount(sampleTargetIndex)
+        self.__initClassOutputPaths(sampleTargetIndex)
         return None
 
     def registerProcessedSample(self, signalData: object) -> None:
@@ -71,6 +88,7 @@ class RundataManager(componentManager.ComponentManager):
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
             msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
                 sampleTargetIndex)
+            self.logMessage(msg)
             raise RuntimeError(msg)
         self._classInfo.incrementProcessedCount(sampleTargetIndex)
         return None
@@ -81,6 +99,7 @@ class RundataManager(componentManager.ComponentManager):
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
             msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
                 sampleTargetIndex)
+            self.logMessage(msg)
             raise RuntimeError(msg)
         self._classInfo.incrementExportedCount(sampleTargetIndex)
         return None
@@ -93,6 +112,32 @@ class RundataManager(componentManager.ComponentManager):
 
     def __initClassInfo(self) -> None:
         """ Initialize the class Info Struct """
+        return None
+
+    def __initPipelineOutputPaths(self) -> None:
+        """ Create the top-level output path for each pipeline """
+        topLevelOutputPath = self.getSettings().getOutputPath()
+        numPipelines = self.getApp().getPipelineManager().getSize()
+        for ii in range(numPipelines):
+            pipelinePath = "pipeline{0}".format(ii)
+            fullPath = os.path.join(topLevelOutputPath,pipelinePath)
+            if (os.path.isdir(fullPath) == False):
+                # Path does NOT exist
+                msg = "Making pipeline export path: {0}".format(fullPath)
+                self.logMessage(msg)
+                os.mkdir(fullPath)
+        return None
+   
+    def __initClassOutputPaths(self,classIndex: int) -> None:
+        """ Create the top-level output path for each class within each pipeline """
+        numPipelines = self.getApp().getPipelineManager().getSize()
+        for ii in range(numPipelines):
+            fullPath = self.getExportLocation(ii,classIndex)
+            if (os.path.isdir(fullPath) == False):
+                # Path does NOT exist
+                msg = "Making pipeline export path: {0}".format(fullPath)
+                self.logMessage(msg)
+                os.mkdir(fullPath)
         return None
 
     def __exportRunInfo(self) -> None:

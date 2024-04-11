@@ -17,7 +17,13 @@
 class RunInfo:
     """ Store general run-session information """
 
-    pass
+    def __init__(self):
+        """ Constructor """
+        pass
+
+    def __del__(self):
+        """ Destructor """
+        pass
 
 class ClassInfoDatabase:
     """ Store info about each class + occurence """

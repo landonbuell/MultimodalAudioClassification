@@ -197,7 +197,6 @@ class FeatureCollector(threading.Thread):
                                      signal: object,
                                      listOfFeatureVectors: list) -> None:
         """ Export a list of feature Vectors to binaries """
-        topLevelOutputPath = FeatureCollector.appSettings().getOutputPath()
         for ii,vector in enumerate(listOfFeatureVectors):
             # Export
             if (vector is None):
@@ -206,8 +205,8 @@ class FeatureCollector(threading.Thread):
                 self.logMessage(msg)
                 continue
             # Get output Path
-            pipelineFolder = "pipeline{0}".format(ii)
-            fullOutputPath = os.path.join(topLevelOutputPath,pipelineFolder,signal.exportPathBinary())
+            outputLocation = FeatureCollector.dataManager().getExportLocation(ii,signal.getTarget())
+            fullOutputPath = os.path.join(outputLocation,signal.exportNameBinary())
             # Export
             try:
                 vector.toBinaryFile(fullOutputPath)
