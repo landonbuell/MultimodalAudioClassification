@@ -26,6 +26,7 @@
     <Compile Include="collectionManager.py" />
     <Compile Include="componentManager.py" />
     <Compile Include="coreCallbacks.py" />
+    <Compile Include="dataManager.py" />
     <Compile Include="featureCollectionApp.py" />
     <Compile Include="featureCollector.py" />
     <Compile Include="featurePipeline.py" />
@@ -34,6 +35,7 @@
     <Compile Include="pipelineManager.py" />
     <Compile Include="sampleDatabase.py" />
     <Compile Include="sampleFile.py" />
+    <Compile Include="sessionInformation.py" />
     <Compile Include="signalData.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>

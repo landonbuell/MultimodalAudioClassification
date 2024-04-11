@@ -141,11 +141,9 @@ class SignalData:
 
     # Public Interface
 
-    def exportPathBinary(self) -> str:
-        """ location within the output path where to export this sample """
-        classFolder = "class{0}".format(self._targetClass)
-        fileName    = "sample{0}.bin".format(self.uniqueID())
-        return os.path.join(classFolder,fileName)
+    def exportNameBinary(self) -> str:
+        """ Name of the exported binary file """
+        return "sample{0}.bin".format(self.uniqueID())
 
     def clearCachedData(self) -> None:
         """ Clear the underlying cached data """
