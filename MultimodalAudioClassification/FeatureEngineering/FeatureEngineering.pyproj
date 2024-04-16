@@ -22,9 +22,8 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dataset.py" />
     <Compile Include="main.py" />
-    <Compile Include="Preprocessors.py" />
-    <Compile Include="Visualizers.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
