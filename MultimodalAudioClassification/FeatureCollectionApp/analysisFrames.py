@@ -113,15 +113,25 @@ class AnalysisFrameParameters:
 
     def getFreqFramesShape(self) -> tuple:
         """ Return the SHAPE of the frequency frames """
-        return (self.maxNumFrames,self.freqFrameSize(),)
+        return (self.maxNumFrames,self.getFreqFrameSizeMasked(),)
 
     def getTimeFramesShape(self) -> tuple:
         """ Return the SHAPE of the time frames """
         return (self.maxNumFrames,self.getTimeFrameSize(),)
 
-    def getFreqFramesNumFeatures(self) -> int:
+    def getFreqFramesNumFeatures(self,separateRealImag=False) -> int:
         """ Return the total number of data points in the frequency frames """
-        return (self.maxNumFrames * self.freqFrameSize)
+        result = (self.maxNumFrames * self.getFreqFrameSizeMasked())
+        if (separateRealImag == True):
+            result *= 2
+        return result
+
+    def getFreqFrameShape(self,separateRealImag=False) -> tuple:
+        """ Return the shape of the frequency frames. Option to separate real/imag """
+        if (separateRealImag  == True):
+            return (2,self.maxNumFrames,self.getFreqFrameSizeMasked(),)
+        return (1,self.maxNumFrames,self.getFreqFrameSizeMasked(),)
+
 
     def getFreqAxisMask(self) -> np.ndarray:
         """ Return the mask for the frequency axis """
@@ -367,7 +377,27 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     def getMaskedFrequencyAxisHz(self) -> np.ndarray:
         """ Return Masked frequency axis """
-        return self._params.getMaskedFrequencyAxisHz()
+        return self._params.getFreqAxisMasked()
+
+    # Public Interface
+
+    def plot(self,title: str) -> None:
+        """ Show a figure of the time-series analysis frames """
+        plt.figure(figsize=(16,12))
+        plt.title(title,size=32,weight='bold')
+        plt.xlabel('Frequency',size=24,weight='bold')
+        plt.ylabel('Time',size=24,weight='bold')
+
+        f = self.getMaskedFrequencyAxisHz()
+        t = np.arange(self.getNumFramesInUse(),0,-1)
+        X = np.abs(self._data)
+        plt.pcolormesh(f,t,X,cmap=plt.cm.plasma)
+
+        plt.grid()
+        plt.tight_layout()
+        plt.show()
+
+        return None
 
     # Protected Interface
 

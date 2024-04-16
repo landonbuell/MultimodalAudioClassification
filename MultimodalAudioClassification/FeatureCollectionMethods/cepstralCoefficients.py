@@ -18,6 +18,21 @@ import collectionMethod
 
         #### CLASS DEFINITIONS ####
 
+class MelFilterBankEnergies:
+    """
+        Compute the MFBE's for a signal
+    """
+
+    @staticmethod
+    def hertzToMels(hertz: np.ndarray) -> np.ndarray:
+        """ Cast Hz to Mels """
+        return 2595 * np.log10(1 + (hertz/700))
+
+    @staticmethod
+    def melsToHertz(mels: np.ndarray) -> np.ndarray:
+        """ Cast Mels to Hz """
+        return 700 * (np.power(10,(mels/2595)) - 1)
+
 class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
     """
         Compute Mel Frequency Ceptral Coefficients

@@ -14,6 +14,8 @@
 
 import numpy as np
 
+import signalData
+
 import collectionMethod
 import analysisFrames
 
@@ -27,12 +29,13 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     __NAME = "SPECTROGRAM"
     
     def __init__(self,
-                 frameParams: analysisFrames.AnalysisFrameParameters):
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 separateRealImag=True):
         """ Constructor """
-        super().__init__(Spectrogram.__NAME,frameParams.getFreqFramesNumFeatures())
+        super().__init__(Spectrogram.__NAME,frameParams.getFreqFramesNumFeatures(separateRealImag=separateRealImag)) # set to 1 for memory efficiency!
         self._params = frameParams
-        self._callbacks.append( collectionMethod.CollectionMethodCallbacks.signalHasAnalysisFramesTime )
-
+        self._separateRealImage = separateRealImag
+        
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -47,7 +50,7 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     @property
     def frameSize(self) -> int:
         """ Return the size of each frame """
-        return self._parmas.freqFrameSize
+        return self._params.freqFrameSize
 
     # Protected Interface
 
@@ -55,6 +58,21 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
                   signal: signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
-        self._data = signal.cachedData.analysisFramesFreq.flatten()
+        #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())
+        if (self._separateRealImage == True):
+            halfWay = int(self.getNumFeatures() / 2)
+            np.copyto(
+                self._data[:halfWay],
+                np.real(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
+                casting='no')
+            np.copyto(
+                self._data[halfWay:],
+                np.imag(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
+                casting='no')
+        else:
+             np.copyto(
+                 self._data,
+                 np.abs(signal.cachedData.analysisFramesFreq.rawFrames()),
+                 casting='no')
         return True
     

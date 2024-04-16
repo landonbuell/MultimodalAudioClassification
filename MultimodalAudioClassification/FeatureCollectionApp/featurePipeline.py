@@ -11,6 +11,8 @@
 
         #### IMPORTS ####
 
+import numpy as np
+
 import signalData
 import featureVector
 
@@ -109,6 +111,7 @@ class FeaturePipeline:
         """ Helper function to evaluate the feature pipeline """
         featuresCollected = 0
         for method in self._methods:
+            # Invoke the collection method
             if (method is None):
                 continue
             success = method.call(signal)
@@ -116,14 +119,21 @@ class FeaturePipeline:
                 msg = "Exepected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
+            # Retrive the internally stored features
             features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
                 msg = "Exepected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
-            for ii in range(method.getNumFeatures()):
-                vector[featuresCollected] = features[ii]
-                featuresCollected += 1
+            # Copy to the feature vector
+            if (method.getNumFeatures() > 1024):
+                # Do a numpy copy
+                vector.copyFromArray(features,featuresCollected)
+                featuresCollected += features.size
+            else:
+                for ii in range(method.getNumFeatures()):
+                    vector[featuresCollected] = features[ii]
+                    featuresCollected += 1
             # Completed with current method
         return None
 

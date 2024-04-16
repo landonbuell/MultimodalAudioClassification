@@ -15,11 +15,13 @@
         #### IMPORTS ####
 
 import featurePipeline
+import analysisFrames
 
 import timeDomainEnvelope
 import zeroCrossingRate
 import centerOfMass
 import autoCorrelation
+import spectrogram
 
         #### CLASS DEFINTIONS ####
 
@@ -50,15 +52,16 @@ class DefaultFeaturePipeline:
     def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 00 """
         pipeline = featurePipeline.FeaturePipeline("Alpha")
-        pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
-        pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
-        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
-                                            centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
-        pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
-
+        #pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
+        #pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
+        #pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+        #                                    centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
+        #pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
         return pipeline
 
     def getDefaultPipeline01() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 01 """
+        frameParams = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
         pipeline = featurePipeline.FeaturePipeline("Beta")
+        pipeline.appendCollectionMethod( spectrogram.Spectrogram(frameParams) )
         return pipeline
