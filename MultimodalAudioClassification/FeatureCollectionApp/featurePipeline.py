@@ -11,6 +11,7 @@
 
         #### IMPORTS ####
 
+import os
 import numpy as np
 
 import signalData
@@ -84,6 +85,11 @@ class FeaturePipeline:
         self._ptrPipelineMgr = pipelineMgr
         return None
 
+    def getOutputPath(self) -> str:
+        """ Return the output Path for this pipeline """
+        rootOutputPath = self._ptrPipelineMgr.getSettings().getOutputPath()
+        return os.path.join(rootOutputPath,"pipeline{0}".format(self._indentifier))
+
     # Public Interface
 
     def appendCollectionMethod(self,
@@ -102,6 +108,21 @@ class FeaturePipeline:
         self.__evaluateSignalPostprocessCallbacks(signal)
         self.__evaluateFeaturePostprocessCallbacks(features)
         return features
+
+    def exportFeatureNames(self) -> None:
+        """ Export feature names to pipeline output folder """
+        outputPath = os.path.join(self.getOutputPath(),"featureNames.txt")
+        featureNames = []
+        for method in self._methods:
+            # Invoke the collection method
+            if (method is None):
+                continue
+            featureNames.append(method.featureNames())
+        # Export the data to a text file
+        with open(outputPath) as outputStream:
+            for item in featureNames:
+                outputStream.write(item + "\n")
+        return None
 
     # Private Interface
 

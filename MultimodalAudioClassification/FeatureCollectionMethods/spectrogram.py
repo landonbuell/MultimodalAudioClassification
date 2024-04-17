@@ -52,6 +52,22 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
         """ Return the size of each frame """
         return self._params.freqFrameSize
 
+    # Public Interface
+
+    def featureNames(self) -> list:
+        """ VIRTUAL: Return a list of the feature names """
+        result = [None] * self.getNumFeatures()    
+        counter = 0
+        outputShape = self._params.getFreqFrameShape(self._separateRealImage)
+        # output Shape is always 3D
+        for ii in range(outputShape[0]):
+            for jj in range(outputShape[1]):
+                for kk in range(outputShape[2]):
+                    name = "[{0},{1},{2}]".format(ii,jj,kk)
+                    result[counter] = name
+                    counter += 1
+        return result
+
     # Protected Interface
 
     def _callBody(self, 
