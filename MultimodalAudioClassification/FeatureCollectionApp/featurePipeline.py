@@ -125,15 +125,9 @@ class FeaturePipeline:
                 msg = "Exepected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
-            # Copy to the feature vector
-            if (method.getNumFeatures() > 1024):
-                # Do a numpy copy
-                vector.copyFromArray(features,featuresCollected)
-                featuresCollected += features.size
-            else:
-                for ii in range(method.getNumFeatures()):
-                    vector[featuresCollected] = features[ii]
-                    featuresCollected += 1
+            # Do a numpy copy
+            vector.copyFromArray(features,featuresCollected)
+            featuresCollected += features.size
             # Completed with current method
         return None
 
