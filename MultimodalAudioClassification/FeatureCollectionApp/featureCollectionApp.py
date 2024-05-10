@@ -118,9 +118,9 @@ class FeatureCollectionApplication:
     def __startup(self) -> None:
         """ Run the startup """
         self._pipelineManager.initialize()
+        self._dataManager.initialize()
         self._sampleDatabase.initialize()        
         self._collectionManager.initialize()
-        self._dataManager.initialize()
         return None
 
     def __execute(self) -> None:

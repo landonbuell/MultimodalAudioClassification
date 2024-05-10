@@ -31,6 +31,7 @@ class SignalData:
             self.analysisFramesTime = None
             self.analysisFramesFreq = None
             self.freqCenterOfMasses = None
+            self.melFilterEnergies  = None
 
         def __del__(self):
             """ Destructor """

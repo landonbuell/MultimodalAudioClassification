@@ -50,13 +50,13 @@ class PipelineManager(componentManager.ComponentManager):
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )
-        self.__exportFeatureNames()
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
+        self.__exportFeatureNames()
         return None
 
     def registerPipeline(self,
