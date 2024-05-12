@@ -76,7 +76,8 @@ class AnalysisFrameParameters:
         self.freqHighBoundHz    = freqHighBoundHz
         self.freqLowBoundHz     = freqLowBoundHz
 
-        self.window   = window(samplesPerFrame)
+        self.window         = window(samplesPerFrame)
+        self._melFilters    = dict() # int -> np.ndarray
 
     def __del__(self):
         """ Destructor """
@@ -92,12 +93,12 @@ class AnalysisFrameParameters:
     @property
     def freqHighBoundMels(self) -> float:
         """ Return the frequency high bound in Mels """
-        return AnalysisFrameParameters.hzToMels(self.freqHighBoundHz)
+        return AnalysisFrameParameters.hzToMel(self.freqHighBoundHz)
 
     @property
     def freqLowBoundMels(self) -> float:
         """ Return the frequency low bound in Mels """
-        return AnalysisFrameParameters.hzToMels(self.freqLowBoundHz)
+        return AnalysisFrameParameters.hzToMel(self.freqLowBoundHz)
 
     def getTimeFrameSize(self) -> int:
         """ Get the total size of each frame """
@@ -156,6 +157,62 @@ class AnalysisFrameParameters:
         mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
         return freqAxis[mask]
 
+    def getMelFilters(self,numFilters: int) -> np.ndarray:
+        """ Return the Mel Filter banks """
+        if (self._melFilters.get(numFilters,None) is None):
+            self._melFilters[numFilters] = self.__createMelFilters(numFilters)
+        return self._melFilters[numFilters]
+
+
+    # Private Interface
+
+    def __createMelFilters(self,numFilters: int) -> None:
+        """ Create + Return mel filter banks """
+        lowerFreqMels = self.freqLowBoundMels
+        upperFreqMels = self.freqHighBoundMels
+        melPoints = np.linspace(lowerFreqMels,upperFreqMels,numFilters + 2)
+        hzPoints = AnalysisFrameParameters.melToHz(melPoints)
+        frameSize = self.getFreqFrameSizeUnmasked()
+
+        bins = np.floor((frameSize + 1) * hzPoints / AnalysisFrameParameters.sampleRate() )
+        filterBanks = np.zeros(shape=(numFilters,frameSize),dtype=np.float32)
+
+        for ii in range(1, numFilters + 1, 1): 
+            # Each filter
+            freqLeft    = int(bins[ii - 1])
+            freqRight   = int(bins[ii + 1])
+            freqCenter  = int(bins[ii])
+
+            for jj in range(freqLeft,freqCenter):
+                filterBanks[ii-1,jj] = (jj - bins[ii-1]) / (bins[ii] - bins[ii - 1])
+            for jj in range(freqCenter,freqRight):
+                filterBanks[ii-1,jj] = (bins[ii+1] - jj) / (bins[ii + 1] - bins[ii])
+        
+        freqAxis = np.arange(frameSize)
+        AnalysisFrameParameters.plotFilters(filterBanks,freqAxis)
+        return filterBanks
+
+    @staticmethod
+    def plotFilters(filterMatrix: np.ndarray, freqAxis: np.ndarray) -> None:
+        """ Plot all filters """
+        plt.figure(figsize=(16,12))
+        plt.title("Mel Filters",size=24,weight='bold')
+        plt.xlabel("Frequency",size=20,weight='bold')
+        plt.ylabel("Filter Strength",size=20,weight='bold')
+
+        # Plot the Stuff
+        numFilters = filterMatrix.shape[0]
+        for ii in range(numFilters):
+            plt.plot(freqAxis,filterMatrix[ii],label="Filter{0}".format(ii))
+
+        # House Keeping
+        plt.grid()
+        plt.legend()
+        plt.show()
+        return None
+
+
+
     # Static Interface
 
     @staticmethod
@@ -164,7 +221,7 @@ class AnalysisFrameParameters:
         return 700.0 *  (np.power(10,(freqMels/2595)) - 1)
 
     @staticmethod
-    def hzToMels(freqHz: np.ndarray) -> np.ndarray:
+    def hzToMel(freqHz: np.ndarray) -> np.ndarray:
         """ Cast Hz Frequency to Mels """
         return 2595 * np.log10(1 + (freqHz/700))
 

@@ -51,9 +51,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        filterBanks = MelFilterBankEnergies.createMelFilters(
-            self._params.freqLowBoundHz,self._params.freqHighBoundHz,
-            self.numFilters,44100,self._params.getFreqFrameSizeMasked())
+        filterBanks = self._params.getMelFilters(self.numFilters)
         return True
 
     # Static Interface
@@ -68,54 +66,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ Cast Mels to Hz """
         return 700 * (10**(mels/2595) - 1)
 
-    @staticmethod
-    def createMelFilters(  lowerFreqHz: float,
-                            upperFreqHz: float,
-                            numFilters: int,
-                            sampleRate: int,
-                            frameSize: int) -> np.ndarray:
-        """ Create Mel Filter Banks """
-        lowerFreqMels = MelFilterBankEnergies.hertzToMels(lowerFreqHz)
-        upperFreqMels = MelFilterBankEnergies.hertzToMels(upperFreqHz)
-        melPoints = np.linspace(lowerFreqMels,upperFreqMels,numFilters + 2)
-        hzPoints = MelFilterBankEnergies.melsToHertz(melPoints)
 
-        bins = np.floor((frameSize + 1) * hzPoints / sampleRate )
-        filterBanks = np.zeros(shape=(numFilters,frameSize),dtype=np.float32)
-
-        for ii in range(1, numFilters + 1, 1): 
-            # Each filter
-            freqLeft    = int(bins[ii - 1])
-            freqRight   = int(bins[ii + 1])
-            freqCenter  = int(bins[ii])
-
-            for jj in range(freqLeft,freqCenter):
-                filterBanks[ii-1,jj] = (jj - bins[ii-1]) / (bins[ii] - bins[ii - 1])
-            for jj in range(freqCenter,freqRight):
-                filterBanks[ii-1,jj] = (bins[ii+1] - jj) / (bins[ii + 1] - bins[ii])
-        
-        freqAxis = np.linspace(lowerFreqHz,upperFreqHz,frameSize)
-        MelFilterBankEnergies.plotFilters(filterBanks,freqAxis)
-        return filterbanks
-
-    @staticmethod
-    def plotFilters(filterMatrix: np.ndarray, freqAxis: np.ndarray) -> None:
-        """ Plot all filters """
-        plt.figure(figsize=(16,12))
-        plt.title("Mel Filters",size=24,weight='bold')
-        plt.xlabel("Frequency",size=20,weight='bold')
-        plt.ylabel("Filter Strength",size=20,weight='bold')
-
-        # Plot the Stuff
-        numFilters = filterMatrix.shape[0]
-        for ii in range(numFilters):
-            plt.plot(freqAxis,filterMatrix[ii],label="Filter{0}".format(ii))
-
-        # House Keeping
-        plt.grid()
-        plt.legend()
-        plt.show()
-        return None
 
 class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
     """
