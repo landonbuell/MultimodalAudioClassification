@@ -161,8 +161,7 @@ class AnalysisFrameParameters:
         """ Return the Mel Filter banks """
         if (self._melFilters.get(numFilters,None) is None):
             self._melFilters[numFilters] = self.__createMelFilters(numFilters)
-        return self._melFilters[numFilters]
-
+        return self._melFilters[numFilters] # hash-map is O(1) lookup
 
     # Private Interface
 
@@ -172,7 +171,9 @@ class AnalysisFrameParameters:
         upperFreqMels = self.freqHighBoundMels
         melPoints = np.linspace(lowerFreqMels,upperFreqMels,numFilters + 2)
         hzPoints = AnalysisFrameParameters.melToHz(melPoints)
+
         frameSize = self.getFreqFrameSizeUnmasked()
+        maskFreqAxisHz = self.getFreqAxisMask()
 
         bins = np.floor((frameSize + 1) * hzPoints / AnalysisFrameParameters.sampleRate() )
         filterBanks = np.zeros(shape=(numFilters,frameSize),dtype=np.float32)
@@ -188,8 +189,8 @@ class AnalysisFrameParameters:
             for jj in range(freqCenter,freqRight):
                 filterBanks[ii-1,jj] = (bins[ii+1] - jj) / (bins[ii + 1] - bins[ii])
         
-        freqAxis = np.arange(frameSize)
-        AnalysisFrameParameters.plotFilters(filterBanks,freqAxis)
+        # Apply mask to frequency Axis
+        filterBanks = filterBanks[:,maskFreqAxisHz]
         return filterBanks
 
     @staticmethod
