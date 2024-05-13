@@ -35,6 +35,9 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         super().__init__(MelFilterBankEnergies.__NAME,numCoeffs)
         self._params = frameParams
 
+        self._callbacks.append(
+            )
+
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -51,7 +54,10 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        filterBanks = self._params.getMelFilters(self.numFilters)
+        filterBanks = self._params.getMelFilters(self.numFilters).transpose()
+
+
+
         return True
 
     # Static Interface
@@ -65,6 +71,8 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def melsToHertz(mels: np.ndarray) -> np.ndarray:
         """ Cast Mels to Hz """
         return 700 * (10**(mels/2595) - 1)
+
+    def 
 
 
 

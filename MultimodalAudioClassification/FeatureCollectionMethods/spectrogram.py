@@ -30,11 +30,13 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     
     def __init__(self,
                  frameParams: analysisFrames.AnalysisFrameParameters,
-                 separateRealImag=True):
+                 separateRealAndImag=True):
         """ Constructor """
-        super().__init__(Spectrogram.__NAME,frameParams.getFreqFramesNumFeatures(separateRealImag=separateRealImag)) # set to 1 for memory efficiency!
+        super().__init__(Spectrogram.__NAME,
+                         frameParams.getFreqFramesNumFeatures(
+                             separateRealImag=separateRealAndImag)) # set to 1 for memory efficiency!
         self._params = frameParams
-        self._separateRealImage = separateRealImag
+        self._separateRealAndImaginary = separateRealAndImag
         
     def __del__(self):
         """ Destructor """
@@ -58,7 +60,7 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
         """ VIRTUAL: Return a list of the feature names """
         result = [None] * self.getNumFeatures()    
         counter = 0
-        outputShape = self._params.getFreqFrameShape(self._separateRealImage)
+        outputShape = self._params.getFreqFrameShape(self._separateRealAndImaginary)
         # output Shape is always 3D
         for ii in range(outputShape[0]):
             for jj in range(outputShape[1]):
@@ -75,7 +77,7 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
         #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())
-        if (self._separateRealImage == True):
+        if (self._separateRealAndImaginary == True):
             halfWay = int(self.getNumFeatures() / 2)
             np.copyto(
                 self._data[:halfWay],
