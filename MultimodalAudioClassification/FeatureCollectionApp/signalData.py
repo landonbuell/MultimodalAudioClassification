@@ -31,7 +31,7 @@ class SignalData:
             self.analysisFramesTime = None
             self.analysisFramesFreq = None
             self.freqCenterOfMasses = None
-            self.melFilterEnergies  = None
+            self.melFilterFrameEnergies  = None
 
         def __del__(self):
             """ Destructor """
@@ -220,9 +220,17 @@ class SignalData:
         return madeFrames
 
     def makeMelFilterBankEnergies(self,
+                                  numFilters: int,
                                   frameParams: analysisFrames.AnalysisFrameParameters,
-                                  forceMakeFrames=False) -> bool:
+                                  forceMakeFrames=False,) -> bool:
         """ Populate the cached data Mel Filter Bank Energies """
+        self.makeFreqSeriesAnalysisFrames(frameParams,forceMakeFrames) 
+        if (forceMakeFrames == True):
+            self.cachedData.melFilterFrameEnergies = analysisFrames.MelFilterBankEnergies(self,frameParams,numFilters)
+            return True
+        if (self.__shouldMakeMelFilterBankEnergies(frameParams) == True):
+            self.cachedData.melFilterFrameEnergies = analysisFrames.MelFilterBankEnergies(self,frameParams,numFilters)
+            return True
         return False
 
     # Private Interface
@@ -248,6 +256,19 @@ class SignalData:
             # The provided params do not match to existing params
             return True
         return False
+
+    def __shouldMakeMelFilterBankEnergies(self,
+                                          analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F id we should make or remake the mel-filter bank energies based on provided params """
+        
+        if (self.cachedData.melFilterFrameEnergies is None):
+            # MFBEs do not exist, so we should make them
+            return True
+        if (self.cachedData.melFilterFrameEnergies.getParams() != analysisFrameParams):
+            # The provided params to not match the existing ones
+            return True
+        return False
+
 
     # Magic Methods
 

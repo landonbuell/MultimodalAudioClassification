@@ -212,8 +212,6 @@ class AnalysisFrameParameters:
         plt.show()
         return None
 
-
-
     # Static Interface
 
     @staticmethod
@@ -265,7 +263,7 @@ class __AbstractAnalysisFrames:
         self._params = frameParams
         self._data   = np.zeros(shape=(numFrames,frameSize),dtype=dataType)
         self._framesInUse = 0
-        # Call "self.populate the child constructor
+        # Call "self.populate()" the child constructor
 
     def __del__(self):
         """ Destructor """
@@ -511,3 +509,85 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         fftData = np.fft.fft(a=paddedFrame)
         fftData = np.abs(fftData)**2 # Compute "abs" of data and element-wise square
         return fftData[self._freqMask]
+
+class MelFilterBankEnergies:
+    """ Stored Mel Filter Bank Energies """
+
+    def __init__(self,
+                 signal,
+                 frameParams,
+                 numFilters: int):
+        """ Constructor """
+        self._params        = frameParams
+        self._filterMatrix  = self._params.getMelFilters(numFilters)
+        self._data          = None
+
+        self.__validateSignal(signal)
+
+        numFrames = signal.cachedData.analysisFramesFreq.getNumFramesInUse()
+        self._data = np.zeros(shape=(numFrames,numFilters))
+
+        self.__applyMelFilters(signal)
+        
+
+    def __del__(self):
+        """ Destructor """
+        self._params    = None
+        self._data      = None
+
+    # Accessors
+
+    def getParams(self) -> AnalysisFrameParameters:
+        """ Return the parameters structure used to create this instance """
+        return self._params
+
+    @property
+    def numFilters(self) -> int:
+        """ Return the number of Mel Filter Banks """
+        return self._filterMatrix.shape[0]
+
+    @property
+    def filterSize(self) -> int:
+        """ Return the size of each Mel Filter """
+        return self._filterMatrix.shape[1]
+
+    def getEnergies(self) -> np.ndarray:
+        """ Return the raw MFBE array """
+        return self._data
+
+    # Private Interface
+
+    def __validateSignal(self,
+                        signalData) -> bool:
+        """ Validate that the input signal has info to work with """
+        if (signalData.cachedData.analysisFramesTime is None):
+            errMsg = "Provided signal does not have time-series analysis frames"
+            raise RuntimeWarning(errMsg)
+            return False
+        if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
+            errMsg = "Provided signal's analysis frames parmas do NOT match this one's"
+            raise RuntimeWarning(errMsg)
+            return False
+        return True
+
+    def __applyMelFilters(self,signal) -> np.ndarray:
+        """ Apply mel Filters to freq-series frames """
+        # Each ROW is a filter      
+        frameSize   = signal.cachedData.analysisFramesFreq.getFrameSize()
+        numFrames =  signal.cachedData.analysisFramesFreq.getNumFramesInUse()
+        if (self.filterSize != frameSize):
+            msg = "ERROR: provided mel filters have size={1} and analysis frames have size={1}".format(
+                self.filterSize,frameSize)
+            raise RuntimeError(msg)
+        # Pre-allocate the OUTPUT array
+        freqFrames = np.abs(signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True))**2
+        melFiltersTransposed = self._filterMatrix.transpose()
+        np.matmul(freqFrames,melFiltersTransposed,out=self._data)
+        return None
+
+
+    # Magic Methods
+
+    def __getitem__(self,index) -> object:
+        """ Return item at index """
+        return self._data[index]

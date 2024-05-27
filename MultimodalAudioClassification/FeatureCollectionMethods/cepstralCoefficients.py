@@ -35,9 +35,6 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         super().__init__(MelFilterBankEnergies.__NAME,numCoeffs)
         self._params = frameParams
 
-        self._callbacks.append(
-            )
-
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -54,8 +51,12 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        filterBanks = self._params.getMelFilters(self.numFilters).transpose()
-
+        madeMFBEs = signal.makeMelFilterBankEnergies(self.numFilters,self._params,False)
+        if (madeMFBEs == False):
+            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
+            self._logMessage(msg)
+            return False
+        # Apply the MFBEs
 
 
         return True
@@ -71,10 +72,6 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def melsToHertz(mels: np.ndarray) -> np.ndarray:
         """ Cast Mels to Hz """
         return 700 * (10**(mels/2595) - 1)
-
-    def 
-
-
 
 class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
     """

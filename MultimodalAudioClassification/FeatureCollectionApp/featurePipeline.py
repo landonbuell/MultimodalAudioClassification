@@ -137,13 +137,13 @@ class FeaturePipeline:
                 continue
             success = method.call(signal)
             if (success == False):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
-                    str(method),method.getNumFeatures(),len(features))
+                msg = "Got unsuccessful return flag from collection method: {0} on signal {1}".format(
+                    method,signal)
                 raise RuntimeError(msg)
             # Retrive the internally stored features
             features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
+                msg = "Expected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
             # Do a numpy copy
