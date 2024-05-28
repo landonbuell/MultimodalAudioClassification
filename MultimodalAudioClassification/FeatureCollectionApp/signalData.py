@@ -32,6 +32,7 @@ class SignalData:
             self.analysisFramesFreq = None
             self.freqCenterOfMasses = None
             self.melFilterFrameEnergies  = None
+            self.melFreqCepstralCoeffs = None
 
         def __del__(self):
             """ Destructor """
@@ -232,6 +233,14 @@ class SignalData:
             self.cachedData.melFilterFrameEnergies = analysisFrames.MelFilterBankEnergies(self,frameParams,numFilters)
             return True
         return False
+
+    def makeMelFreqenctCepstralCoeffs(self,
+                                    numFilters: int,
+                                    frameParams: analysisFrames.AnalysisFrameParameters,
+                                    forceMakeFrames=False,) -> bool:
+        """ Populate the MFCCs """
+        return False
+
 
     # Private Interface
 

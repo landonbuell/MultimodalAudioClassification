@@ -555,6 +555,26 @@ class MelFilterBankEnergies:
         """ Return the raw MFBE array """
         return self._data
 
+    def getMeans(self) -> np.ndarray:
+        """ Return mean energy of each filter """
+        return np.mean(self._data,axis=0)
+
+    def getVariances(self) -> np.ndarray:
+        """ Return variance of energy in each filter """
+        return np.var(self._data,axis=0)
+
+    def getMedian(self) -> np.ndarray:
+        """ Return the median energy of each filter bank """
+        return np.median(self._data,axis=0)
+
+    def getMin(self) -> np.ndarray:
+        """ Return the minimum energy of each filter bank """
+        return np.min(self._data,axis=0)
+
+    def getMax(self) -> np.ndarray:
+        """ Return the maximim energy of each filter bank """
+        return np.max(self._data,axis=0)
+
     # Private Interface
 
     def __validateSignal(self,
@@ -585,6 +605,67 @@ class MelFilterBankEnergies:
         np.matmul(freqFrames,melFiltersTransposed,out=self._data)
         return None
 
+    # Magic Methods
+
+    def __getitem__(self,index) -> object:
+        """ Return item at index """
+        return self._data[index]
+
+class MelFrequencyCepstralCoefficients:
+    """ Stores the Mel Frequency Cepstral Coefficients """
+
+    def __init__(self,
+                 melFilterBankEnergies: MelFilterBankEnergies):
+        """ Constructor """
+        self._data = np.copy(melFilterBankEnergies.getEnergies())
+        self.__createCepstralCoeffs()
+
+    def __del__(self):
+        """ Destructor """
+        self._data = None
+
+    # Accessors
+
+    @property
+    def numCoeffs(self) -> int:
+        """ Return the number of Mel Filter Banks """
+        return self._data.shape[0]
+
+    @property
+    def filterSize(self) -> int:
+        """ Return the size of each Mel Filter """
+        return self._data.shape[1]
+
+    def getEnergies(self) -> np.ndarray:
+        """ Return the raw MFBE array """
+        return self._data
+
+    def getMeans(self) -> np.ndarray:
+        """ Return mean energy of each filter """
+        return np.mean(self._data,axis=0)
+
+    def getVariances(self) -> np.ndarray:
+        """ Return variance of energy in each filter """
+        return np.var(self._data,axis=0)
+
+    def getMedian(self) -> np.ndarray:
+        """ Return the median energy of each filter bank """
+        return np.median(self._data,axis=0)
+
+    def getMin(self) -> np.ndarray:
+        """ Return the minimum energy of each filter bank """
+        return np.min(self._data,axis=0)
+
+    def getMax(self) -> np.ndarray:
+        """ Return the maximim energy of each filter bank """
+        return np.max(self._data,axis=0)
+
+    # Private Interface
+
+    def __createCepstralCoeffs(self):
+        """ Create Mel Freq Cepstral Coeffs from Filter bank energies """
+        # TODO: Populate MFCCs
+        return None
 
     # Magic Methods
 
