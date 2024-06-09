@@ -555,17 +555,26 @@ class MelFilterBankEnergies:
         """ Return the raw MFBE array """
         return self._data
 
-    def getMeans(self) -> np.ndarray:
+    def getMeans(self,normalize=False) -> np.ndarray:
         """ Return mean energy of each filter """
-        return np.mean(self._data,axis=0)
+        means = np.mean(self._data,axis=0)
+        if (normalize == True):
+            means /= np.max(means)
+        return means
 
     def getVariances(self) -> np.ndarray:
         """ Return variance of energy in each filter """
-        return np.var(self._data,axis=0)
+        varis = np.var(self._data,axis=0)
+        if (normalize == True):
+            varis /= np.max(varis)
+        return varis
 
     def getMedian(self) -> np.ndarray:
         """ Return the median energy of each filter bank """
-        return np.median(self._data,axis=0)
+        medis = np.median(self._data,axis=0)
+        if (normalize == True):
+            medis /= np.max(medis)
+        return medis
 
     def getMin(self) -> np.ndarray:
         """ Return the minimum energy of each filter bank """

@@ -26,6 +26,7 @@
     <Compile Include="centerOfMass.py" />
     <Compile Include="cepstralCoefficients.py" />
     <Compile Include="collectionMethod.py" />
+    <Compile Include="melFilterBankEnergies.py" />
     <Compile Include="spectrogram.py" />
     <Compile Include="timeDomainEnvelope.py" />
     <Compile Include="unitTests.py" />
