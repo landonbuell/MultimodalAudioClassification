@@ -59,7 +59,7 @@ class DefaultFeaturePipeline:
         #pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
         #                                    centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
         #pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
-        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergies(
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans(
             analysisFrames.AnalysisFrameParameters.defaultFrameParams(),12 ) )
         return pipeline
 

@@ -239,6 +239,13 @@ class SignalData:
                                     frameParams: analysisFrames.AnalysisFrameParameters,
                                     forceMakeFrames=False,) -> bool:
         """ Populate the MFCCs """
+        self.makeMelFilterBankEnergies(numFilters,frameParams,forceMakeFrames)
+        if (forceMakeFrames == True):
+            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numFilters)
+            return True
+        if (self.__shouldMakeMelFrequencyCepstralCoefficients(frameParams) == True):
+            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numFilters)
+            return True
         return False
 
 
@@ -278,6 +285,16 @@ class SignalData:
             return True
         return False
 
+    def __shouldMakeMelFrequencyCepstralCoefficients(self,
+                                                     analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
+        """ Return T/F id we should make or remake the mel-frequency cepstral coeffs based on provided params """)
+        if (self.cachedData.melFreqCepstralCoeffs is None):
+            # MFBEs do not exist, so we should make them
+            return True
+        if (self.cachedData.melFreqCepstralCoeffs.getParams() != analysisFrameParams):
+            # The provided params to not match the existing ones
+            return True
+        return False
 
     # Magic Methods
 

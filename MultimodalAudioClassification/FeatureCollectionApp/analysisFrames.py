@@ -562,25 +562,25 @@ class MelFilterBankEnergies:
             means /= np.max(means)
         return means
 
-    def getVariances(self) -> np.ndarray:
+    def getVariances(self,normalize=False) -> np.ndarray:
         """ Return variance of energy in each filter """
         varis = np.var(self._data,axis=0)
         if (normalize == True):
             varis /= np.max(varis)
         return varis
 
-    def getMedian(self) -> np.ndarray:
+    def getMedians(self,normalize=False) -> np.ndarray:
         """ Return the median energy of each filter bank """
         medis = np.median(self._data,axis=0)
         if (normalize == True):
             medis /= np.max(medis)
         return medis
 
-    def getMin(self) -> np.ndarray:
+    def getMins(self) -> np.ndarray:
         """ Return the minimum energy of each filter bank """
         return np.min(self._data,axis=0)
 
-    def getMax(self) -> np.ndarray:
+    def getMaxes(self) -> np.ndarray:
         """ Return the maximim energy of each filter bank """
         return np.max(self._data,axis=0)
 
@@ -592,11 +592,9 @@ class MelFilterBankEnergies:
         if (signalData.cachedData.analysisFramesTime is None):
             errMsg = "Provided signal does not have time-series analysis frames"
             raise RuntimeWarning(errMsg)
-            return False
         if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
             errMsg = "Provided signal's analysis frames parmas do NOT match this one's"
             raise RuntimeWarning(errMsg)
-            return False
         return True
 
     def __applyMelFilters(self,signal) -> np.ndarray:
@@ -624,9 +622,19 @@ class MelFrequencyCepstralCoefficients:
     """ Stores the Mel Frequency Cepstral Coefficients """
 
     def __init__(self,
-                 melFilterBankEnergies: MelFilterBankEnergies):
+                 signal,
+                 frameParams,
+                 numFilters: int):
         """ Constructor """
-        self._data = np.copy(melFilterBankEnergies.getEnergies())
+        self._params        = frameParams
+        self._filterMatrix  = self._params.getMelFilters(numFilters)
+        self._data          = None
+
+        self.__validateSignal(signal)
+
+        numFrames = signal.cachedData.analysisFramesFreq.getNumFramesInUse()
+        self._data = np.zeros(shape=(numFrames,numFilters))
+
         self.__createCepstralCoeffs()
 
     def __del__(self):
@@ -634,6 +642,10 @@ class MelFrequencyCepstralCoefficients:
         self._data = None
 
     # Accessors
+
+    def getParams(self) -> AnalysisFrameParameters:
+        """ Return the parameters structure used to create this instance """
+        return self._params
 
     @property
     def numCoeffs(self) -> int:
@@ -670,6 +682,17 @@ class MelFrequencyCepstralCoefficients:
         return np.max(self._data,axis=0)
 
     # Private Interface
+
+    def __validateSignal(self,
+                        signalData) -> bool:
+        """ Validate that the input signal has info to work with """
+        if (signalData.cachedData.melFilterFrameEnergies is None):
+            errMsg = "Provided signal does not have mel filter bank energies"
+            raise RuntimeWarning(errMsg)
+        if (signalData.cachedData.melFilterFrameEnergies.getParams() != self._params):
+            errMsg = "Provided signal's mel filter bank energies params do NOT match this one's"
+            raise RuntimeWarning(errMsg)
+        return True
 
     def __createCepstralCoeffs(self):
         """ Create Mel Freq Cepstral Coeffs from Filter bank energies """

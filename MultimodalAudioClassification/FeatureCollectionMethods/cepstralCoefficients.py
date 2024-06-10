@@ -2,9 +2,12 @@
     Repo:       MultiModalAudioClassification
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollectionMethods
-    File:       collectionMethod.py
-    Classes:    AbstractCollectionMethod,
-                CollectionMethodCallbacks
+    File:       cepstralCoefficients.py
+    Classes:    __MelFrequencyCepstrumCoefficients,
+                MelFrequencyCepstrumCoefficientMeans
+                MelFrequencyCepstrumCoefficientVariances
+                MelFrequencyCepstrumCoefficientMedians
+                MelFrequencyCepstrumCoefficientMinMax
 
     Author:     Landon Buell
     Date:       February 2024
@@ -21,7 +24,7 @@ import collectionMethod
 
         #### CLASS DEFINITIONS ####
 
-class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
+class __MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
     """
         Compute Mel Frequency Ceptral Coefficients
     """
@@ -30,9 +33,14 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
 
     def __init__(self,
                  frameParams: analysisFrames.AnalysisFrameParameters,
-                 numCoeffs: int):
+                 numCoeffs: int,
+                 forceRemake=False,
+                 normalize=True):
         """ Constructor """
         super().__init__(MelFrequencyCepstrumCoefficients.__NAME,numCoeffs)
+        self._params        = frameParams
+        self._forceRemake   = forceRemake
+        self._normalize     = normalize
 
     def __del__(self):
         """ Destructor """
@@ -50,4 +58,10 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
+        madeMFCCs = signal.makeMelFilterBankEnergies(
+            self.numFilters,self._params,self._forceRemake)
+        if (madeMFCCs == False):
+            msg = "Failed to make Mel Frequency Cepstral Coefficients for signal: {0}".format(signal)
+            self._logMessage(msg)
+            return False
         return True
