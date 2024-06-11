@@ -24,7 +24,7 @@ import collectionMethod
 
         #### CLASS DEFINITIONS ####
 
-class __MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
+class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod):
     """
         Compute Mel Frequency Ceptral Coefficients
     """
@@ -58,7 +58,7 @@ class __MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMeth
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        madeMFCCs = signal.makeMelFilterBankEnergies(
+        madeMFCCs = signal.makeMelFrequencyCepstralCoeffs(
             self.numFilters,self._params,self._forceRemake)
         if (madeMFCCs == False):
             msg = "Failed to make Mel Frequency Cepstral Coefficients for signal: {0}".format(signal)

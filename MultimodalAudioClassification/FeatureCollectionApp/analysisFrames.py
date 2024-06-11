@@ -58,10 +58,10 @@ class AnalysisFrameParameters:
     """ Stores parameters for analysis frames """
  
     def __init__(self,
-                 samplesPerFrame=1024,
-                 sampleOverlap=768,
-                 headPad=1024,
-                 tailPad=2048,
+                 samplesPerFrame=2048,
+                 sampleOverlap=512,
+                 headPad=2048,
+                 tailPad=4096,
                  maxNumFrames=512,
                  freqLowBoundHz=0.0,
                  freqHighBoundHz=16010.0,
@@ -110,7 +110,7 @@ class AnalysisFrameParameters:
 
     def getFreqFrameSizeMasked(self) -> int:
         """ Get the total size of each frame """
-        return self.getFreqAxisMask().size
+        return np.sum(self.getFreqAxisMask())
 
     def getFreqFramesShape(self) -> tuple:
         """ Return the SHAPE of the frequency frames """
@@ -139,7 +139,7 @@ class AnalysisFrameParameters:
         sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
         freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
                                   d=sampleSpacing)
-        mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
+        mask = ((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))
         return mask
 
     def getFreqAxisUnmasked(self) -> np.ndarray:
@@ -154,13 +154,17 @@ class AnalysisFrameParameters:
         sampleSpacing = 1.0 / AnalysisFrameParameters.sampleRate()
         freqAxis = np.fft.fftfreq(n=self.getFreqFrameSizeUnmasked(),
                                   d=sampleSpacing)
-        mask = np.where((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))[0]
+        mask = ((freqAxis >= self.freqLowBoundHz) & (freqAxis < self.freqHighBoundHz))
         return freqAxis[mask]
 
-    def getMelFilters(self,numFilters: int) -> np.ndarray:
+    def getMelFilters(self,numFilters: int, normalize: bool) -> np.ndarray:
         """ Return the Mel Filter banks """
         if (self._melFilters.get(numFilters,None) is None):
             self._melFilters[numFilters] = self.__createMelFilters(numFilters)
+        if (normalize == True):
+            for ii in range(numFilters):
+                filterArray = self._melFilters[numFilters][ii]
+                filterArray /= np.sum(filterArray)
         return self._melFilters[numFilters] # hash-map is O(1) lookup
 
     # Private Interface
@@ -321,7 +325,6 @@ class __AbstractAnalysisFrames:
             errMsg = "Provided signal: {0} has {1} samples.".format(
                 repr(signalData),signalData.getNumSamples())
             raise RuntimeWarning(errMsg)
-            return False
         return True
 
     def _populateFrames(self,
@@ -419,6 +422,8 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         self._freqMask      = self._params.getFreqAxisMask()
         self._multiThread   = multiThread
         self.populate(signalData)
+
+        #self.showHeatmap()
         
     def __del__(self):
         """ Destructor """
@@ -437,22 +442,19 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     # Public Interface
 
-    def plot(self,title: str) -> None:
-        """ Show a figure of the time-series analysis frames """
-        plt.figure(figsize=(16,12))
-        plt.title(title,size=32,weight='bold')
-        plt.xlabel('Frequency',size=24,weight='bold')
-        plt.ylabel('Time',size=24,weight='bold')
+    def showHeatmap(self):
+        """ Create a heatmap plot to show each frame """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Frequency-Series Analysis Frames",size=32,weight="bold")
+        plt.ylabel("Frame Index",size=24,weight="bold")
+        plt.xlabel("Linear Frequency Bin",size=24,weight="bold")
 
-        f = self.getMaskedFrequencyAxisHz()
-        t = np.arange(self.getNumFramesInUse(),0,-1)
-        X = np.abs(self._data)
-        plt.pcolormesh(f,t,X,cmap=plt.cm.plasma)
+        plt.pcolormesh(np.log(np.abs(self._data)**2),cmap="jet")
 
-        plt.grid()
+        plt.legend()
+        plt.grid(True)
         plt.tight_layout()
         plt.show()
-
         return None
 
     # Protected Interface
@@ -465,11 +467,9 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         if (signalData.cachedData.analysisFramesTime is None):
             errMsg = "Provided signal does not have time-series analysis frames"
             raise RuntimeWarning(errMsg)
-            return False
         if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
             errMsg = "Provided signal's time-series analysis frames parmas do NOT match this one's"
             raise RuntimeWarning(errMsg)
-            return False
         return True
 
     def _populateFrames(self,
@@ -481,6 +481,8 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
             self.__populateWithSingleThread(signalData)
         return None
 
+    # Private Interface
+
     def __populateWithMultipleThreads(self,
                                      signalData) -> None:
         """ Populate frequency series analysis frames in multiple threads """
@@ -490,10 +492,11 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
     def __populateWithSingleThread(self,
                                    signalData) -> None:
         """ Populate frequency Series analysis frames in a single thread """
+        #freqAxis = self._params.getFreqAxisMasked()
         freqAxis = self._params.getFreqAxisMasked()
         for ii in range(self._framesInUse):
             self._data[ii] = self.__transform(signalData.cachedData.analysisFramesTime[ii])
-            #debugPlotXy(freqAxis,self._data[ii],"Freq Frame" + str(ii))
+            #debugPlotXy(freqAxis,self._data[ii],"Frame{0}".format(ii))
         return None
 
     def __transform(self,
@@ -506,6 +509,7 @@ class FreqSeriesAnalysisFrames(__AbstractAnalysisFrames):
         paddedFrame = np.zeros(shape=(self._params.getFreqFrameSizeUnmasked(),),dtype=np.float32)
         rawTimeFrame *= self._params.window
         paddedFrame[self._params.headPad:self._params.headPad + rawTimeFrame.size] = rawTimeFrame
+        
         fftData = np.fft.fft(a=paddedFrame)
         fftData = np.abs(fftData)**2 # Compute "abs" of data and element-wise square
         return fftData[self._freqMask]
@@ -519,7 +523,7 @@ class MelFilterBankEnergies:
                  numFilters: int):
         """ Constructor """
         self._params        = frameParams
-        self._filterMatrix  = self._params.getMelFilters(numFilters)
+        self._filterMatrix  = self._params.getMelFilters(numFilters,True)
         self._data          = None
 
         self.__validateSignal(signal)
@@ -529,7 +533,6 @@ class MelFilterBankEnergies:
 
         self.__applyMelFilters(signal)
         
-
     def __del__(self):
         """ Destructor """
         self._params    = None
@@ -542,14 +545,14 @@ class MelFilterBankEnergies:
         return self._params
 
     @property
-    def numFilters(self) -> int:
+    def numFrames(self) -> int:
         """ Return the number of Mel Filter Banks """
-        return self._filterMatrix.shape[0]
+        return self._data.shape[0]
 
     @property
-    def filterSize(self) -> int:
+    def numFilters(self) -> int:
         """ Return the size of each Mel Filter """
-        return self._filterMatrix.shape[1]
+        return self._data.shape[1]
 
     def getEnergies(self) -> np.ndarray:
         """ Return the raw MFBE array """
@@ -599,17 +602,49 @@ class MelFilterBankEnergies:
 
     def __applyMelFilters(self,signal) -> np.ndarray:
         """ Apply mel Filters to freq-series frames """
-        # Each ROW is a filter      
-        frameSize   = signal.cachedData.analysisFramesFreq.getFrameSize()
-        numFrames =  signal.cachedData.analysisFramesFreq.getNumFramesInUse()
-        if (self.filterSize != frameSize):
-            msg = "ERROR: provided mel filters have size={1} and analysis frames have size={1}".format(
-                self.filterSize,frameSize)
-            raise RuntimeError(msg)
-        # Pre-allocate the OUTPUT array
         freqFrames = np.abs(signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True))**2
+        
+        
         melFiltersTransposed = self._filterMatrix.transpose()
+
+        self.__plotEnergiesByFrame()
+
         np.matmul(freqFrames,melFiltersTransposed,out=self._data)
+        return None
+
+    def __plotMelFilters(self):
+        """ Create a plot to show shape of each mel filter """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Mel Filters",size=32,weight="bold")
+        plt.xlabel("Frequency [hz]",size=24,weight="bold")
+        plt.ylabel("Filter Level",size=24,weight="bold")
+
+        for ii in range(self.numFilters):
+            label = "Mel Filter #{0}".format(ii)
+            plt.plot(self._filterMatrix[ii],label=label)
+
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return None
+
+    def __plotEnergiesByFrame(self):
+        """ Create a plot to show the the energy of each filter bank changes by each frame """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Mel Filter Bank Energies by Frame",size=32,weight="bold")
+        plt.xlabel("Frame Index",size=24,weight="bold")
+        plt.ylabel("Energy Level",size=24,weight="bold")
+
+        for ii in range(self.numFilters):
+            energyData = np.log10(self._data[:,ii])
+            label = "MFBE #{0}".format(ii)
+            plt.plot(energyData,label=label)
+
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
         return None
 
     # Magic Methods
@@ -635,7 +670,7 @@ class MelFrequencyCepstralCoefficients:
         numFrames = signal.cachedData.analysisFramesFreq.getNumFramesInUse()
         self._data = np.zeros(shape=(numFrames,numFilters))
 
-        self.__createCepstralCoeffs()
+        self.__createCepstralCoeffs(signal)
 
     def __del__(self):
         """ Destructor """
@@ -648,12 +683,12 @@ class MelFrequencyCepstralCoefficients:
         return self._params
 
     @property
-    def numCoeffs(self) -> int:
+    def numFrames(self) -> int:
         """ Return the number of Mel Filter Banks """
         return self._data.shape[0]
 
     @property
-    def filterSize(self) -> int:
+    def numCoeffs(self) -> int:
         """ Return the size of each Mel Filter """
         return self._data.shape[1]
 
@@ -694,9 +729,18 @@ class MelFrequencyCepstralCoefficients:
             raise RuntimeWarning(errMsg)
         return True
 
-    def __createCepstralCoeffs(self):
+    def __createCepstralCoeffs(self,signal):
         """ Create Mel Freq Cepstral Coeffs from Filter bank energies """
-        # TODO: Populate MFCCs
+        logEnergies = np.log10(signal.cachedData.melFilterFrameEnergies)
+
+        for tt in range(self.numFrames):
+            for cc in range(self.numCoeffs):
+                for mm in range(self.numCoeffs):
+                    cosEnergy = np.cos((np.pi / self.numCoeffs) * (cc + 1) * (mm - 0.5))                   
+                    self._data[tt,cc] += logEnergies[tt,cc] * cosEnergy
+                    
+
+
         return None
 
     # Magic Methods

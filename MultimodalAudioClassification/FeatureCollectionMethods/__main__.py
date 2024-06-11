@@ -14,15 +14,32 @@
 import os
 import sys
 
-import unitTests
+import numpy as np
+import matplotlib.pyplot as plt
+
+import scipy.io.wavfile as sciowav
+
+import signalData
+import analysisFrames
 
         #### MAIN EXECUTABLE ####
 
 if __name__ == "__main__":
     
     # Create the unit Tests
-    testSuite = unitTests.PresetUnitTests.getTestCachedData()
-    testSuite.runAll()
-    
+    #filePath = "C:\\Users\\lando\\Documents\\audioWav2\\TRUMPET.Cs6.025.mezzoforte.normal.wav"
+    #(sampleRate,waveform) = sciowav.read(filePath) 
+    sampleRate = 44100
+    t = np.arange(0,int(1e5),1) / sampleRate
+    waveformA = np.cos( 2 * np.pi * 880 * t ) 
+    waveformB = np.cos( 2 * np.pi * 1760 * np.log(55 *t ) * t)
+    waveform = waveformA + waveformB
+
+    signal = signalData.SignalData(sampleRate,-1,waveform)
+    frameParams = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+
+    madeMFCCs = signal.makeMelFrequencyCepstralCoeffs(16,frameParams)
+    sys.exit(0)
+
 
 

@@ -160,7 +160,7 @@ class SignalData:
         self._waveform = newWaveform
         return None
 
-    def show(self) -> None:
+    def showWaveform(self) -> None:
         """ Plot the time-series representation of this waveform """
         titleText = "{0} \n ch#{1}".format(self.getSourcePath(),str(self.getChannelIndex()))
         
@@ -234,7 +234,7 @@ class SignalData:
             return True
         return False
 
-    def makeMelFreqenctCepstralCoeffs(self,
+    def makeMelFrequencyCepstralCoeffs(self,
                                     numFilters: int,
                                     frameParams: analysisFrames.AnalysisFrameParameters,
                                     forceMakeFrames=False,) -> bool:
@@ -287,7 +287,7 @@ class SignalData:
 
     def __shouldMakeMelFrequencyCepstralCoefficients(self,
                                                      analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
-        """ Return T/F id we should make or remake the mel-frequency cepstral coeffs based on provided params """)
+        """ Return T/F id we should make or remake the mel-frequency cepstral coeffs based on provided params """
         if (self.cachedData.melFreqCepstralCoeffs is None):
             # MFBEs do not exist, so we should make them
             return True
