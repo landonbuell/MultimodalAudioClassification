@@ -587,32 +587,9 @@ class MelFilterBankEnergies:
         """ Return the maximim energy of each filter bank """
         return np.max(self._data,axis=0)
 
-    # Private Interface
+    # Public Interface
 
-    def __validateSignal(self,
-                        signalData) -> bool:
-        """ Validate that the input signal has info to work with """
-        if (signalData.cachedData.analysisFramesTime is None):
-            errMsg = "Provided signal does not have time-series analysis frames"
-            raise RuntimeWarning(errMsg)
-        if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
-            errMsg = "Provided signal's analysis frames parmas do NOT match this one's"
-            raise RuntimeWarning(errMsg)
-        return True
-
-    def __applyMelFilters(self,signal) -> np.ndarray:
-        """ Apply mel Filters to freq-series frames """
-        freqFrames = np.abs(signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True))**2
-        
-        
-        melFiltersTransposed = self._filterMatrix.transpose()
-
-        self.__plotEnergiesByFrame()
-
-        np.matmul(freqFrames,melFiltersTransposed,out=self._data)
-        return None
-
-    def __plotMelFilters(self):
+    def plotMelFilters(self):
         """ Create a plot to show shape of each mel filter """
         plt.figure(figsize=(16,12),facecolor="gray")
         plt.title("Mel Filters",size=32,weight="bold")
@@ -629,7 +606,7 @@ class MelFilterBankEnergies:
         plt.show()
         return None
 
-    def __plotEnergiesByFrame(self):
+    def plotEnergiesByFrame(self):
         """ Create a plot to show the the energy of each filter bank changes by each frame """
         plt.figure(figsize=(16,12),facecolor="gray")
         plt.title("Mel Filter Bank Energies by Frame",size=32,weight="bold")
@@ -647,6 +624,33 @@ class MelFilterBankEnergies:
         plt.show()
         return None
 
+    # Private Interface
+
+    def __validateSignal(self,
+                        signalData) -> bool:
+        """ Validate that the input signal has info to work with """
+        if (signalData.cachedData.analysisFramesTime is None):
+            errMsg = "Provided signal does not have time-series analysis frames"
+            raise RuntimeWarning(errMsg)
+        if (signalData.cachedData.analysisFramesTime.getParams() != self._params):
+            errMsg = "Provided signal's analysis frames parmas do NOT match this one's"
+            raise RuntimeWarning(errMsg)
+        return True
+
+    def __applyMelFilters(self,signal) -> np.ndarray:
+        """ Apply mel Filters to freq-series frames """
+        freqFrames = np.abs(signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True))**2
+        
+        for ii in range(self.numFrames):
+            for jj in range(self.numFilters):
+                self._data[ii,jj] = np.dot(
+                    freqFrames[ii],
+                    self._filterMatrix[jj])
+        self.plotEnergiesByFrame()
+        return None
+
+
+
     # Magic Methods
 
     def __getitem__(self,index) -> object:
@@ -662,7 +666,7 @@ class MelFrequencyCepstralCoefficients:
                  numFilters: int):
         """ Constructor """
         self._params        = frameParams
-        self._filterMatrix  = self._params.getMelFilters(numFilters)
+        self._filterMatrix  = self._params.getMelFilters(numFilters,True)
         self._data          = None
 
         self.__validateSignal(signal)
