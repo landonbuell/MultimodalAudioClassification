@@ -294,9 +294,10 @@ class __AbstractAnalysisFrames:
 
     def rawFrames(self,onlyInUse=False) -> np.ndarray:
         """ Return the raw underlying analysis frames """
+        result = self._data
         if (onlyInUse == True):
-            return self._data[0:self._framesInUse]
-        return self._data
+            result = self._data[0:self._framesInUse]
+        return result
 
     # Public Interface
     
@@ -358,13 +359,15 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
 
     def __init__(self,
                  signalData,
-                 frameParams: AnalysisFrameParameters):
+                 frameParams: AnalysisFrameParameters,
+                 allowIncompleteFrames=False):
         """ Constructor """
         super().__init__(   signalData,
                             frameParams,
                             frameParams.maxNumFrames,
                             frameParams.getTimeFrameSize(),
                             TimeSeriesAnalysisFrames.__DATA_TYPE)
+        self._allowIncompleteFrames = allowIncompleteFrames
         self.populate(signalData)
 
     def __del__(self):
@@ -389,11 +392,14 @@ class TimeSeriesAnalysisFrames(__AbstractAnalysisFrames):
         for ii in range(self.getMaxNumFrames()):
             frameEnd = frameStart + self._params.samplesPerFrame
             if (frameEnd > len(signalData)):
-                if (frameStart > len(signalData)):
-                    break
-                frameEnd = len(signalData) - 1
-                frameSlice = signalData[frameStart:frameEnd]
-                self._data[ii,0:frameSlice.size] = frameSlice
+                if (self._allowIncompleteFrames == True):
+                    if (frameStart > len(signalData)):
+                        break
+                    frameEnd = len(signalData) - 1
+                    frameSlice = signalData[frameStart:frameEnd]
+                    self._data[ii,0:frameSlice.size] = frameSlice
+                else:
+                    continue
             else:
                 # Store the items in the frame
                 self._data[ii] = signalData[frameStart:frameEnd]
@@ -606,15 +612,17 @@ class MelFilterBankEnergies:
         plt.show()
         return None
 
-    def plotEnergiesByFrame(self):
+    def plotEnergiesByFrame(self,plotLogScale=True):
         """ Create a plot to show the the energy of each filter bank changes by each frame """
         plt.figure(figsize=(16,12),facecolor="gray")
         plt.title("Mel Filter Bank Energies by Frame",size=32,weight="bold")
         plt.xlabel("Frame Index",size=24,weight="bold")
         plt.ylabel("Energy Level",size=24,weight="bold")
-
+        
         for ii in range(self.numFilters):
-            energyData = np.log10(self._data[:,ii])
+            energyData = self._data[:,ii]
+            if (plotLogScale == True):
+                energyData = np.log10(energyData)
             label = "MFBE #{0}".format(ii)
             plt.plot(energyData,label=label)
 
@@ -639,14 +647,15 @@ class MelFilterBankEnergies:
 
     def __applyMelFilters(self,signal) -> np.ndarray:
         """ Apply mel Filters to freq-series frames """
-        freqFrames = np.abs(signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True))**2
-        
+        rawFrames = signal.cachedData.analysisFramesFreq.rawFrames(onlyInUse=True)
+        freqFrames = np.abs(rawFrames)**2
+
         for ii in range(self.numFrames):
             for jj in range(self.numFilters):
                 self._data[ii,jj] = np.dot(
                     freqFrames[ii],
                     self._filterMatrix[jj])
-        self.plotEnergiesByFrame()
+        #self.plotEnergiesByFrame(plotLogScale=True)
         return None
 
 
@@ -720,6 +729,41 @@ class MelFrequencyCepstralCoefficients:
         """ Return the maximim energy of each filter bank """
         return np.max(self._data,axis=0)
 
+    # Public Interface
+
+    def plotCepstrumByFrame(self):
+        """ Create a plot to show the the energy of each filter bank changes by each frame """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Mel Frequency Cepstral Coefficients by Frame",size=32,weight="bold")
+        plt.xlabel("Frame Index",size=24,weight="bold")
+        plt.ylabel("Energy Level",size=24,weight="bold")
+        
+        for ii in range(self.numCoeffs):
+            energyData = self._data[:,ii]
+            label = "MFCC #{0}".format(ii)
+            plt.plot(energyData,label=label)
+
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return None
+
+    def showHeatmap(self):
+        """ Create a heatmap plot to show each frame """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Mel Frequency Cepstral Coefficients",size=32,weight="bold")
+        plt.ylabel("Frame Index",size=24,weight="bold")
+        plt.xlabel("MFCC Bin",size=24,weight="bold")
+
+        plt.pcolormesh(self._data,cmap="jet")
+
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return None
+
     # Private Interface
 
     def __validateSignal(self,
@@ -735,16 +779,15 @@ class MelFrequencyCepstralCoefficients:
 
     def __createCepstralCoeffs(self,signal):
         """ Create Mel Freq Cepstral Coeffs from Filter bank energies """
-        logEnergies = np.log10(signal.cachedData.melFilterFrameEnergies)
-
+        logEnergies = np.log10(signal.cachedData.melFilterFrameEnergies.getEnergies())
         for tt in range(self.numFrames):
             for cc in range(self.numCoeffs):
-                for mm in range(self.numCoeffs):
-                    cosEnergy = np.cos((np.pi / self.numCoeffs) * (cc + 1) * (mm - 0.5))                   
-                    self._data[tt,cc] += logEnergies[tt,cc] * cosEnergy
-                    
-
-
+                for mm in range (self.numCoeffs):
+                    cosTerm = np.cos((cc + 1) * (mm + 0.5) * np.pi / self.numCoeffs)
+                    self._data[tt,cc] += logEnergies[tt,mm] * cosTerm
+        self._data /= np.sqrt(2 / self.numCoeffs)
+        self._data /= np.max(np.abs(self._data))
+        self.showHeatmap()
         return None
 
     # Magic Methods
