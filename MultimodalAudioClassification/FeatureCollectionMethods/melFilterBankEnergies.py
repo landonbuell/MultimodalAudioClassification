@@ -24,12 +24,12 @@ import analysisFrames
 
         #### CLASS DEFINITIONS ####
 
-class __MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
+class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     """
         Abstract Base class for other methods that use ta signal's MFBE's for features
     """
 
-    __NAME = "__MelFilterBankEnergies"
+    __NAME = "MelFilterBankEnergies"
 
     def __init__(self,
                  frameParams: analysisFrames.AnalysisFrameParameters,
@@ -37,7 +37,8 @@ class __MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
                  forceRemake=False,
                  normalize=True):
         """ Constructor """
-        super().__init__(MelFilterBankEnergies.__NAME,numCoeffs)
+        super().__init__(MelFilterBankEnergies.__NAME,
+                         numCoeffs * frameParams.maxNumFrames)
         self._params        = frameParams
         self._forceRemake   = forceRemake
         self._normalize     = normalize
@@ -58,14 +59,14 @@ class __MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        madeMFBEs = signal.makeMelFilterBankEnergies(
-            self.numFilters,self._params,self._forceRemake)
-        if (madeMFBEs == False):
-            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
-            self._logMessage(msg)
+        if (self._makeMfccs(signal) == False):
             return False
-        #self.__plotEnergiesByFrame(signal)
+        np.copyto(self._data,signal.cachedData.melFilterFrameEnergies)
         return True
+
+    # Protected Interface
+
+
 
     # Private Interface
 
@@ -89,8 +90,6 @@ class __MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         plt.show()
         return None
 
-
-
     # Static Interface
 
     @staticmethod
@@ -103,7 +102,18 @@ class __MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ Cast Mels to Hz """
         return 700 * (10**(mels/2595) - 1)
 
-class MelFilterBankEnergyMeans(MelFilterBankEnergies):
+    def _makeMfccs(self,
+                   signal: collectionMethod.signalData.SignalData) -> bool:
+        """ Make Mel Frequency Cepstrum Coefficients """
+        madeMFBEs = signal.makeMelFilterBankEnergies(
+            self.numFilters,self._params,self._forceRemake)
+        if (madeMFBEs == False):
+            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
+            self._logMessage(msg)
+            return False
+        return True
+
+class MelFilterBankEnergyMeans(collectionMethod.AbstractCollectionMethod):
     """
         Compute + Return the Mean of each MFBE across all analysis frames
     """
@@ -116,8 +126,11 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
                  forceRemake=False,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
-        self._name = MelFilterBankEnergyMeans.__NAME
+        super().__init__(MelFilterBankEnergies.__NAME,
+                         numCoeffs * frameParams.maxNumFrames)
+        self._params        = frameParams
+        self._forceRemake   = forceRemake
+        self._normalize     = normalize
 
     def __del__(self):
         """ Destructor """
@@ -128,8 +141,7 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        success = super()._callBody(signal)
-        if (success == False):
+        if (self._make == False):
             return False
         self._data = signal.cachedData.melFilterFrameEnergies.getMeans(self._normalize)
         return True

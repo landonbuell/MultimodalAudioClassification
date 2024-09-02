@@ -275,7 +275,7 @@ class SignalData:
 
     def __shouldMakeMelFilterBankEnergies(self,
                                           analysisFrameParams: analysisFrames.AnalysisFrameParameters) -> bool:
-        """ Return T/F id we should make or remake the mel-filter bank energies based on provided params """
+        """ Return T/F if we should make or remake the mel-filter bank energies based on provided params """
         
         if (self.cachedData.melFilterFrameEnergies is None):
             # MFBEs do not exist, so we should make them
