@@ -64,13 +64,18 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         np.copyto(self._data,signal.cachedData.melFilterFrameEnergies)
         return True
 
-    # Protected Interface
+    def _makeMfccs(self,
+                   signal: collectionMethod.signalData.SignalData) -> bool:
+        """ Make Mel Frequency Cepstrum Coefficients """
+        madeMFBEs = signal.makeMelFilterBankEnergies(
+            self.numFilters,self._params,self._forceRemake)
+        if (madeMFBEs == False):
+            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
+            self._logMessage(msg)
+            return False
+        return True
 
-
-
-    # Private Interface
-
-    def __plotEnergiesByFrame(self,
+    def _plotEnergiesByFrame(self,
                               signal: collectionMethod.signalData.SignalData):
         """ Create a plot to show the the energy of each filter bank changes by each frame """
         plt.figure(figsize=(16,12),facecolor="gray")
@@ -102,18 +107,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ Cast Mels to Hz """
         return 700 * (10**(mels/2595) - 1)
 
-    def _makeMfccs(self,
-                   signal: collectionMethod.signalData.SignalData) -> bool:
-        """ Make Mel Frequency Cepstrum Coefficients """
-        madeMFBEs = signal.makeMelFilterBankEnergies(
-            self.numFilters,self._params,self._forceRemake)
-        if (madeMFBEs == False):
-            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
-            self._logMessage(msg)
-            return False
-        return True
-
-class MelFilterBankEnergyMeans(collectionMethod.AbstractCollectionMethod):
+class MelFilterBankEnergyMeans(MelFilterBankEnergies):
     """
         Compute + Return the Mean of each MFBE across all analysis frames
     """
@@ -126,11 +120,9 @@ class MelFilterBankEnergyMeans(collectionMethod.AbstractCollectionMethod):
                  forceRemake=False,
                  normalize=True):
         """ Constructor """
-        super().__init__(MelFilterBankEnergies.__NAME,
-                         numCoeffs * frameParams.maxNumFrames)
-        self._params        = frameParams
-        self._forceRemake   = forceRemake
-        self._normalize     = normalize
+        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        self._name  = MelFilterBankEnergyMeans.__NAME
+        self._data  = np.zeros(shape=(numCoeffs,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
@@ -160,7 +152,8 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
                  normalize=True):
         """ Constructor """
         super().__init__(frameParams,numCoeffs,forceRemake,normalize)
-        self._name = MelFilterBankEnergyMeans.__NAME
+        self._data  = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._name = MelFilterBankEnergyVaris.__NAME
 
     def __del__(self):
         """ Destructor """
@@ -191,7 +184,8 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
                  normalize=True):
         """ Constructor """
         super().__init__(frameParams,numCoeffs,forceRemake,normalize)
-        self._name = MelFilterBankEnergyMeans.__NAME
+        self._data  = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._name  = MelFilterBankEnergyMedians.__NAME
 
     def __del__(self):
         """ Destructor """
@@ -222,7 +216,8 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
                  normalize=True):
         """ Constructor """
         super().__init__(frameParams,numCoeffs * 2,forceRemake,normalize)
-        self._name = MelFilterBankEnergyMeans.__NAME
+        self._data  = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._name = MelFilterBankEnergyMinMax.__NAME
 
     def __del__(self):
         """ Destructor """

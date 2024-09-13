@@ -117,9 +117,9 @@ class FeaturePipeline:
             # Invoke the collection method
             if (method is None):
                 continue
-            featureNames.append(method.featureNames())
+            featureNames += method.featureNames()
         # Export the data to a text file
-        with open(outputPath) as outputStream:
+        with open(outputPath,"w") as outputStream:
             for item in featureNames:
                 outputStream.write(item + "\n")
         return None
