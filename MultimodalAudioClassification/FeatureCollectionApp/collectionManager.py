@@ -17,7 +17,6 @@ import os
 import componentManager
 import featureCollector
 
-
         #### CLASS DEFINITIONS ####
 
 class CollectionManager(componentManager.ComponentManager):

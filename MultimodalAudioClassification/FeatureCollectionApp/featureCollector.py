@@ -190,7 +190,7 @@ class FeatureCollector(threading.Thread):
         """ Preprocess a single signal """
         # Cast to new type
         signal.normalizeAmplitude(np.float32)
-        #signal.show()
+        signal.show()
         return signal
 
     def __exportListOfFeatureVectors(self, 
