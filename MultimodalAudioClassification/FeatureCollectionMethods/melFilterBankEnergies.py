@@ -133,7 +133,7 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        if (self._make == False):
+        if (self._makeMfccs(signal) == False):
             return False
         self._data = signal.cachedData.melFilterFrameEnergies.getMeans(self._normalize)
         return True

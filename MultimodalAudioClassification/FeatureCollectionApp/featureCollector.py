@@ -181,7 +181,7 @@ class FeatureCollector(threading.Thread):
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
             signal = self.__preprocessSignal(signal)
-            FeatureCollector.dataManager().registerProcessedSample(signal)
+            #FeatureCollector.dataManager().registerExpectedSample(signal)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
             self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
@@ -190,7 +190,7 @@ class FeatureCollector(threading.Thread):
         """ Preprocess a single signal """
         # Cast to new type
         signal.normalizeAmplitude(np.float32)
-        signal.show()
+        #signal.showWaveform()
         return signal
 
     def __exportListOfFeatureVectors(self, 
