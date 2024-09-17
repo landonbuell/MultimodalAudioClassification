@@ -16,6 +16,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+import PyToolsPlotting
+
 import analysisFrames
 
         #### CLASS DEFINITIONS ####
@@ -181,12 +183,20 @@ class SignalData:
         plt.show()
         return None
 
+    def showSpectrogram(self) -> None:
+        """ Plot the spectrogram representation of this waveform """
+        titleText = "{0} \n ch#{1}".format(self.getSourcePath(),str(self.getChannelIndex()))
+        PyToolsPlotting.heatMap(
+            self.cachedData.analysisFramesFreq,
+            titleText)
+        return None
+
     def makeTimeSeriesAnalysisFrames(self,
                                      frameParams: analysisFrames.AnalysisFrameParameters,
                                      forceMakeFrames=False) -> bool:
         """ Populate the cached data' time series analysis frames """
         if (forceMakeFrames == True):
-            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
+            self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)           
             return True
         if (self.__shouldMakeTimeSeriesAnalysisFrames(frameParams) == True):
             self.cachedData.analysisFramesTime = analysisFrames.TimeSeriesAnalysisFrames(self,frameParams)
@@ -203,7 +213,6 @@ class SignalData:
             return True
         if (self.__shouldMakeFreqSeriesAnalysisFrames(frameParams) == True):
             self.cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
-            return True
         return False
 
     def makeFreqCenterOfMasses(self,
@@ -225,7 +234,7 @@ class SignalData:
                                   frameParams: analysisFrames.AnalysisFrameParameters,
                                   forceMakeFrames=False,) -> bool:
         """ Populate the cached data Mel Filter Bank Energies """
-        self.makeFreqSeriesAnalysisFrames(frameParams,forceMakeFrames) 
+        self.makeFreqSeriesAnalysisFrames(frameParams,forceMakeFrames)       
         if (forceMakeFrames == True):
             self.cachedData.melFilterFrameEnergies = analysisFrames.MelFilterBankEnergies(self,frameParams,numFilters)
             return True
@@ -235,19 +244,18 @@ class SignalData:
         return False
 
     def makeMelFrequencyCepstralCoeffs(self,
-                                    numFilters: int,
+                                    numCoeffs: int,
                                     frameParams: analysisFrames.AnalysisFrameParameters,
                                     forceMakeFrames=False,) -> bool:
         """ Populate the MFCCs """
-        self.makeMelFilterBankEnergies(numFilters,frameParams,forceMakeFrames)
+        self.makeMelFilterBankEnergies(numCoeffs,frameParams,forceMakeFrames)
         if (forceMakeFrames == True):
-            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numFilters)
+            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numCoeffs)
             return True
         if (self.__shouldMakeMelFrequencyCepstralCoefficients(frameParams) == True):
-            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numFilters)
+            self.cachedData.melFreqCepstralCoeffs = analysisFrames.MelFrequencyCepstralCoefficients(self,frameParams,numCoeffs)     
             return True
         return False
-
 
     # Private Interface
 
@@ -257,7 +265,7 @@ class SignalData:
         if (self.cachedData.analysisFramesTime is None):
             # Frames do not exist, we should make them
             return True
-        if (self.cachedData.analysisFramesTime.getParms() != frameParams):
+        if (self.cachedData.analysisFramesTime.getParams() != frameParams):
             # The provided params do not match to existing params
             return True
         return False

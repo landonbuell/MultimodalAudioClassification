@@ -32,7 +32,8 @@ if __name__ == "__main__":
     sampleRate = 44100
     t = np.arange(0,int(1e5),1) / sampleRate
     waveformA = np.cos( 2 * np.pi * 880 * t ) 
-    waveformB = np.cos( 2 * np.pi * 1760 * np.log(55 * t + 1e-8 ) * t)
+    waveformB = np.cos( 2 * np.pi * 1760 * t ) 
+    #waveformB = np.cos( 2 * np.pi * 1760 * np.log(55 * t + 1e-8 ) * t)
     waveform = waveformA + waveformB
 
     signal = signalData.SignalData(sampleRate,-1,waveform)

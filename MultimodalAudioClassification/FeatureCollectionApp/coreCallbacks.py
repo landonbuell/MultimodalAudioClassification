@@ -51,8 +51,10 @@ class FeatureVectorPostProcessCallbacks:
 class DefaultFeaturePipeline:
     """ Static Class of Default Feature Pipelines """
 
+    @staticmethod
     def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 00 """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
         pipeline = featurePipeline.FeaturePipeline("Alpha")
         #pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
         #pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
@@ -60,9 +62,12 @@ class DefaultFeaturePipeline:
         #                                    centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
         #pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans(
-            analysisFrames.AnalysisFrameParameters.defaultFrameParams(),12 ) )
+            params, 12 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients(
+            params, 12 ) )
         return pipeline
 
+    @staticmethod
     def getDefaultPipeline01() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 01 """
         frameParams = analysisFrames.AnalysisFrameParameters.defaultFrameParams()

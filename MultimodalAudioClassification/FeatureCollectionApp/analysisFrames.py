@@ -16,7 +16,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import threading
 
         #### FUNCTION DEFINITIONS ####
 
@@ -535,7 +534,7 @@ class MelFilterBankEnergies:
         self.__validateSignal(signal)
 
         numFrames = signal.cachedData.analysisFramesFreq.getNumFramesInUse()
-        self._data = np.zeros(shape=(numFrames,numFilters))
+        self._data = np.zeros(shape=(numFrames,numFilters),dtype=np.float32)
 
         self.__applyMelFilters(signal)
         
@@ -658,8 +657,6 @@ class MelFilterBankEnergies:
         #self.plotEnergiesByFrame(plotLogScale=True)
         return None
 
-
-
     # Magic Methods
 
     def __getitem__(self,index) -> object:
@@ -672,16 +669,16 @@ class MelFrequencyCepstralCoefficients:
     def __init__(self,
                  signal,
                  frameParams,
-                 numFilters: int):
+                 numCoeffs: int):
         """ Constructor """
         self._params        = frameParams
-        self._filterMatrix  = self._params.getMelFilters(numFilters,True)
+        self._filterMatrix  = self._params.getMelFilters(numCoeffs,True)
         self._data          = None
 
         self.__validateSignal(signal)
 
         numFrames = signal.cachedData.analysisFramesFreq.getNumFramesInUse()
-        self._data = np.zeros(shape=(numFrames,numFilters))
+        self._data = np.zeros(shape=(numFrames,numCoeffs))
 
         self.__createCepstralCoeffs(signal)
 
@@ -705,7 +702,7 @@ class MelFrequencyCepstralCoefficients:
         """ Return the size of each Mel Filter """
         return self._data.shape[1]
 
-    def getEnergies(self) -> np.ndarray:
+    def getCoeffs(self) -> np.ndarray:
         """ Return the raw MFBE array """
         return self._data
 
@@ -787,7 +784,6 @@ class MelFrequencyCepstralCoefficients:
                     self._data[tt,cc] += logEnergies[tt,mm] * cosTerm
         self._data /= np.sqrt(2 / self.numCoeffs)
         self._data /= np.max(np.abs(self._data))
-        self.showHeatmap()
         return None
 
     # Magic Methods
