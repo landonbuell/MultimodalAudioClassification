@@ -714,7 +714,7 @@ class MelFrequencyCepstralCoefficients:
         """ Return variance of energy in each filter """
         return np.var(self._data,axis=0)
 
-    def getMedian(self) -> np.ndarray:
+    def getMedians(self) -> np.ndarray:
         """ Return the median energy of each filter bank """
         return np.median(self._data,axis=0)
 

@@ -133,7 +133,7 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
 
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
-        """ OVERRIDE: Compute MFCC's for signal """
+        """ OVERRIDE: Compute average MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getMeans(self._normalize))
@@ -164,7 +164,7 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
 
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
-        """ OVERRIDE: Compute MFCC's for signal """
+        """ OVERRIDE: Compute MFBE's for signal """
         success = super()._callBody(signal)
         if (success == False):
             return False
@@ -196,7 +196,7 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
 
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
-        """ OVERRIDE: Compute MFCC's for signal """
+        """ OVERRIDE: Compute MFBE's for signal """
         success = super()._callBody(signal)
         if (success == False):
             return False
@@ -207,7 +207,7 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
     """
         Compute + Return the Min & Max of each MFBE across all analysis frames
     """
-
+    
     __NAME = "MelFilterBankEnergyMinMax"
 
     def __init__(self,
@@ -228,11 +228,11 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
 
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
-        """ OVERRIDE: Compute MFCC's for signal """
+        """ OVERRIDE: Compute MFBE's for signal """
         success = super()._callBody(signal)
         if (success == False):
             return False
         halfNumFeatures = int(self.getNumFeatures() // 2)
-        self._data[:halfNumFeatures] = signal.cachedData.melFilterFrameEnergies.getMins()
-        self._data[halfNumFeatures:] = signal.cachedData.melFilterFrameEnergies.getMaxes()
+        np.copyto(self._data[:halfNumFeatures], signal.cachedData.melFilterFrameEnergies.getMins())
+        np.copyto(self._data[halfNumFeatures:], signal.cachedData.melFilterFrameEnergies.getMaxes())
         return True

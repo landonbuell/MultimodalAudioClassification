@@ -75,3 +75,153 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
             self._logMessage(msg)
             return False
         return True
+
+    def _plotCoefficientsByFrame(self,
+                              signal: collectionMethod.signalData.SignalData):
+        """ Create a plot to show the the energy of each filter bank changes by each frame """
+        plt.figure(figsize=(16,12),facecolor="gray")
+        plt.title("Mel Filter Bank Energies by Frame",size=32,weight="bold")
+        plt.xlabel("Frame Index",size=24,weight="bold")
+        plt.ylabel("Energy Level",size=24,weight="bold")
+
+        energies = np.transpose(signal.cachedData.melFreqCepstralCoeffs.getCoeffs())
+        for ii in range(self.numFilters):
+            energyData = np.log10(energies[ii])
+            label = "MFBE #{0}".format(ii)
+            plt.plot(energyData,label=label)
+
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return None
+
+class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
+    """
+        Compute + Return the mean of eah MFCC across all analysis frames 
+    """
+
+    __NAME = "MelFrequencyCepstrumCoefficientMeans"
+
+    def __init__(self,
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 numCoeffs: int,
+                 forceRemake=False,
+                 normalize=True):
+        """ Constructor """
+        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        self._name = MelFrequencyCepstrumCoefficientMeans.__NAME
+        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Protected Interface
+
+    def _copyBody(self,
+                  signal: collectionMethod.signalData.SignalData) -> bool:
+        """ OVERRIDE: Compute average MFCC's for signal """
+        success = super()._callBody(signal)
+        if (success == False):
+            return False
+        np.copyto(self._data,signal.cachedData.melFreqCepstralCoeffs.getMeans(self._normalize))
+        return True
+
+class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
+    """
+        Compute + Return the varaiance of eah MFCC across all analysis frames 
+    """
+
+    __NAME = "MelFrequencyCepstrumCoefficientVaris"
+
+    def __init__(self,
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 numCoeffs: int,
+                 forceRemake=False,
+                 normalize=True):
+        """ Constructor """
+        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        self._name = MelFrequencyCepstrumCoefficientVaris.__NAME
+        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Protected Interface
+
+    def _copyBody(self,
+                  signal: collectionMethod.signalData.SignalData) -> bool:
+        """ OVERRIDE: Compute median MFCC's for signal """
+        success = super()._callBody(signal)
+        if (success == False):
+            return False
+        np.copyto(self._data,signal.cachedData.melFreqCepstralCoeffs.getVariances(self._normalize))
+        return True
+
+class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
+    """
+        Compute + Return the medians of eah MFCC across all analysis frames 
+    """
+
+    __NAME = "MelFrequencyCepstrumCoefficientMedians"
+
+    def __init__(self,
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 numCoeffs: int,
+                 forceRemake=False,
+                 normalize=True):
+        """ Constructor """
+        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        self._name = MelFrequencyCepstrumCoefficientMedians.__NAME
+        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Protected Interface
+
+    def _copyBody(self,
+                  signal: collectionMethod.signalData.SignalData) -> bool:
+        """ OVERRIDE: Compute median MFCC's for signal """
+        success = super()._callBody(signal)
+        if (success == False):
+            return False
+        np.copyto(self._data,signal.cachedData.melFreqCepstralCoeffs.getMedians(self._normalize))
+        return True
+
+class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
+    """
+        Compute + Return the Min & Max of eah MFCC across all analysis frames 
+    """
+
+    __NAME = "MelFrequencyCepstrumCoefficientMinMax"
+
+    def __init__(self,
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 numCoeffs: int,
+                 forceRemake=False,
+                 normalize=True):
+        """ Constructor """
+        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        self._name = MelFrequencyCepstrumCoefficientMinMax.__NAME
+        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    # Protected Interface
+
+    def _copyBody(self,
+                  signal: collectionMethod.signalData.SignalData) -> bool:
+        """ OVERRIDE: Compute mins & maxs of MFCC's for signal """
+        success = super()._callBody(signal)
+        if (success == False):
+            return False
+        halfNumFeatures = int(self.getNumFeatures() // 2)
+        np.copyto(self._data[:halfNumFeatures], signal.cachedData.melFreqCepstralCoeffs.getMins())
+        np.copyto(self._data[halfNumFeatures:], signal.cachedData.melFreqCepstralCoeffs.getMaxes())
+        return True
