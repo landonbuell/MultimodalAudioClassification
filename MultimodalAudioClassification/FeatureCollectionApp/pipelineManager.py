@@ -51,6 +51,8 @@ class PipelineManager(componentManager.ComponentManager):
         super().initialize()
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )        
         return None
 
     def teardown(self) -> None:

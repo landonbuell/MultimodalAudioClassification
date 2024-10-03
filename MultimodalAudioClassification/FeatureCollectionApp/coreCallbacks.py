@@ -51,26 +51,41 @@ class FeatureVectorPostProcessCallbacks:
 class DefaultFeaturePipeline:
     """ Static Class of Default Feature Pipelines """
 
-    @staticmethod
+    staticmethod
     def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 00 """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("Alpha")
-        #pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(12) )
-        #pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
-        #pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
-        #                                    centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
-        #pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16,16) )
-        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans(
-            params, 12 ) )
-        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients(
-            params, 12 ) )
+        pipeline = featurePipeline.FeaturePipeline("pipeline00Misc")
         return pipeline
 
     @staticmethod
     def getDefaultPipeline01() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 01 """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+        pipeline = featurePipeline.FeaturePipeline("pipeline00Mfbes")
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergies( params, 16 ) )
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans( params, 16 ) )
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyVaris( params, 16 ) )
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMedians( params, 16 ) )
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMinMax( params, 16 ) )
+        return pipeline
+
+    @staticmethod
+    def getDefaultPipeline02() -> featurePipeline.FeaturePipeline:
+        """ Get the default pipeline 02 """
+        params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
+        pipeline = featurePipeline.FeaturePipeline("pipeline01Mfccs")
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients( params, 16 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMeans( params, 16 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientVaris( params, 16 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMedians( params, 16 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMinMax( params, 16 ) )
+        return pipeline
+
+    @staticmethod
+    def getDefaultPipeline03() -> featurePipeline.FeaturePipeline:
+        """ Get the default pipeline 03 """
         frameParams = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("Beta")
+        pipeline = featurePipeline.FeaturePipeline("pipeline02Spectogram")
         pipeline.appendCollectionMethod( spectrogram.Spectrogram(frameParams) )
         return pipeline

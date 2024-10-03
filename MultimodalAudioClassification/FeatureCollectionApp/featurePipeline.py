@@ -88,7 +88,7 @@ class FeaturePipeline:
     def getOutputPath(self) -> str:
         """ Return the output Path for this pipeline """
         rootOutputPath = self._ptrPipelineMgr.getSettings().getOutputPath()
-        return os.path.join(rootOutputPath,"pipeline{0}".format(self._indentifier))
+        return os.path.join(rootOutputPath,self._indentifier)
 
     # Public Interface
 

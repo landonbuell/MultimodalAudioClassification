@@ -62,6 +62,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
+        #TODO: Handle this shape mis-match
         np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getEnergies())
         return True
 
