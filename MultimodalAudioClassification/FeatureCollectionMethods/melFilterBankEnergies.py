@@ -35,6 +35,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
         super().__init__(MelFilterBankEnergies.__NAME,
@@ -42,6 +43,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         self._params        = frameParams
         self._numFilters    = numFilters
         self._forceRemake   = forceRemake
+        self._framesInUse   = onlyFramesInUse
         self._normalize     = normalize
 
     def __del__(self):
@@ -55,6 +57,15 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ Return the number of filters """
         return self._numFilters
 
+    @property
+    def onlyIncludeFramesInUse(self) -> bool:
+        """ Return T/F if features should only include frames in use """
+
+    @property
+    def normalize(self) -> bool:
+        """ Return T/F if return features should be normalized within +/- 1 """
+        return self._normalize
+
     # Protected Interface
 
     def _callBody(self,
@@ -62,16 +73,15 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
-        #TODO: Handle this shape mis-match
-        np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getEnergies())
+        energies = signal.cachedData.melFilterFrameEnergies.getEnergies()
+        np.copyto(self._data,energies.ravel())
         return True
 
     def _makeMfbes(self,
                    signal: collectionMethod.signalData.SignalData) -> bool:
         """ Make Mel Frequency Cepstrum Coefficients """
-        madeMFBEs = signal.makeMelFilterBankEnergies(
-            self.numFilters,self._params,self._forceRemake)
-        if (madeMFBEs == False):
+        signal.makeMelFilterBankEnergies(self.numFilters,self._params,self._forceRemake)
+        if (signal.cachedData.melFilterFrameEnergies == None):
             msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
             self._logMessage(msg)
             return False
@@ -137,7 +147,8 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
         """ OVERRIDE: Compute average MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
-        np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getMeans(self._normalize))
+        meanEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(True,self.normalize
+        np.copyto(self._data,meanEnergies)
         return True
 
 class MelFilterBankEnergyVaris(MelFilterBankEnergies):

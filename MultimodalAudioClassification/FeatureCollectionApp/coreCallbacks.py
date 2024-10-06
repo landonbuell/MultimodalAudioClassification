@@ -62,7 +62,7 @@ class DefaultFeaturePipeline:
     def getDefaultPipeline01() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 01 """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("pipeline00Mfbes")
+        pipeline = featurePipeline.FeaturePipeline("pipeline01Mfbes")
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergies( params, 16 ) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans( params, 16 ) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyVaris( params, 16 ) )
@@ -74,7 +74,7 @@ class DefaultFeaturePipeline:
     def getDefaultPipeline02() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 02 """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("pipeline01Mfccs")
+        pipeline = featurePipeline.FeaturePipeline("pipeline02Mfccs")
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients( params, 16 ) )
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMeans( params, 16 ) )
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientVaris( params, 16 ) )
@@ -86,6 +86,6 @@ class DefaultFeaturePipeline:
     def getDefaultPipeline03() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 03 """
         frameParams = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("pipeline02Spectogram")
+        pipeline = featurePipeline.FeaturePipeline("pipeline03Spectogram")
         pipeline.appendCollectionMethod( spectrogram.Spectrogram(frameParams) )
         return pipeline

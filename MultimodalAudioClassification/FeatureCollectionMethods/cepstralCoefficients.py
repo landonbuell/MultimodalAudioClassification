@@ -66,11 +66,10 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
         return True
 
     def _makeMfccs(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
-        madeMFCCs = signal.makeMelFrequencyCepstralCoeffs(
-            self.numCoeffs,self._params,self._forceRemake)
-        if (madeMFCCs == False):
+        signal.makeMelFrequencyCepstralCoeffs(self.numCoeffs,self._params,self._forceRemake)
+        if (signal.cachedData.melFreqCepstralCoeffs == None):
             msg = "Failed to make Mel Frequency Cepstral Coefficients for signal: {0}".format(signal)
             self._logMessage(msg)
             return False

@@ -213,6 +213,7 @@ class SignalData:
             return True
         if (self.__shouldMakeFreqSeriesAnalysisFrames(frameParams) == True):
             self.cachedData.analysisFramesFreq = analysisFrames.FreqSeriesAnalysisFrames(self,frameParams)
+            return True
         return False
 
     def makeFreqCenterOfMasses(self,
