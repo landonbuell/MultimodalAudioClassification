@@ -561,7 +561,7 @@ class MelFilterBankEnergies(__AbstractAnalysisFrames):
         """ Return the frame energies """
         return self.rawFrames(onlyInUse)
 
-    def getMeans(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getMeans(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return mean energy of each filter """
         rawData = self.rawFrames(onlyInUse)
         means = np.mean(rawData,axis=0)
@@ -569,7 +569,7 @@ class MelFilterBankEnergies(__AbstractAnalysisFrames):
             means /= np.max(means)
         return means
 
-    def getVariances(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getVariances(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return variance of energy in each filter """
         rawData = self.rawFrames(onlyInUse)
         varis = np.var(rawData,axis=0)
@@ -577,7 +577,7 @@ class MelFilterBankEnergies(__AbstractAnalysisFrames):
             varis /= np.max(varis)
         return varis
 
-    def getMedians(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getMedians(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the median energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
         medis = np.median(rawData,axis=0)
@@ -585,15 +585,21 @@ class MelFilterBankEnergies(__AbstractAnalysisFrames):
             medis /= np.max(medis)
         return medis
 
-    def getMins(self,onlyInUse=False) -> np.ndarray:
+    def getMins(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the minimum energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
-        return np.min(rawData,axis=0)
+        mins = np.min(rawData,axis=0)
+        if (normalize == True):
+            mins /= np.max(mins)
+        return mins
 
-    def getMaxes(self,onlyInUse=False) -> np.ndarray:
+    def getMaxes(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the maximim energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
-        return np.max(rawData,axis=0)
+        maxes = np.max(rawData,axis=0)
+        if (normalize == True):
+            maxes /= np.max(maxes)
+        return maxes
 
     # Public Interface
 
@@ -694,9 +700,9 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
 
     def getCoeffs(self,onlyInUse=False) -> np.ndarray:
         """ Return the frame energies """
-        return self.rawFrames(onlyInUse)
+        return self.rawFrames(onlyInUse)v
 
-    def getMeans(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getMeans(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return mean energy of each filter """
         rawData = self.rawFrames(onlyInUse)
         means = np.mean(rawData,axis=0)
@@ -704,7 +710,7 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
             means /= np.max(means)
         return means
 
-    def getVariances(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getVariances(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return variance of energy in each filter """
         rawData = self.rawFrames(onlyInUse)
         varis = np.var(rawData,axis=0)
@@ -712,7 +718,7 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
             varis /= np.max(varis)
         return varis
 
-    def getMedians(self,onlyInUse=False,normalize=False) -> np.ndarray:
+    def getMedians(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the median energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
         medis = np.median(rawData,axis=0)
@@ -720,15 +726,21 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
             medis /= np.max(medis)
         return medis
 
-    def getMins(self,onlyInUse=False) -> np.ndarray:
+    def getMins(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the minimum energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
-        return np.min(rawData,axis=0)
+        mins = np.min(rawData,axis=0)
+        if (normalize == True):
+            mins /= np.max(mins)
+        return mins
 
-    def getMaxes(self,onlyInUse=False) -> np.ndarray:
+    def getMaxes(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return the maximim energy of each filter bank """
         rawData = self.rawFrames(onlyInUse)
-        return np.max(rawData,axis=0)
+        maxes = np.max(rawData,axis=0)
+        if (normalize == True):
+            maxes /= np.max(maxes)
+        return maxes
 
     # Private Interface
 

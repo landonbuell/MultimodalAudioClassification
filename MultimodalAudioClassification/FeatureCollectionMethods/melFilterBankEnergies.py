@@ -19,7 +19,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import collectionMethod
-
 import analysisFrames
 
         #### CLASS DEFINITIONS ####
@@ -35,7 +34,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
-                 onlyFramesInUse=True,
+                 onlyFramesInUse=False,
                  normalize=True):
         """ Constructor """
         super().__init__(MelFilterBankEnergies.__NAME,
@@ -60,6 +59,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     @property
     def onlyIncludeFramesInUse(self) -> bool:
         """ Return T/F if features should only include frames in use """
+        return self._framesInUse
 
     @property
     def normalize(self) -> bool:
@@ -82,7 +82,7 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         """ Make Mel Frequency Cepstrum Coefficients """
         signal.makeMelFilterBankEnergies(self.numFilters,self._params,self._forceRemake)
         if (signal.cachedData.melFilterFrameEnergies == None):
-            msg = "Failed to make Mel Filter bank energies for signal: {0}".format(signal)
+            msg = "Failed to make Mel Filter Bank Energies for signal: {0}".format(signal)
             self._logMessage(msg)
             return False
         return True
@@ -130,9 +130,10 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numFilters,forceRemake,normalize)
+        super().__init__(frameParams,numFilters,forceRemake,onlyFramesInUse,normalize)
         self._name  = MelFilterBankEnergyMeans.__NAME
         self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
 
@@ -147,7 +148,8 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
         """ OVERRIDE: Compute average MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
-        meanEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(True,self.normalize
+        meanEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(
+            self.onlyIncludeFramesInUse,self.normalize)
         np.copyto(self._data,meanEnergies)
         return True
 
@@ -162,9 +164,10 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numFilters,forceRemake,normalize)
+        super().__init__(frameParams,numFilters,forceRemake,onlyFramesInUse,normalize)
         self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
         self._name = MelFilterBankEnergyVaris.__NAME
 
@@ -177,10 +180,11 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
-        success = super()._callBody(signal)
-        if (success == False):
+        if (self._makeMfbes(signal) == False):
             return False
-        np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getVariances(self._normalize))
+        variEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(
+            True,self.onlyIncludeFramesInUse,self.normalize)
+        np.copyto(self._data,variEnergies)       
         return True
 
 class MelFilterBankEnergyMedians(MelFilterBankEnergies):
@@ -194,9 +198,10 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numFilters,forceRemake,normalize)
+        super().__init__(frameParams,numFilters,forceRemake,onlyFramesInUse,normalize)
         self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
         self._name  = MelFilterBankEnergyMedians.__NAME
 
@@ -209,10 +214,11 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
-        success = super()._callBody(signal)
-        if (success == False):
+        if (self._makeMfbes(signal) == False):
             return False
-        np.copyto(self._data,signal.cachedData.melFilterFrameEnergies.getMedians(self._normalize))
+        mediEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(
+            self.onlyIncludeFramesInUse,self.normalize)
+        np.copyto(self._data,mediEnergies)    
         return True
 
 class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
@@ -226,9 +232,10 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numFilters: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numFilters * 2,forceRemake,normalize)
+        super().__init__(frameParams,numFilters * 2,forceRemake,onlyFramesInUse,normalize)
         self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
         self._name = MelFilterBankEnergyMinMax.__NAME
 
@@ -241,10 +248,15 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
-        success = super()._callBody(signal)
-        if (success == False):
+        if (self._makeMfbes(signal) == False):
             return False
         halfNumFeatures = int(self.getNumFeatures() // 2)
-        np.copyto(self._data[:halfNumFeatures], signal.cachedData.melFilterFrameEnergies.getMins())
-        np.copyto(self._data[halfNumFeatures:], signal.cachedData.melFilterFrameEnergies.getMaxes())
+
+        minEngergies = signal.cachedData.melFilterFrameEnergies.getMins(
+            self.onlyIncludeFramesInUse,self.normalize)
+        np.copyto(self._data[:halfNumFeatures], minEngergies)
+
+        maxEnergies = signal.cachedData.melFilterFrameEnergies.getMaxes(
+            self.onlyIncludeFramesInUse,self.normalize)
+        np.copyto(self._data[halfNumFeatures:], maxEnergies)
         return True
