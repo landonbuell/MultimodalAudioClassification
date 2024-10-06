@@ -80,7 +80,7 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
 
     def _makeMfccs(self,
                    signal: collectionMethod.signalData.SignalData) -> bool:
-        """ OVERRIDE: Compute MFCC's for signal """
+        """ Compute MFCC's for signal """
         signal.makeMelFrequencyCepstralCoeffs(self.numCoeffs,self._params,self._forceRemake)
         if (signal.cachedData.melFreqCepstralCoeffs == None):
             msg = "Failed to make Mel Frequency Cepstral Coefficients for signal: {0}".format(signal)
@@ -122,7 +122,11 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
                  onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numCoeffs,forceRemake,onlyFramesInUse,normalize)
+        super().__init__(frameParams,
+                         numCoeffs,
+                         forceRemake,
+                         onlyFramesInUse,
+                         normalize)
         self._name = MelFrequencyCepstrumCoefficientMeans.__NAME
         self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
 
@@ -132,7 +136,7 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
 
     # Protected Interface
 
-    def _copyBody(self,
+    def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute average MFCC's for signal """
         if (self._makeMfccs(signal) == False):
@@ -153,9 +157,14 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numCoeffs: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        super().__init__(frameParams,
+                         numCoeffs,
+                         forceRemake,
+                         onlyFramesInUse,
+                         normalize)
         self._name = MelFrequencyCepstrumCoefficientVaris.__NAME
         self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
 
@@ -165,7 +174,7 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
 
     # Protected Interface
 
-    def _copyBody(self,
+    def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute median MFCC's for signal """
         if (self._makeMfccs(signal) == False):
@@ -186,9 +195,14 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numCoeffs: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        super().__init__(frameParams,
+                         numCoeffs,
+                         forceRemake,
+                         onlyFramesInUse,
+                         normalize)
         self._name = MelFrequencyCepstrumCoefficientMedians.__NAME
         self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
 
@@ -198,7 +212,7 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
 
     # Protected Interface
 
-    def _copyBody(self,
+    def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute median MFCC's for signal """
         if (self._makeMfccs(signal) == False):
@@ -219,11 +233,16 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
                  frameParams: analysisFrames.AnalysisFrameParameters,
                  numCoeffs: int,
                  forceRemake=False,
+                 onlyFramesInUse=True,
                  normalize=True):
         """ Constructor """
-        super().__init__(frameParams,numCoeffs,forceRemake,normalize)
+        super().__init__(frameParams,
+                         numCoeffs,
+                         forceRemake,
+                         onlyFramesInUse,
+                         normalize)
         self._name = MelFrequencyCepstrumCoefficientMinMax.__NAME
-        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._data = np.zeros(shape=(numCoeffs * 2,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
@@ -231,7 +250,7 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
 
     # Protected Interface
 
-    def _copyBody(self,
+    def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute mins & maxs of MFCC's for signal """
         if (self._makeMfbes(signal) == False):

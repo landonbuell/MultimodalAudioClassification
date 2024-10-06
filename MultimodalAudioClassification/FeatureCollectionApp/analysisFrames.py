@@ -700,7 +700,7 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
 
     def getCoeffs(self,onlyInUse=False) -> np.ndarray:
         """ Return the frame energies """
-        return self.rawFrames(onlyInUse)v
+        return self.rawFrames(onlyInUse)
 
     def getMeans(self,onlyInUse=True,normalize=False) -> np.ndarray:
         """ Return mean energy of each filter """
