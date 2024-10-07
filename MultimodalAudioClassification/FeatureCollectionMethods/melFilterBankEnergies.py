@@ -74,6 +74,8 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         if (self._makeMfbes(signal) == False):
             return False
         energies = signal.cachedData.melFilterFrameEnergies.getEnergies()
+        if (self.normalize == True):
+            energies /= np.max(energies)
         np.copyto(self._data,energies.ravel())
         return True
 

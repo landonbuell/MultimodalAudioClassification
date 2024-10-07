@@ -40,6 +40,15 @@ class SignalData:
             """ Destructor """
             pass
 
+        def clear(self) -> None:
+            """ Set all data members to None """
+            self.analysisFramesTime = None
+            self.analysisFramesFreq = None
+            self.freqCenterOfMasses = None
+            self.melFilterFrameEnergies  = None
+            self.melFreqCepstralCoeffs = None
+            return None
+
     # Applies a unique label to each sample
     __unqiueCounter = 0
 

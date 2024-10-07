@@ -55,6 +55,8 @@ def debugPlotXy(xData,yData,title):
 
 class AnalysisFrameParameters:
     """ Stores parameters for analysis frames """
+
+    DELTA = 1e-8
  
     def __init__(self,
                  samplesPerFrame=2048,
@@ -757,12 +759,15 @@ class MelFrequencyCepstralCoefficients(__AbstractAnalysisFrames):
 
     def __createCepstralCoeffs(self,signalData) -> None:
         """ Create Mel Freq Cepstral Coeffs from Filter bank energies """
-        logEnergies = np.log10(signalData.cachedData.melFilterFrameEnergies.getEnergies())
-        for tt in range(self.numFrames):
+        energies = signalData.cachedData.melFilterFrameEnergies.getEnergies(True)
+        logEnergies = np.log10(energies)
+        numFrames = logEnergies.shape[0]
+
+        for tt in range(numFrames):
             for cc in range(self.numCoeffs):
                 for mm in range (self.numCoeffs):
                     cosTerm = np.cos((cc + 1) * (mm + 0.5) * np.pi / self.numCoeffs)
                     self._data[tt,cc] += logEnergies[tt,mm] * cosTerm
+
         self._data /= np.sqrt(2 / self.numCoeffs)
-        self._data /= np.max(np.abs(self._data))
         return None

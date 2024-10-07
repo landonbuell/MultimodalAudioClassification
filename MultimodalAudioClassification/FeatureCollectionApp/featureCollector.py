@@ -199,7 +199,7 @@ class FeatureCollector(threading.Thread):
         """ Export a list of feature Vectors to binaries """
         for ii,vector in enumerate(listOfFeatureVectors):
             # Export
-            if (vector is None):
+            if ((vector is None) or (len(vector) == 0)):
                 msg = "Got None for feature vector on signal {0}, pipeline {1}".format(
                     signal.uniqueID(),ii)
                 self.logMessage(msg)

@@ -75,6 +75,8 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
         if (self._makeMfccs(signal) == False):
             return False
         coeffs = signal.cachedData.melFreqCepstralCoeffs.getCoeffs()
+        if (self.normalize == True):
+            coeffs /= np.max(coeffs)
         np.copyto(self._data,coeffs.ravel())
         return True
 
@@ -179,7 +181,7 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
         """ OVERRIDE: Compute median MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
-        variCoeffs = signal.cachedData.melFreqCepstralCoeffs.getVari(
+        variCoeffs = signal.cachedData.melFreqCepstralCoeffs.getVariances(
             self.onlyIncludeFramesInUse,self.normalize)
         np.copyto(self._data,variCoeffs)
         return True
@@ -253,7 +255,7 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
     def _callBody(self,
                   signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute mins & maxs of MFCC's for signal """
-        if (self._makeMfbes(signal) == False):
+        if (self._makeMfccs(signal) == False):
             return False
         halfNumFeatures = int(self.getNumFeatures() // 2)
 
