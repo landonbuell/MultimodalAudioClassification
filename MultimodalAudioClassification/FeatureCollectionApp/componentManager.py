@@ -20,8 +20,9 @@ class ComponentManager:
                  componentName: str,
                  collectionApp):
         """ Constructor """
-        self._name  = componentName
-        self._app   = collectionApp
+        self._name      = componentName
+        self._app       = collectionApp
+        self._status    = 0
 
     def __del__(self):
         """ Destructor """
@@ -36,6 +37,10 @@ class ComponentManager:
     def getApp(self):
         """ Return the feature collection app """
         return self._app
+
+    def getStatus(self) -> int:
+        """ Return the status of this component """
+        return self._status
 
     def getSettings(self):
         """ Return the app's settings """

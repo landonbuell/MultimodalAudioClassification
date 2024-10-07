@@ -76,6 +76,20 @@ class FeatureVector:
             raise RuntimeWarning(msg)
         return success
 
+    def copyFromArray(self, source: np.ndarray, offset=0) -> None:
+        """ Perform numpy copyto to quickly copy bytes into feature vector """
+        if (offset + source.size > self._data.size):
+            msg = "Contents of source array + offset will not fit into underlying feature array"
+            raise RuntimeError(msg)
+        # Copy into underlying memory
+        np.copyto(
+            self._data[offset:offset+source.size],
+            source,
+            casting='no')
+        return None
+
+
+
     def __getitem__(self,index: int) -> np.float32:
         """ Index operator """
         return self._data[index]

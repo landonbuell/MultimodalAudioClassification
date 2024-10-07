@@ -80,3 +80,4 @@ def plotSignal(xData,yData,title,savepath=None,show=True):
     if (show == True):
         plt.show()
     return None
+

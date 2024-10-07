@@ -40,18 +40,25 @@ class PipelineManager(componentManager.ComponentManager):
         """ Return the current size of the database """
         return len(self._featurePipelines)
 
+    def getOutputPath(self,pipelineIndex: int) -> str:
+        """ Return the output path for the pipeline at the provided index """
+        return self._featurePipelines[pipelineIndex].getOutputPath()
+
     # Public Interface
 
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )        
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
+        self.__exportFeatureNames()
         return None
 
     def registerPipeline(self,
@@ -73,6 +80,14 @@ class PipelineManager(componentManager.ComponentManager):
             featureVectors[ii] = pipeline.evaluate(signal)
         return featureVectors
             
+    # Private Interface
+
+    def __exportFeatureNames(self) -> None:
+        """ Export all feature names for a single pipeline """
+        for pipeline in self._featurePipelines:
+            pipeline.exportFeatureNames()
+        return None
+
             
 
 

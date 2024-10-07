@@ -14,6 +14,8 @@
 
 import numpy as np
 
+import signalData
+
 import collectionMethod
 import analysisFrames
 
@@ -27,12 +29,15 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     __NAME = "SPECTROGRAM"
     
     def __init__(self,
-                 frameParams: analysisFrames.AnalysisFrameParameters):
+                 frameParams: analysisFrames.AnalysisFrameParameters,
+                 separateRealAndImag=True):
         """ Constructor """
-        super().__init__(Spectrogram.__NAME,frameParams.getFreqFramesNumFeatures())
+        super().__init__(Spectrogram.__NAME,
+                         frameParams.getFreqFramesNumFeatures(
+                             separateRealImag=separateRealAndImag)) # set to 1 for memory efficiency!
         self._params = frameParams
-        self._callbacks.append( collectionMethod.CollectionMethodCallbacks.signalHasAnalysisFramesTime )
-
+        self._separateRealAndImaginary = separateRealAndImag
+        
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -47,7 +52,23 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     @property
     def frameSize(self) -> int:
         """ Return the size of each frame """
-        return self._parmas.freqFrameSize
+        return self._params.freqFrameSize
+
+    # Public Interface
+
+    def featureNames(self) -> list:
+        """ VIRTUAL: Return a list of the feature names """
+        result = [None] * self.getNumFeatures()    
+        counter = 0
+        outputShape = self._params.getFreqFrameShape(self._separateRealAndImaginary)
+        # output Shape is always 3D
+        for ii in range(outputShape[0]):
+            for jj in range(outputShape[1]):
+                for kk in range(outputShape[2]):
+                    name = "[{0},{1},{2}]".format(ii,jj,kk)
+                    result[counter] = name
+                    counter += 1
+        return result
 
     # Protected Interface
 
@@ -55,6 +76,21 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
                   signal: signalData.SignalData) -> bool:
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
-        self._data = signal.cachedData.analysisFramesFreq.flatten()
+        #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())
+        if (self._separateRealAndImaginary == True):
+            halfWay = int(self.getNumFeatures() / 2)
+            np.copyto(
+                self._data[:halfWay],
+                np.real(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
+                casting='no')
+            np.copyto(
+                self._data[halfWay:],
+                np.imag(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
+                casting='no')
+        else:
+             np.copyto(
+                 self._data,
+                 np.abs(signal.cachedData.analysisFramesFreq.rawFrames()),
+                 casting='no')
         return True
     

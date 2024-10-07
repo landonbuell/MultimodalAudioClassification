@@ -11,6 +11,9 @@
 
         #### IMPORTS ####
 
+import os
+import numpy as np
+
 import signalData
 import featureVector
 
@@ -82,6 +85,11 @@ class FeaturePipeline:
         self._ptrPipelineMgr = pipelineMgr
         return None
 
+    def getOutputPath(self) -> str:
+        """ Return the output Path for this pipeline """
+        rootOutputPath = self._ptrPipelineMgr.getSettings().getOutputPath()
+        return os.path.join(rootOutputPath,self._indentifier)
+
     # Public Interface
 
     def appendCollectionMethod(self,
@@ -101,6 +109,21 @@ class FeaturePipeline:
         self.__evaluateFeaturePostprocessCallbacks(features)
         return features
 
+    def exportFeatureNames(self) -> None:
+        """ Export feature names to pipeline output folder """
+        outputPath = os.path.join(self.getOutputPath(),"featureNames.txt")
+        featureNames = []
+        for method in self._methods:
+            # Invoke the collection method
+            if (method is None):
+                continue
+            featureNames += method.featureNames()
+        # Export the data to a text file
+        with open(outputPath,"w") as outputStream:
+            for item in featureNames:
+                outputStream.write(item + "\n")
+        return None
+
     # Private Interface
 
     def __evaluateHelper(self,
@@ -109,21 +132,23 @@ class FeaturePipeline:
         """ Helper function to evaluate the feature pipeline """
         featuresCollected = 0
         for method in self._methods:
+            # Invoke the collection method
             if (method is None):
                 continue
             success = method.call(signal)
             if (success == False):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
-                    str(method),method.getNumFeatures(),len(features))
+                msg = "Got unsuccessful return flag from collection method: {0} on signal {1}".format(
+                    method,signal)
                 raise RuntimeError(msg)
+            # Retrive the internally stored features
             features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
+                msg = "Expected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
-            for ii in range(method.getNumFeatures()):
-                vector[featuresCollected] = features[ii]
-                featuresCollected += 1
+            # Do a numpy copy
+            vector.copyFromArray(features,featuresCollected)
+            featuresCollected += features.size
             # Completed with current method
         return None
 

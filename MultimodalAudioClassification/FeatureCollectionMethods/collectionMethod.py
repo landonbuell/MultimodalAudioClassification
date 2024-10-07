@@ -39,6 +39,7 @@ class AbstractCollectionMethod:
         numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
         self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        self._ptrPipeline  = None
         self._callbacks = []    # called in __evaluateCallbacks() 
   
     def __del__(self):
@@ -58,6 +59,10 @@ class AbstractCollectionMethod:
     def getNumFeatures(self) -> int:
         """ Return the number of features returned by this method """
         return self._data.size
+
+    def getPipeliene(self) -> object:
+        """ Return the pipeline that owns this collection method """
+        return self._ptrPipeline
 
     # Public Interface
 
@@ -83,6 +88,11 @@ class AbstractCollectionMethod:
         result = ["{0}{1}".format(self._name,x) for x in range(self._data.size)]
         return result
 
+    def registerPipeline(self,ptrPipeline) -> None:
+        """ Register the pipeline that will run this collection method (opt) """
+        self._ptrPipeline = ptrPipeline
+        return None
+
     # Protected Interface 
     
     def _validateNumFeatures(self,numFeatures: int) -> int:
@@ -97,6 +107,14 @@ class AbstractCollectionMethod:
                   signal: signalData.SignalData) -> bool:
         """ VIRTUAL: main body of call function """
         return False
+
+    def _logMessage(self,message) -> None:
+        """ Log a message through the owning pipeline if possible """
+        if (self._ptrPipeline is not None):
+            ptrPipelineMgr = self._ptrPipeline.getManager()
+            if (ptrPipelineMgr is not None):
+                ptrPipelineMgr.logMessage(message)
+        return None
 
     # Private Interface
 
