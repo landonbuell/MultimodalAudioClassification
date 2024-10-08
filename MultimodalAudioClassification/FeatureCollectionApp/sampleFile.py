@@ -23,12 +23,16 @@ import signalData
 class SampleFileIO:
     """ Stores basic info for each sample file """
 
+    __uniqueIdentifier = 0
+
     def __init__(self,
                  targetClass: int,
                  sourceFile: str):
         """ Constructor """
         self._target    = targetClass
         self._source    = os.path.abspath(sourceFile)
+        self._id        = SampleFileIO.__uniqueIdentifier
+        SampleFileIO.__uniqueIdentifier += 1
 
     def __del__(self):
         """ Destructor """
@@ -43,6 +47,10 @@ class SampleFileIO:
     def getSource(self) -> str:
         """ Return the file source """
         return self._source
+
+    def getId(self) -> int:
+        """ Return the sample ID """
+        return self._id
 
     def isReal(self) -> bool:
         """ Return T/F if source file exists """
@@ -111,7 +119,7 @@ class SampleFileIO:
 
     def __str__(self) -> str:
         """ Cast to string """
-        return "{0} @ {1}".format(self._target,self._source)
+        return "Sample #{0} @ {1}".format(self._id,self._source)
 
     def __repr__(self) -> str:
         """ Representation for debugging """

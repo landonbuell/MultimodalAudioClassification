@@ -332,6 +332,10 @@ class SignalData:
         self._waveform[key] = val
         return None
 
+    def __str__(self) -> str:
+        """ Cast to string """
+        return "Signal #{0} @ {1}".format(self._uniqueID,self._source)
+
     def __repr__(self) -> str:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
