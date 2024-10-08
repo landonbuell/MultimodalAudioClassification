@@ -51,6 +51,7 @@ class FeatureVector:
         """ Reset all entries to zeros """
         numFeatures = self._data.size
         self._data = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        return None
 
     def toBinaryFile(self,
                fullOutputPath: str) -> bool:
@@ -87,8 +88,6 @@ class FeatureVector:
             source,
             casting='no')
         return None
-
-
 
     def __getitem__(self,index: int) -> np.float32:
         """ Index operator """

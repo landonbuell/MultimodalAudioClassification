@@ -52,13 +52,14 @@ class PipelineManager(componentManager.ComponentManager):
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
+        self.__exportPipelineInfo()
+        self.__exportFeatureNames()
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
-        self.__exportFeatureNames()
         return None
 
     def registerPipeline(self,
@@ -81,6 +82,10 @@ class PipelineManager(componentManager.ComponentManager):
         return featureVectors
             
     # Private Interface
+
+    def __exportPipelineInfo(self) -> None:
+        """ Export info about each pipeline to their appropriate paths """
+        return None
 
     def __exportFeatureNames(self) -> None:
         """ Export all feature names for a single pipeline """

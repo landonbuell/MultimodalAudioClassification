@@ -12,6 +12,7 @@
         #### IMPORTS ####
 
 import os
+import datetime
 
         #### CLASS DEFINITIONS ####
 
@@ -24,7 +25,7 @@ class AppSettings:
         """ Constructor """
         self._pathsInput    = set()     # __initInputPaths
         self._pathOutput    = "NULL"    # __initOutputPath
-        self._loggerName    = "textLog.txt"
+        self._loggerName    = "textLog"
 
         self._collectionThreads     = 1
         self._findFilesRecurseDepth = 1
@@ -51,13 +52,17 @@ class AppSettings:
         """ Return output Path """
         return self._pathOutput
 
-    def getTextLogPath(self) -> str:
+    def getTextLogPath(self,includeTimeStamp=True) -> str:
         """ Retun the path where the text logger is outputted to """
-        return os.path.join(self._pathOutput,self._loggerName)
+        loggerPath = os.path.join(self._pathOutput,self._loggerName + ".txt")
+        if (includeTimeStamp == True):
+            now = AppSettings.getCurrentTimeStamp()
+            loggerPath = os.path.join(self._pathOutput,self._loggerName + now + ".txt")
+        return loggerPath
 
     def getNumCollectionThreads(self) -> int:
         """ Return the number of collection threads to use """
-        return self._collectionThreads
+        return max(self._collectionThreads,1)
 
     def getFindFilesRecursionDepth(self) -> int:
         """ Retur the depth use to recurse directory trees """
@@ -75,6 +80,17 @@ class AppSettings:
         """ Return T/F if this run is in development mode """
         return self._developmentMode
 
+    @staticmethod
+    def getCurrentTimeStamp():
+        """ Get the current time in YYYYMMDDHHMMSS"""
+        now = str(datetime.datetime.now())
+        now = now.replace(" ","")
+        now = now.replace(":","")
+        now = now.replace("-","")
+        now = now.replace(".","")
+        now = now[:-6]
+        return str(now)
+
     # Public Interface
 
     @staticmethod
@@ -86,7 +102,7 @@ class AppSettings:
                         #os.path.join(inputFilesHome,"Y3.csv"),
                         os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV2"
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV3"
         return AppSettings(inputFiles,outputPath)
 
     # Private Interface

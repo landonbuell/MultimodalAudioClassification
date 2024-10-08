@@ -39,7 +39,9 @@ class SampleDatabase(componentManager.ComponentManager):
         super().__init__(SampleDatabase.__NAME,app)
         self._inputFiles    = queue.Queue()
         self._database      = queue.Queue(SampleDatabase.__CAPACITY)      
-        self._size          = 0
+        self._size          = 0     # also tracks size
+        self._queued        = 0     # total number of samples queued
+        self._released      = 0     # total number of samples released
         self._password      = ""
 
     def __del__(self):
@@ -52,6 +54,14 @@ class SampleDatabase(componentManager.ComponentManager):
     def getSize(self) -> int:
         """ Return the current size of the database """
         self._size
+
+    def getNumQueued(self) -> int:
+        """ Return the total number of samples queued """
+        return self._queued
+
+    def getNumReleased(self) -> int:
+        """ Return the total number of samples released """
+        self._released
 
     def getCapacity(self) -> int:
         """ Return the capacity of the database """
@@ -75,11 +85,13 @@ class SampleDatabase(componentManager.ComponentManager):
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
         self.__buildSampleDatabase()
+        self.logState()
         return None
 
     def teardown(self) -> None:
-        """ OVERRIDE: Teardown the Sample Database """
+        """ OVERRIDE: Teardown the Sample Database """   
         super().teardown()
+        self.logState()
         return None
 
     def requestLock(self,password: str) -> bool:
@@ -104,7 +116,18 @@ class SampleDatabase(componentManager.ComponentManager):
         """ Return the next sample in the queue """
         result = self._database.get()
         self._size -= 1
+        self._released += 1
         return result
+
+    def logState(self) -> None:
+        """ Log the current state of the sample manager """
+        msg = "{0} is populated with ({1}/{2}) samples".format(
+            self,self._size,self._database.maxsize)
+        self.logMessage(msg)
+        msg = "{0} has released ({1}/{2}) queued samples".format(
+            self, self._released,self._queued)
+        self.logMessage(msg)
+        return None
 
     # Private Interface
 
@@ -178,7 +201,10 @@ class SampleDatabase(componentManager.ComponentManager):
         self._app.getDataManager().registerExpectedSample(sample)
         self._database.put(sample)
         self._size += 1
+        self._queued += 1
         return SampleDatabase.Status.STABLE
+
+    
 
 
 
