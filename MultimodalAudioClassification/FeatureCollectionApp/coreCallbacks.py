@@ -51,7 +51,7 @@ class FeatureVectorPostProcessCallbacks:
 class DefaultFeaturePipeline:
     """ Static Class of Default Feature Pipelines """
 
-    staticmethod
+    @staticmethod
     def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 00 """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()

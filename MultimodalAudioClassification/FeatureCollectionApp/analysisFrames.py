@@ -128,11 +128,20 @@ class AnalysisFrameParameters:
             result *= 2
         return result
 
-    def getFreqFrameShape(self,separateRealImag=False) -> tuple:
+    def getFreqFrameShape(self,
+                          separateRealImag=False,
+                          channelsFirst=False)-> list:
         """ Return the shape of the frequency frames. Option to separate real/imag """
-        if (separateRealImag  == True):
-            return (2,self.maxNumFrames,self.getFreqFrameSizeMasked(),)
-        return (1,self.maxNumFrames,self.getFreqFrameSizeMasked(),)
+        shape = [1,1,1]
+        if (channelsFirst == True):
+            shape[0] = int(separateRealImag) + 1
+            shape[1] = self.maxNumFrames
+            shape[2] = self.getFreqFrameSizeMasked()
+        else:
+            shape[0] = self.maxNumFrames
+            shape[1] = self.getFreqFrameSizeMasked()
+            shape[2] = int(separateRealImag) + 1
+        return shape
 
 
     def getFreqAxisMask(self) -> np.ndarray:

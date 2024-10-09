@@ -36,7 +36,7 @@ class FeaturePipeline:
         self._callbacksPreprocessFeatures   = []
         self._callbacksPostProcessSignal    = []
         self._callbacksPostProcessFeatures  = []
-        
+
     def __del__(self):
         """ Destructor """
         self._methods.clear()
@@ -83,10 +83,14 @@ class FeaturePipeline:
     def setManager(self,pipelineMgr) -> None:
         """ Set the pointer to the manager that owns this pipeline """
         self._ptrPipelineMgr = pipelineMgr
+        self.__createOutputPath()
         return None
 
     def getOutputPath(self) -> str:
         """ Return the output Path for this pipeline """
+        if (self._ptrPipelineMgr == None):
+            msg = "Cannot generate output path because no pipeline manager has been registered"
+            raise RuntimeError(msg)
         rootOutputPath = self._ptrPipelineMgr.getSettings().getOutputPath()
         return os.path.join(rootOutputPath,self._indentifier)
 
@@ -124,7 +128,37 @@ class FeaturePipeline:
                 outputStream.write(item + "\n")
         return None
 
+    def exportFeatureShapes(self) -> None:
+        """ Export feature names to pipeline output folder """
+        outputPath = os.path.join(self.getOutputPath(),"featureShapes.txt")
+        formatString = lambda x,y,z : "{0:<32}{1:<8}{2}\n".format(x,y,z)
+        header = formatString("NAME","SIZE","SHAPE")
+        with open(outputPath,"w") as outputStream:
+            outputStream.write(header)
+            for method in self._methods:
+                intendedShape = method.getShape()
+                shapeStr = ".".join([str(x) for x in intendedShape])
+                rowText = formatString(
+                    method.getName(),
+                    method.getNumFeatures(),
+                    shapeStr)
+                outputStream.write(rowText)
+        return None
+
     # Private Interface
+
+    def __createOutputPath(self) -> bool:
+        """ Create the output path for writing data to """
+        if (os.path.isdir(self.getOutputPath()) == False):
+            msg = "Creating output path for feature pipeline: {0}".format(
+                self.getOutputPath())
+            # TODO: Log message
+            try:
+                os.mkdir(self.getOutputPath())
+            except Exception as err:
+                msg = "Got unexpected error when attempt to create output path: {0}".format(
+                    self.getOutputPath())
+        return True
 
     def __evaluateHelper(self,
                             signal: signalData.SignalData,

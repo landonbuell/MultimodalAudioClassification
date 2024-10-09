@@ -33,10 +33,15 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
                  separateRealAndImag=True):
         """ Constructor """
         super().__init__(Spectrogram.__NAME,
-                         frameParams.getFreqFramesNumFeatures(
-                             separateRealImag=separateRealAndImag)) # set to 1 for memory efficiency!
+                            frameParams.getFreqFramesNumFeatures(
+                            separateRealImag=separateRealAndImag)) # set to 1 for memory efficiency!
         self._params = frameParams
         self._separateRealAndImaginary = separateRealAndImag
+
+        intendedShape = list(
+            self._params.getFreqFrameShape(
+                self._separateRealAndImaginary))
+        self._setIntendedShape(intendedShape)
         
     def __del__(self):
         """ Destructor """
@@ -52,7 +57,12 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     @property
     def frameSize(self) -> int:
         """ Return the size of each frame """
-        return self._params.freqFrameSize
+        return self._params.getFreqFrameSizeUnmasked()
+
+    @property
+    def numChannels(self) -> int:
+        """ Return the number of channels in the """
+        return int(self._separateRealAndImaginary) + 1
 
     # Public Interface
 

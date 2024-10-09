@@ -130,7 +130,10 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientMeans.__NAME
-        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._resizeData(numCoeffs)
+
+        intendedShape = [self._params.maxNumFrames, self._numFilters,]
+        self._setIntendedShape(intendedShape)
 
     def __del__(self):
         """ Destructor """
@@ -168,8 +171,8 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientVaris.__NAME
-        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
-
+        self._resizeData(numCoeffs)
+     
     def __del__(self):
         """ Destructor """
         pass
@@ -206,7 +209,7 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientMedians.__NAME
-        self._data = np.zeros(shape=(numCoeffs,),dtype=np.float32)
+        self._resizeData(numCoeffs)
 
     def __del__(self):
         """ Destructor """
@@ -244,7 +247,7 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientMinMax.__NAME
-        self._data = np.zeros(shape=(numCoeffs * 2,),dtype=np.float32)
+        self._resizeData(numCoeffs * 2)
 
     def __del__(self):
         """ Destructor """
