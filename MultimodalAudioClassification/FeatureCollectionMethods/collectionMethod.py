@@ -67,9 +67,10 @@ class AbstractCollectionMethod:
         numFeaturesInShape = 1
         for axisSize in shape:
             numFeaturesInShape *= axisSize
-        if (numFeaturesInShape != self.getNumFeatures()):
-            msg = "Cannot set intended shape of {0} to {1} due to size mis-match.".format(
-                self.getName(),str(shape))
+        numFeatures = self.getNumFeatures()
+        if (numFeaturesInShape != numFeatures):
+            msg = "Cannot set intended shape of {0} w/ {1} features to {2} due to size mis-match.".format(
+                self.getName(),numFeatures,str(shape))
             self._logMessage(msg)
             raise RuntimeError(msg)
         self._shape = shape

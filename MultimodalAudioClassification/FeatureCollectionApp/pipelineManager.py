@@ -84,11 +84,13 @@ class PipelineManager(componentManager.ComponentManager):
 
     def __exportPipelineInfo(self) -> None:
         """ Export info about each pipeline to their appropriate paths """
+        MAX_NUM_NAMES_ALLOWED = 10000
         for pipeline in self._featurePipelines:
             if (pipeline.getManager() != self):
-                pipeline.setManager(self)
+                pipeline.setManager(self)         
+            if (pipeline.getNumFeatures() < MAX_NUM_NAMES_ALLOWED):
+                pipeline.exportFeatureNames()         
             pipeline.exportFeatureShapes()
-            pipeline.exportFeatureNames()
         return None
 
 

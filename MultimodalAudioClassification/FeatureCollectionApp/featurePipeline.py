@@ -117,27 +117,27 @@ class FeaturePipeline:
         """ Export feature names to pipeline output folder """
         outputPath = os.path.join(self.getOutputPath(),"featureNames.txt")
         featureNames = []
-        for method in self._methods:
-            # Invoke the collection method
-            if (method is None):
-                continue
-            featureNames += method.featureNames()
         # Export the data to a text file
-        with open(outputPath,"w") as outputStream:
-            for item in featureNames:
-                outputStream.write(item + "\n")
+        with open(outputPath,"w") as outputStream:              
+            for ii,method in enumerate(self._methods):
+                # Get the name of the features from each method
+                if (method is None):
+                    continue
+                featureNames = method.featureNames()
+                for jj,name in enumerate(featureNames):
+                    outputStream.write(name + "\n")
         return None
 
     def exportFeatureShapes(self) -> None:
         """ Export feature names to pipeline output folder """
         outputPath = os.path.join(self.getOutputPath(),"featureShapes.txt")
-        formatString = lambda x,y,z : "{0:<32}{1:<8}{2}\n".format(x,y,z)
+        formatString = lambda x,y,z : "{0:<32}{1:<16}{2}\n".format(x,y,z)
         header = formatString("NAME","SIZE","SHAPE")
         with open(outputPath,"w") as outputStream:
             outputStream.write(header)
             for method in self._methods:
                 intendedShape = method.getShape()
-                shapeStr = ".".join([str(x) for x in intendedShape])
+                shapeStr = ",".join([str(x) for x in intendedShape])
                 rowText = formatString(
                     method.getName(),
                     method.getNumFeatures(),

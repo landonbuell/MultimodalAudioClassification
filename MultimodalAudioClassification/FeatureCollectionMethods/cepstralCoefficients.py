@@ -132,7 +132,7 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientMeans.__NAME
         self._resizeData(numCoeffs)
 
-        intendedShape = [self._params.maxNumFrames, self._numFilters,]
+        intendedShape = [self._numCoeffs,]
         self._setIntendedShape(intendedShape)
 
     def __del__(self):
@@ -172,6 +172,9 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientVaris.__NAME
         self._resizeData(numCoeffs)
+
+        intendedShape = [self._numCoeffs,]
+        self._setIntendedShape(intendedShape)
      
     def __del__(self):
         """ Destructor """
@@ -211,6 +214,9 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientMedians.__NAME
         self._resizeData(numCoeffs)
 
+        intendedShape = [self._numCoeffs,]
+        self._setIntendedShape(intendedShape)
+
     def __del__(self):
         """ Destructor """
         pass
@@ -248,6 +254,9 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
                          normalize)
         self._name = MelFrequencyCepstrumCoefficientMinMax.__NAME
         self._resizeData(numCoeffs * 2)
+
+        intendedShape = [self._numCoeffs * 2,]
+        self._setIntendedShape(intendedShape)
 
     def __del__(self):
         """ Destructor """
