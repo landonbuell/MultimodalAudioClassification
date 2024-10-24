@@ -39,6 +39,8 @@ class AbstractCollectionMethod:
         numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
         self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        self._shape = [numFeatures,]
+        self._ptrPipeline  = None
         self._callbacks = []    # called in __evaluateCallbacks() 
   
     def __del__(self):
@@ -55,9 +57,33 @@ class AbstractCollectionMethod:
         """ Return the populated features """
         return self._data
 
+    def getShape(self) -> list:
+        """ Return the intended shape of the output features """
+        return self._shape
+
+    def _setIntendedShape(self,
+                           shape: list) -> None:
+        """ Set the intended shape of the output features """
+        numFeaturesInShape = 1
+        for axisSize in shape:
+            numFeaturesInShape *= axisSize
+        numFeatures = self.getNumFeatures()
+        if (numFeaturesInShape != numFeatures):
+            msg = "Cannot set intended shape of {0} w/ {1} features to {2} due to size mis-match.".format(
+                self.getName(),numFeatures,str(shape))
+            self._logMessage(msg)
+            raise RuntimeError(msg)
+        self._shape = shape
+        return None
+
+
     def getNumFeatures(self) -> int:
         """ Return the number of features returned by this method """
         return self._data.size
+
+    def getPipeliene(self) -> object:
+        """ Return the pipeline that owns this collection method """
+        return self._ptrPipeline
 
     # Public Interface
 
@@ -83,6 +109,11 @@ class AbstractCollectionMethod:
         result = ["{0}{1}".format(self._name,x) for x in range(self._data.size)]
         return result
 
+    def registerPipeline(self,ptrPipeline) -> None:
+        """ Register the pipeline that will run this collection method (opt) """
+        self._ptrPipeline = ptrPipeline
+        return None
+
     # Protected Interface 
     
     def _validateNumFeatures(self,numFeatures: int) -> int:
@@ -97,6 +128,20 @@ class AbstractCollectionMethod:
                   signal: signalData.SignalData) -> bool:
         """ VIRTUAL: main body of call function """
         return False
+
+    def _logMessage(self,message) -> None:
+        """ Log a message through the owning pipeline if possible """
+        if (self._ptrPipeline is not None):
+            ptrPipelineMgr = self._ptrPipeline.getManager()
+            if (ptrPipelineMgr is not None):
+                ptrPipelineMgr.logMessage(message)
+        return None
+
+    def _resizeData(self, newDataSize: int) -> None:
+        """ Resize the internal data and shape to match a new size """
+        self._data  = np.zeros(shape=(newDataSize,),dtype=np.float32)
+        self._shape = [newDataSize,]
+        return self
 
     # Private Interface
 

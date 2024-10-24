@@ -12,6 +12,7 @@
 
         #### IMPORTS ####
 import os
+import datetime
 import numpy as np
 import threading
 
@@ -132,13 +133,16 @@ class FeatureCollector(threading.Thread):
         self._stopEvent.set()
         return None
 
+    # Private Interface
+
     def __processNext(self) -> bool:
         """ Collect features for a single sample """
         if (self.stopFlag() == False):
             # Pull Next Sample
             nextSample = self.__invokeGetNextSample()
-        if (nextSample is None):
-            return False
+            if (nextSample is None):
+                return False
+            self.__logNextSample(nextSample)
         if (self.stopFlag() == False):
             # Decode Sample into list of signals
             listOfSignals = self.__decodeSample(nextSample)
@@ -148,8 +152,6 @@ class FeatureCollector(threading.Thread):
             # Process List of Signals + Export Features
             self.__processListOfSignals(listOfSignals)
         return True
-
-    # Private Interface
 
     def __invokeGetNextSample(self) -> sampleFile.SampleFileIO:
         """ Pull Next Sample from sample database """
@@ -164,10 +166,20 @@ class FeatureCollector(threading.Thread):
                return nextSample
         return None
 
+    def __logNextSample(self, nextSample: sampleFile.SampleFileIO) -> None:
+        """ Log the next sample """
+        timeDelta = datetime.datetime.now() - FeatureCollector.collectionManager().getCollectionStartTime()
+        msg = "Pulled sample: {0}. Time: {1}".format(
+            str(nextSample),str(timeDelta))
+        FeatureCollector.collectionManager().logMessage(msg)
+        return None
+
     def __decodeSample(self, sampleFile) -> list:
         """ Decode the sample and return a list of signals """
         try:
             listOfSignals = sampleFile.decode()
+            msg = "Read {0} into {1} signals".format(sampleFile,len(listOfSignals))
+            self.logMessage(msg)
             return listOfSignals
         except Exception as err:
             msg = "Failed to read signals from {0} due to error: {1}".format(
@@ -181,7 +193,8 @@ class FeatureCollector(threading.Thread):
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
             signal = self.__preprocessSignal(signal)
-            FeatureCollector.dataManager().registerProcessedSample(signal)
+            msg = "Sending {0} to be processed by pipeline manager".format(signal)
+            self.logMessage(msg)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
             self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
@@ -190,7 +203,7 @@ class FeatureCollector(threading.Thread):
         """ Preprocess a single signal """
         # Cast to new type
         signal.normalizeAmplitude(np.float32)
-        #signal.show()
+        #signal.showWaveform()
         return signal
 
     def __exportListOfFeatureVectors(self, 
@@ -199,7 +212,7 @@ class FeatureCollector(threading.Thread):
         """ Export a list of feature Vectors to binaries """
         for ii,vector in enumerate(listOfFeatureVectors):
             # Export
-            if (vector is None):
+            if ((vector is None) or (len(vector) == 0)):
                 msg = "Got None for feature vector on signal {0}, pipeline {1}".format(
                     signal.uniqueID(),ii)
                 self.logMessage(msg)
@@ -229,10 +242,7 @@ class GetNextSampleStrategies:
         if (FeatureCollector.sampleDatabase().isEmpty() == True):
             collector.raiseStopFlag(reason="Sample database is empty")
             return None
-        sample = FeatureCollector.sampleDatabase().getNext()
-        message = "Got sample ({0}) from database".format(str(sample))
-        collector.logMessage(message)
-        return sample
+        return FeatureCollector.sampleDatabase().getNext()
 
     @staticmethod
     def getNextSampleMultiThread(collector: FeatureCollector) -> object:
@@ -241,7 +251,4 @@ class GetNextSampleStrategies:
             collector.raiseStopFlag(reason="Sample database is empty")
             return None
         # TODO: Fix this for multiple threads
-        sample = FeatureCollector.sampleDatabase().getNext()
-        message = "Got sample ({0}) from database".format(str(sample))
-        collector.logMessage(message)
-        return sample
+        return FeatureCollector.sampleDatabase().getNext()

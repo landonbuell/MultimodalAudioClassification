@@ -40,13 +40,20 @@ class PipelineManager(componentManager.ComponentManager):
         """ Return the current size of the database """
         return len(self._featurePipelines)
 
+    def getOutputPath(self,pipelineIndex: int) -> str:
+        """ Return the output path for the pipeline at the provided index """
+        return self._featurePipelines[pipelineIndex].getOutputPath()
+
     # Public Interface
 
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
+        self.__exportPipelineInfo()
         return None
 
     def teardown(self) -> None:
@@ -73,6 +80,20 @@ class PipelineManager(componentManager.ComponentManager):
             featureVectors[ii] = pipeline.evaluate(signal)
         return featureVectors
             
+    # Private Interface
+
+    def __exportPipelineInfo(self) -> None:
+        """ Export info about each pipeline to their appropriate paths """
+        MAX_NUM_NAMES_ALLOWED = 10000
+        for pipeline in self._featurePipelines:
+            if (pipeline.getManager() != self):
+                pipeline.setManager(self)         
+            if (pipeline.getNumFeatures() < MAX_NUM_NAMES_ALLOWED):
+                pipeline.exportFeatureNames()         
+            pipeline.exportFeatureShapes()
+        return None
+
+
             
 
 

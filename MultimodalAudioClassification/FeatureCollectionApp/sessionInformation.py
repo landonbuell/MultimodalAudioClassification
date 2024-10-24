@@ -94,12 +94,11 @@ class ClassInfoDatabase:
         """ Return the number of times we actually exported this class's features """
         return self._classMap[classIndex].exportedCount
 
-
-    def hasClassIndex(self, classIndex: int):
+    def hasClassIndex(self, classIndex: int) -> bool:
         """ Return T/F if data for this class index already exists """
         return (classIndex in self._classMap.keys())
 
-    def hasClassName(self, className: str):
+    def hasClassName(self, className: str) -> bool:
         """ Return T/F if data for this class name alread exists """
         index = self.getClassIndex(className)
         return (index != -1)

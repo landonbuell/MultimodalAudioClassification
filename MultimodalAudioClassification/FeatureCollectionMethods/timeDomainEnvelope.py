@@ -43,7 +43,7 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData) -> bool:
         """ OVERRIDE: Compute TDE's for signal """
         partitionSize = int(np.floor((signal.getNumSamples() / self.numPartitions)))
         startIndex = 0

@@ -48,10 +48,9 @@ class RundataManager(componentManager.ComponentManager):
                       pipelineIndex: int,
                       classIndex: int) -> str:
         """ Return the export location (but not file name) for a sample """
-        topLevelOutputPath = self.getSettings().getOutputPath()
-        pipelinePath = "pipeline{0}".format(pipelineIndex)
+        pipelinePath = self.getApp().getPipelineManager().getOutputPath(pipelineIndex)
         classPath = "class{0}".format(classIndex)
-        return os.path.join(topLevelOutputPath,pipelinePath,classPath)
+        return os.path.join(pipelinePath,classPath)
 
     # Public Interface
 
@@ -116,16 +115,14 @@ class RundataManager(componentManager.ComponentManager):
 
     def __initPipelineOutputPaths(self) -> None:
         """ Create the top-level output path for each pipeline """
-        topLevelOutputPath = self.getSettings().getOutputPath()
         numPipelines = self.getApp().getPipelineManager().getSize()
         for ii in range(numPipelines):
-            pipelinePath = "pipeline{0}".format(ii)
-            fullPath = os.path.join(topLevelOutputPath,pipelinePath)
-            if (os.path.isdir(fullPath) == False):
+            pipelinePath = self.getApp().getPipelineManager().getOutputPath(ii)
+            if (os.path.isdir(pipelinePath) == False):
                 # Path does NOT exist
-                msg = "Making pipeline export path: {0}".format(fullPath)
+                msg = "Making pipeline export path: {0}".format(pipelinePath)
                 self.logMessage(msg)
-                os.mkdir(fullPath)
+                os.mkdir(pipelinePath)
         return None
    
     def __initClassOutputPaths(self,classIndex: int) -> None:

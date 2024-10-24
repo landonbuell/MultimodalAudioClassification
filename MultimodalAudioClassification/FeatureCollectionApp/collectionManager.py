@@ -12,11 +12,10 @@
 
         #### IMPORTS ####
 
-import os
+import datetime
 
 import componentManager
 import featureCollector
-
 
         #### CLASS DEFINITIONS ####
 
@@ -30,6 +29,8 @@ class CollectionManager(componentManager.ComponentManager):
         """ Constructor """
         super().__init__(CollectionManager.__NAME,app)
         self._collectors = [None] * app.getSettings().getNumCollectionThreads()
+        self._timeStart     = datetime.datetime.min
+        self._timeFinish    = datetime.datetime.max
         self.__initCollectors()
 
     def __del__(self):
@@ -43,6 +44,10 @@ class CollectionManager(componentManager.ComponentManager):
         """ Return the number of feature collectors """
         return len(self._collectors)
 
+    def getCollectionStartTime(self) -> datetime.datetime:
+        """ Return the time when collection began """
+        return self._timeStart
+
     # Public Interface
 
     def initialize(self) -> None:
@@ -54,11 +59,14 @@ class CollectionManager(componentManager.ComponentManager):
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the collection manager """
         super().teardown()
+        self.__logGrossTimeElapsed()
         return None
 
     def runCollection(self) -> int:
-        """ Run the Collection Session """       
+        """ Run the Collection Session """    
+        self._timeStart = datetime.datetime.now()
         self.__startCollection()  
+        self._timeFinish = datetime.datetime.now()
         return self._status
 
     def logMessage(self,
@@ -68,6 +76,15 @@ class CollectionManager(componentManager.ComponentManager):
         return None
 
     # Private Interface
+
+    @staticmethod
+    def getCurrentTimeStamp():
+        """ Get the current time in YYYY.MM.DD.HH.MM.SS.UUUUUU """
+        now = str(datetime.datetime.now())
+        now = now.replace(" ",".")
+        now = now.replace(":",".")
+        now = now.replace("-",".")
+        return str(now)
 
     def __initCollectors(self) -> None:
         """ Initialize all feature collectors """
@@ -87,4 +104,12 @@ class CollectionManager(componentManager.ComponentManager):
                 collector.start()
             for collector in self._collectors:
                 collector.join()
+        return None
+
+    def __logGrossTimeElapsed(self) -> None:
+        """ Log time current elapsed since collection began """
+        if (self._timeFinish == datetime.datetime.max):
+            self._timeFinish = datetime.datetime.now()
+        timeDelta = self._timeFinish - self._timeStart
+        msg = "Collection time elapsed: {0}".format(timeDelta)
         return None

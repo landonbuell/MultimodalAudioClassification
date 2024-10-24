@@ -11,6 +11,9 @@
 
         #### IMPORTS ####
 
+import os
+import numpy as np
+
 import signalData
 import featureVector
 
@@ -33,7 +36,7 @@ class FeaturePipeline:
         self._callbacksPreprocessFeatures   = []
         self._callbacksPostProcessSignal    = []
         self._callbacksPostProcessFeatures  = []
-        
+
     def __del__(self):
         """ Destructor """
         self._methods.clear()
@@ -80,7 +83,16 @@ class FeaturePipeline:
     def setManager(self,pipelineMgr) -> None:
         """ Set the pointer to the manager that owns this pipeline """
         self._ptrPipelineMgr = pipelineMgr
+        self.__createOutputPath()
         return None
+
+    def getOutputPath(self) -> str:
+        """ Return the output Path for this pipeline """
+        if (self._ptrPipelineMgr == None):
+            msg = "Cannot generate output path because no pipeline manager has been registered"
+            raise RuntimeError(msg)
+        rootOutputPath = self._ptrPipelineMgr.getSettings().getOutputPath()
+        return os.path.join(rootOutputPath,self._indentifier)
 
     # Public Interface
 
@@ -101,7 +113,52 @@ class FeaturePipeline:
         self.__evaluateFeaturePostprocessCallbacks(features)
         return features
 
+    def exportFeatureNames(self) -> None:
+        """ Export feature names to pipeline output folder """
+        outputPath = os.path.join(self.getOutputPath(),"featureNames.txt")
+        featureNames = []
+        # Export the data to a text file
+        with open(outputPath,"w") as outputStream:              
+            for ii,method in enumerate(self._methods):
+                # Get the name of the features from each method
+                if (method is None):
+                    continue
+                featureNames = method.featureNames()
+                for jj,name in enumerate(featureNames):
+                    outputStream.write(name + "\n")
+        return None
+
+    def exportFeatureShapes(self) -> None:
+        """ Export feature names to pipeline output folder """
+        outputPath = os.path.join(self.getOutputPath(),"featureShapes.txt")
+        formatString = lambda x,y,z : "{0:<32}{1:<16}{2}\n".format(x,y,z)
+        header = formatString("NAME","SIZE","SHAPE")
+        with open(outputPath,"w") as outputStream:
+            outputStream.write(header)
+            for method in self._methods:
+                intendedShape = method.getShape()
+                shapeStr = ",".join([str(x) for x in intendedShape])
+                rowText = formatString(
+                    method.getName(),
+                    method.getNumFeatures(),
+                    shapeStr)
+                outputStream.write(rowText)
+        return None
+
     # Private Interface
+
+    def __createOutputPath(self) -> bool:
+        """ Create the output path for writing data to """
+        if (os.path.isdir(self.getOutputPath()) == False):
+            msg = "Creating output path for feature pipeline: {0}".format(
+                self.getOutputPath())
+            # TODO: Log message
+            try:
+                os.mkdir(self.getOutputPath())
+            except Exception as err:
+                msg = "Got unexpected error when attempt to create output path: {0}".format(
+                    self.getOutputPath())
+        return True
 
     def __evaluateHelper(self,
                             signal: signalData.SignalData,
@@ -109,21 +166,23 @@ class FeaturePipeline:
         """ Helper function to evaluate the feature pipeline """
         featuresCollected = 0
         for method in self._methods:
+            # Invoke the collection method
             if (method is None):
                 continue
             success = method.call(signal)
             if (success == False):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
-                    str(method),method.getNumFeatures(),len(features))
+                msg = "Got unsuccessful return flag from collection method: {0} on signal {1}".format(
+                    method,signal)
                 raise RuntimeError(msg)
+            # Retrive the internally stored features
             features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
-                msg = "Exepected collection method {0} to return {1} features but got {2}".format(
+                msg = "Expected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
                 raise RuntimeError(msg)
-            for ii in range(method.getNumFeatures()):
-                vector[featuresCollected] = features[ii]
-                featuresCollected += 1
+            # Do a numpy copy
+            vector.copyFromArray(features,featuresCollected)
+            featuresCollected += features.size
             # Completed with current method
         return None
 

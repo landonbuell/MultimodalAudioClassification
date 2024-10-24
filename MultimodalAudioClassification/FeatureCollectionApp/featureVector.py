@@ -51,6 +51,7 @@ class FeatureVector:
         """ Reset all entries to zeros """
         numFeatures = self._data.size
         self._data = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        return None
 
     def toBinaryFile(self,
                fullOutputPath: str) -> bool:
@@ -75,6 +76,18 @@ class FeatureVector:
             msg = "Failed to write data to {0} for reason: {1}".format(fullOutputPath,str(err))
             raise RuntimeWarning(msg)
         return success
+
+    def copyFromArray(self, source: np.ndarray, offset=0) -> None:
+        """ Perform numpy copyto to quickly copy bytes into feature vector """
+        if (offset + source.size > self._data.size):
+            msg = "Contents of source array + offset will not fit into underlying feature array"
+            raise RuntimeError(msg)
+        # Copy into underlying memory
+        np.copyto(
+            self._data[offset:offset+source.size],
+            source,
+            casting='no')
+        return None
 
     def __getitem__(self,index: int) -> np.float32:
         """ Index operator """
