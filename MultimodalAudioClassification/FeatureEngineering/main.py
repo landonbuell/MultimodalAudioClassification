@@ -13,23 +13,13 @@ Date:       Sept 2022
 import sys
 import os
 
-import PyToolsStructures
-import Preprocessors
-
     #### MAIN EXECUTABLE ####
 
 if __name__ == "__main__":
 
     # Set some constants + Load Run Info
-    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\allSamplesV3"
-    runInfo = PyToolsStructures.RunInformation.deserialize(INPUT_PATH)
+    INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\developV4"
 
-    # Create + Fit the Scaler Instance
-    #scaler = Preprocessors.CustomStandardScaler(runInfo)
-    #scaler.fit()
 
-    # Create + Fit the Scaler Wrapper Instance 
-    scalerWrapper = Preprocessors.StandardScalerWrapper(runInfo)
-    scalerWrapper.fit()
 
     sys.exit(0)
