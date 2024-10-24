@@ -54,7 +54,6 @@ class PipelineManager(componentManager.ComponentManager):
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
         self.__exportPipelineInfo()
-        self.__exportFeatureNames()
         return None
 
     def teardown(self) -> None:
@@ -85,13 +84,15 @@ class PipelineManager(componentManager.ComponentManager):
 
     def __exportPipelineInfo(self) -> None:
         """ Export info about each pipeline to their appropriate paths """
+        MAX_NUM_NAMES_ALLOWED = 10000
+        for pipeline in self._featurePipelines:
+            if (pipeline.getManager() != self):
+                pipeline.setManager(self)         
+            if (pipeline.getNumFeatures() < MAX_NUM_NAMES_ALLOWED):
+                pipeline.exportFeatureNames()         
+            pipeline.exportFeatureShapes()
         return None
 
-    def __exportFeatureNames(self) -> None:
-        """ Export all feature names for a single pipeline """
-        for pipeline in self._featurePipelines:
-            pipeline.exportFeatureNames()
-        return None
 
             
 

@@ -334,9 +334,10 @@ class SignalData:
 
     def __str__(self) -> str:
         """ Cast to string """
-        return "Signal #{0} @ {1}".format(self._uniqueID,self._source)
+        return "Signal #{0} @ {1}".format(self._uniqueID,self._sourcePath)
 
     def __repr__(self) -> str:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
+    

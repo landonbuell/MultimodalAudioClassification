@@ -45,6 +45,9 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
         self._framesInUse   = onlyFramesInUse
         self._normalize     = normalize
 
+        intendedShape = [self._params.maxNumFrames, self._numFilters,]
+        self._setIntendedShape(intendedShape)
+
     def __del__(self):
         """ Destructor """
         super().__del__()
@@ -141,7 +144,7 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
                          onlyFramesInUse,
                          normalize)
         self._name  = MelFilterBankEnergyMeans.__NAME
-        self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
+        self._resizeData(numFilters)
 
     def __del__(self):
         """ Destructor """
@@ -179,7 +182,7 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFilterBankEnergyVaris.__NAME
-        self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
+        self._resizeData(numFilters)
 
     def __del__(self):
         """ Destructor """
@@ -217,7 +220,7 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
                          onlyFramesInUse,
                          normalize)
         self._name  = MelFilterBankEnergyMedians.__NAME
-        self._data  = np.zeros(shape=(numFilters,),dtype=np.float32)
+        self._resizeData(numFilters)
 
     def __del__(self):
         """ Destructor """
@@ -255,7 +258,7 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
                          onlyFramesInUse,
                          normalize)
         self._name = MelFilterBankEnergyMinMax.__NAME
-        self._data  = np.zeros(shape=(numFilters * 2,),dtype=np.float32)
+        self._resizeData(numFilters * 2)
 
     def __del__(self):
         """ Destructor """
