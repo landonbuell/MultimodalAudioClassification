@@ -11,6 +11,8 @@
 
         #### IMPORTS ####
 
+import os
+
 import componentManager
 import featurePipeline
 import signalData
@@ -27,17 +29,21 @@ class PipelineManager(componentManager.ComponentManager):
                  app):
         """ Constructor """
         super().__init__(PipelineManager.__NAME,app)
-        self._featurePipelines = []
+        self._featurePipelines  = []
+        self._outputStream      = open(
+            os.path.join(app.getSettings().getOutputPath(),"samples.txt"),"w") 
+        self._rowFmt = "{0:<16}{1:<16}{2:<16}{3}\n"
 
     def __del__(self):
         """ Destructor """
         super().__del__()
         self._featurePipelines.clear()
+        self._outputStream.close()
 
     # Accessors
 
-    def getSize(self) -> int:
-        """ Return the current size of the database """
+    def getNumPipelines(self) -> int:
+        """ Return the number of feature pipelines """
         return len(self._featurePipelines)
 
     def getOutputPath(self,pipelineIndex: int) -> str:
@@ -54,11 +60,13 @@ class PipelineManager(componentManager.ComponentManager):
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
         self.__exportPipelineInfo()
+        self.__exportSamplesFileHeader()
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
+        self._outputStream.close()
         return None
 
     def registerPipeline(self,
@@ -75,9 +83,11 @@ class PipelineManager(componentManager.ComponentManager):
     def processSignal(self,
                       signal: signalData.SignalData) -> list:
         """ Evalute signal on each pipeline & return list of feature vectors """
-        featureVectors = [None] * len(self._featurePipelines)
+        featureVectors  = [None] * len(self._featurePipelines)
+        successFlags    = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
-            featureVectors[ii] = pipeline.evaluate(signal)
+            featureVectors[ii]  = pipeline.evaluate(signal)
+        self.__logSignalData(signal)
         return featureVectors
             
     # Private Interface
@@ -93,6 +103,24 @@ class PipelineManager(componentManager.ComponentManager):
             pipeline.exportFeatureShapes()
         return None
 
+    def __exportSamplesFileHeader(self) -> None:
+        """ Export the header for the sample.txt file """
+        # Sample Index, Class Index, Channel Index, source file
+        rowText = self._rowFmt.format(
+            "sampleIndex","classIndex","channelIndex","sourcePath")
+        self._outputStream.write(rowText)
+        return None
+
+    def __logSignalData(self,
+                        signal: signalData.SignalData) -> None:
+        """ Log that the pipeline processed a feature """
+        rowText = self._rowFmt.format(
+            signal.uniqueID(),
+            signal.getTarget(),
+            signal.getChannelIndex(),
+            signal.getSourcePath())
+        self._outputStream.write(rowText)
+        return
 
             
 

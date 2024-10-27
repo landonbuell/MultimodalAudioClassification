@@ -38,11 +38,10 @@ class SampleDatabase(componentManager.ComponentManager):
         """ Constructor """
         super().__init__(SampleDatabase.__NAME,app)
         self._inputFiles    = queue.Queue()
-        self._database      = queue.Queue(SampleDatabase.__CAPACITY)      
+        self._database      = queue.Queue(app.getSettings().getSampleLimit())      
         self._size          = 0     # also tracks size
         self._queued        = 0     # total number of samples queued
         self._released      = 0     # total number of samples released
-        self._password      = ""
 
     def __del__(self):
         """ Destructor """
@@ -75,10 +74,6 @@ class SampleDatabase(componentManager.ComponentManager):
         """ Return T/F if the database if empty """
         return self._database.empty()
 
-    def isLocked(self) -> bool:
-        """ Return T/F if the database is locked """
-        return self._password != ""
-
     # Public Interface
 
     def initialize(self) -> None:
@@ -93,24 +88,6 @@ class SampleDatabase(componentManager.ComponentManager):
         super().teardown()
         self.logState()
         return None
-
-    def requestLock(self,password: str) -> bool:
-        """ Attempt to lock the database. Return T/F is successful """
-        if (self.isLocked() == True):
-            return False
-        # Is not locked yet
-        self._password = password
-        return True
-
-    def requestUnlock(self, password: str) -> bool:
-        """ Attempt to unlock the database. Return T/F if successful """
-        if (self.isLocked() == False):
-            return True
-        if (self._password == password):
-            # passwords match
-            self._password = ""
-            return True
-        # Passwords do not match
 
     def getNext(self) -> sampleFile.SampleFileIO:
         """ Return the next sample in the queue """
@@ -135,6 +112,8 @@ class SampleDatabase(componentManager.ComponentManager):
         """ Build a queue of input files to read for sample files """
         listOfInputFiles = self.getSettings().getInputPaths()
         for item in listOfInputFiles:
+            if (self.isFull() == True):
+                break
             fullPathToItem = os.path.abspath(item)
             if (os.path.isdir(fullPathToItem) == True):
                 # Item is a Directory 
@@ -164,14 +143,18 @@ class SampleDatabase(componentManager.ComponentManager):
             else:
                 # Item is an unknown type
                 pass
+            # If full, exit
+            if (self.isFull() == True):
+                break
         return None
 
     def __handleInputFile(self, filePath: str) -> None:
         """ Handle reading a single input file """
         line = ""
         lineCounter = 0
+        success = True
         with open(filePath,"r") as inputStream:
-            while (True):
+            while (success == True):
                 line = inputStream.readline()
                 lineCounter += 1
                 if (lineCounter == 1):
@@ -189,20 +172,18 @@ class SampleDatabase(componentManager.ComponentManager):
                     self.logMessage(msg)
                     continue
                 # If the instance worked, add it to the queue
-                self.__enqueueSample(newSample)
+                success = self.__enqueueSample(newSample)
         return None
     
     def __enqueueSample(self,sample) -> int:
         """ Enqueue a sample to the database """
-        if (self.isLocked() == True):
-            return SampleDatabase.Status.LOCKED
         if (self.isFull() == True):
-            return SampleDatabase.Status.FULL
+            return False
         self._app.getDataManager().registerExpectedSample(sample)
         self._database.put(sample)
         self._size += 1
         self._queued += 1
-        return SampleDatabase.Status.STABLE
+        return True
 
     
 

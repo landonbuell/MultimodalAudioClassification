@@ -152,13 +152,20 @@ class FeaturePipeline:
         if (os.path.isdir(self.getOutputPath()) == False):
             msg = "Creating output path for feature pipeline: {0}".format(
                 self.getOutputPath())
-            # TODO: Log message
+            self.__logMessage(msg)
             try:
                 os.mkdir(self.getOutputPath())
             except Exception as err:
                 msg = "Got unexpected error when attempt to create output path: {0}".format(
                     self.getOutputPath())
+                self.__logMessage(msg)
         return True
+
+    def __logMessage(self, message: str) -> None:
+        """ Log Message to App """
+        if (self._ptrPipelineMgr is not None):
+            self._ptrPipelineMgr.logMessage(message)
+        return None
 
     def __evaluateHelper(self,
                             signal: signalData.SignalData,
@@ -171,15 +178,17 @@ class FeaturePipeline:
                 continue
             success = method.call(signal)
             if (success == False):
+                vector.setIsTrustworthy(False)
                 msg = "Got unsuccessful return flag from collection method: {0} on signal {1}".format(
-                    method,signal)
-                raise RuntimeError(msg)
+                    method,signal)            
+                self.__logMessage(msg)
             # Retrive the internally stored features
             features = method.getFeatures()
             if (len(features) != method.getNumFeatures()):
+                vector.setIsTrustworthy(False)
                 msg = "Expected collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),len(features))
-                raise RuntimeError(msg)
+                self.__logMessage(msg)
             # Do a numpy copy
             vector.copyFromArray(features,featuresCollected)
             featuresCollected += features.size

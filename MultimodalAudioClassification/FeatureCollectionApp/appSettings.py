@@ -30,10 +30,8 @@ class AppSettings:
         self._collectionThreads     = 1
         self._findFilesRecurseDepth = 1
 
-        self._maxSampleFetchAttempts = 16
-        self._waitFetchDuration = 8000
-
         self._developmentMode = True
+        self._sampleLimit     = 10
 
         self.__initInputPaths(inputPaths)
         self.__initOutputPath(outputPath)
@@ -68,13 +66,9 @@ class AppSettings:
         """ Retur the depth use to recurse directory trees """
         return self._findFilesRecurseDepth
      
-    def getMaxSampleFetchAttempts(self) -> int:
-        """ Returns the max number of times a thread should try to pull a sample """
-        return self._maxSampleFetchAttempts
-
-    def getWaitFetchDuration(self) -> float:
-        """ Return the time in ms between fetch attempts """
-        return self._waitFetchDuration
+    def getSampleLimit(self) -> int:
+        """ Return the limit on the number of samples to read """
+        return self._sampleLimit
 
     def getIsDevMode(self) -> bool:
         """ Return T/F if this run is in development mode """
@@ -102,7 +96,7 @@ class AppSettings:
                         #os.path.join(inputFilesHome,"Y3.csv"),
                         os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV4"
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV2"
         return AppSettings(inputFiles,outputPath)
 
     # Private Interface

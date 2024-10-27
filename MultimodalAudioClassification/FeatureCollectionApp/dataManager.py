@@ -115,7 +115,7 @@ class RundataManager(componentManager.ComponentManager):
 
     def __initPipelineOutputPaths(self) -> None:
         """ Create the top-level output path for each pipeline """
-        numPipelines = self.getApp().getPipelineManager().getSize()
+        numPipelines = self.getApp().getPipelineManager().getNumPipelines()
         for ii in range(numPipelines):
             pipelinePath = self.getApp().getPipelineManager().getOutputPath(ii)
             if (os.path.isdir(pipelinePath) == False):
@@ -127,7 +127,7 @@ class RundataManager(componentManager.ComponentManager):
    
     def __initClassOutputPaths(self,classIndex: int) -> None:
         """ Create the top-level output path for each class within each pipeline """
-        numPipelines = self.getApp().getPipelineManager().getSize()
+        numPipelines = self.getApp().getPipelineManager().getNumPipelines()
         for ii in range(numPipelines):
             fullPath = self.getExportLocation(ii,classIndex)
             if (os.path.isdir(fullPath) == False):
@@ -143,4 +143,6 @@ class RundataManager(componentManager.ComponentManager):
 
     def __exportClassInfo(self) -> None:
         """ Export the class info struct to the output path """
+        outputFile = os.path.join(self.getSettings().getOutputPath(),"classInfo.txt")
+        self._classInfo.exportToFile(outputFile)
         return None
