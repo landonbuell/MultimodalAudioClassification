@@ -31,7 +31,8 @@ class AppSettings:
         self._findFilesRecurseDepth = 1
 
         self._developmentMode = True
-        self._sampleLimit     = 10
+        self._sampleLimit     = int(2**16)
+        self._samplesPerFile  = 1000    # samples per output file
 
         self.__initInputPaths(inputPaths)
         self.__initOutputPath(outputPath)
@@ -68,8 +69,12 @@ class AppSettings:
      
     def getSampleLimit(self) -> int:
         """ Return the limit on the number of samples to read """
-        return self._sampleLimit
+        return min(self._sampleLimit,int(2**24))
 
+    def getSamplesPerOutputFile(self) -> int:
+        """ Return the number of samples per sample#.txt file """
+        return self._samplesPerFile
+     
     def getIsDevMode(self) -> bool:
         """ Return T/F if this run is in development mode """
         return self._developmentMode
@@ -96,7 +101,7 @@ class AppSettings:
                         #os.path.join(inputFilesHome,"Y3.csv"),
                         os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\developV2"
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
         return AppSettings(inputFiles,outputPath)
 
     # Private Interface

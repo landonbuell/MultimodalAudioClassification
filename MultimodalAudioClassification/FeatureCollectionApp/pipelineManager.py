@@ -30,15 +30,13 @@ class PipelineManager(componentManager.ComponentManager):
         """ Constructor """
         super().__init__(PipelineManager.__NAME,app)
         self._featurePipelines  = []
-        self._outputStream      = open(
-            os.path.join(app.getSettings().getOutputPath(),"samples.txt"),"w") 
+        self._outputStreams     = [None] * 10        
         self._rowFmt = "{0:<16}{1:<16}{2:<16}{3}\n"
 
     def __del__(self):
         """ Destructor """
         super().__del__()
-        self._featurePipelines.clear()
-        self._outputStream.close()
+        self.__closeAllOutputStreams()
 
     # Accessors
 
@@ -60,13 +58,12 @@ class PipelineManager(componentManager.ComponentManager):
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
         self.__exportPipelineInfo()
-        self.__exportSamplesFileHeader()
         return None
 
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
-        self._outputStream.close()
+        self.__closeAllOutputStreams()
         return None
 
     def registerPipeline(self,
@@ -87,7 +84,7 @@ class PipelineManager(componentManager.ComponentManager):
         successFlags    = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
             featureVectors[ii]  = pipeline.evaluate(signal)
-        self.__logSignalData(signal)
+        self.__exportSampleFileData(signal)
         return featureVectors
             
     # Private Interface
@@ -103,26 +100,47 @@ class PipelineManager(componentManager.ComponentManager):
             pipeline.exportFeatureShapes()
         return None
 
-    def __exportSamplesFileHeader(self) -> None:
-        """ Export the header for the sample.txt file """
-        # Sample Index, Class Index, Channel Index, source file
-        rowText = self._rowFmt.format(
-            "sampleIndex","classIndex","channelIndex","sourcePath")
-        self._outputStream.write(rowText)
-        return None
+    def __exportSampleFileData(self,
+                               signal: signalData.SignalData) -> None:
+        """ Log that the pipeline manager processed a sample """
+        sampleFileIndex = signal.uniqueID() // self.getSettings().getSamplesPerOutputFile()
+        sampleFileIndexStr = str(sampleFileIndex)
+        if (sampleFileIndex < 10):
+            sampleFileIndexStr = "0" + sampleFileIndexStr
 
-    def __logSignalData(self,
-                        signal: signalData.SignalData) -> None:
-        """ Log that the pipeline processed a feature """
+        # Locate the output stream to send the row data to
+        if (sampleFileIndex >= len(self._outputStreams)):
+            for ii in range(len(self._outputStream),sampleFileIndex):
+                self._outputStreams.append(None)
+
+        # Now see if we need to create the file there
+        if (self._outputStreams[sampleFileIndex] is None):
+            # create the stream
+            streamPath = os.path.join(
+                self.getSettings().getOutputPath(),
+                "samples{0}.txt".format(sampleFileIndexStr))
+
+            self._outputStreams[sampleFileIndex] = open(streamPath,"w")
+            headerText = self._rowFmt.format(
+                "sampleIndex","classIndex","channelIndex","sourcePath")
+            self._outputStreams[sampleFileIndex].write(headerText)
+
+        # The stream is now open, write to it
         rowText = self._rowFmt.format(
             signal.uniqueID(),
             signal.getTarget(),
             signal.getChannelIndex(),
             signal.getSourcePath())
-        self._outputStream.write(rowText)
-        return
+        self._outputStreams[sampleFileIndex].write(rowText)
+        return None
 
-            
+    def __closeAllOutputStreams(self) -> None:
+        """ Close all output streams """
+        for stream in self._outputStreams:
+            if (stream is not None):
+                stream.close()
+        self._outputStreams.clear()
+        return None
 
 
 
