@@ -22,8 +22,9 @@ class FeatureVector:
                  numFeatures: int,
                  classLabel: int):
         """ Constructor """
-        self._data = np.zeros(shape=(numFeatures,),dtype=np.float32)
-        self._target = classLabel
+        self._data      = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        self._target    = classLabel
+        self._trust     = True
 
     def __del__(self):
         """ Destructor """
@@ -43,6 +44,16 @@ class FeatureVector:
                   classLabel: int) -> None:
         """ Set the target value """
         self._target = classLabel
+        return None
+
+    def getIsTrustworthy(self) -> bool:
+        """ Return T/F flag if we can trust this feature vector """
+        return self._trust
+
+    def setIsTrustworthy(self,
+                        canTrust: bool) -> bool:
+        """ Set T/F flag if we can trust this feature vector """
+        self._trust = canTrust
         return None
 
     # Public Interface
