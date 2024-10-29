@@ -45,6 +45,16 @@ class ClassInfoDatabase:
             """ Destructor """
             pass
 
+        @staticmethod
+        def formatString(col0,
+                         col1,
+                         col2,
+                         col3,
+                         col4) -> str:
+            """ Return a formated string """
+            return "{0:<16}{1:<32}{2:<16}{3:<16}{4:<16}".format(
+                col0,col1,col2,col3,col4)
+
         def __repr__(self) -> str:
             """ Return instance as string """
             return "{0}:{1} - ({2},{3},{4})".format(
@@ -55,7 +65,7 @@ class ClassInfoDatabase:
 
         def __str__(self) -> str:
             """ Return instance as string """
-            return "{0:<8}{1:<24}{2:<8}{3:<8}{4:<8}".format(
+            return ClassInfoDatabase.ClassInfo.formatString(
                 self.index,self.name,
                 self.expectedCount,
                 self.processedCount,
@@ -63,7 +73,7 @@ class ClassInfoDatabase:
 
     def __init__(self):
         """ Constructor """
-        self._classMap  = dict()
+        self._classMap  = dict() # int -> ClassInfoDatabase.ClassInfo
 
     def __del__(self):
         """ Destructor """
@@ -124,5 +134,22 @@ class ClassInfoDatabase:
     def incrementExportedCount(self, classIndex: int) -> None:
         """ Increment the number of times we've exported this class's features """
         self._classMap[classIndex].exportedCount += 1
+        return None
+
+    def exportToFile(self,
+                     outputPath: str) -> bool:
+        """ Export this instance to the provided text file """
+        with open(outputPath,"w") as outputStream:
+            # Write Header
+            header = ClassInfoDatabase.ClassInfo.formatString(
+                col0="CLASS_INDEX",
+                col1="CLASS_NAME",
+                col2="NUM_EXPECTED",
+                col3="NUM_PROCESSED",
+                col4="NUM_EXPORTED")
+            outputStream.write(header)
+            # Write body
+            for (key,val) in self._classMap.items():
+                outputStream.write(str(val))
         return None
 

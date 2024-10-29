@@ -11,6 +11,8 @@
 
         #### IMPORTS ####
 
+import os
+
 import componentManager
 import featurePipeline
 import signalData
@@ -27,17 +29,19 @@ class PipelineManager(componentManager.ComponentManager):
                  app):
         """ Constructor """
         super().__init__(PipelineManager.__NAME,app)
-        self._featurePipelines = []
+        self._featurePipelines  = []
+        self._outputStreams     = [None] * 10        
+        self._rowFmt = "{0:<16}{1:<16}{2:<16}{3}\n"
 
     def __del__(self):
         """ Destructor """
         super().__del__()
-        self._featurePipelines.clear()
+        self.__closeAllOutputStreams()
 
     # Accessors
 
-    def getSize(self) -> int:
-        """ Return the current size of the database """
+    def getNumPipelines(self) -> int:
+        """ Return the number of feature pipelines """
         return len(self._featurePipelines)
 
     def getOutputPath(self,pipelineIndex: int) -> str:
@@ -59,6 +63,7 @@ class PipelineManager(componentManager.ComponentManager):
     def teardown(self) -> None:
         """ OVERRIDE: Teardown the Sample Database """
         super().teardown()
+        self.__closeAllOutputStreams()
         return None
 
     def registerPipeline(self,
@@ -75,9 +80,11 @@ class PipelineManager(componentManager.ComponentManager):
     def processSignal(self,
                       signal: signalData.SignalData) -> list:
         """ Evalute signal on each pipeline & return list of feature vectors """
-        featureVectors = [None] * len(self._featurePipelines)
+        featureVectors  = [None] * len(self._featurePipelines)
+        successFlags    = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
-            featureVectors[ii] = pipeline.evaluate(signal)
+            featureVectors[ii]  = pipeline.evaluate(signal)
+        self.__exportSampleFileData(signal)
         return featureVectors
             
     # Private Interface
@@ -93,8 +100,47 @@ class PipelineManager(componentManager.ComponentManager):
             pipeline.exportFeatureShapes()
         return None
 
+    def __exportSampleFileData(self,
+                               signal: signalData.SignalData) -> None:
+        """ Log that the pipeline manager processed a sample """
+        sampleFileIndex = signal.uniqueID() // self.getSettings().getSamplesPerOutputFile()
+        sampleFileIndexStr = str(sampleFileIndex)
+        if (sampleFileIndex < 10):
+            sampleFileIndexStr = "0" + sampleFileIndexStr
 
-            
+        # Locate the output stream to send the row data to
+        if (sampleFileIndex >= len(self._outputStreams)):
+            for ii in range(len(self._outputStream),sampleFileIndex):
+                self._outputStreams.append(None)
+
+        # Now see if we need to create the file there
+        if (self._outputStreams[sampleFileIndex] is None):
+            # create the stream
+            streamPath = os.path.join(
+                self.getSettings().getOutputPath(),
+                "samples{0}.txt".format(sampleFileIndexStr))
+
+            self._outputStreams[sampleFileIndex] = open(streamPath,"w")
+            headerText = self._rowFmt.format(
+                "sampleIndex","classIndex","channelIndex","sourcePath")
+            self._outputStreams[sampleFileIndex].write(headerText)
+
+        # The stream is now open, write to it
+        rowText = self._rowFmt.format(
+            signal.uniqueID(),
+            signal.getTarget(),
+            signal.getChannelIndex(),
+            signal.getSourcePath())
+        self._outputStreams[sampleFileIndex].write(rowText)
+        return None
+
+    def __closeAllOutputStreams(self) -> None:
+        """ Close all output streams """
+        for stream in self._outputStreams:
+            if (stream is not None):
+                stream.close()
+        self._outputStreams.clear()
+        return None
 
 
 
