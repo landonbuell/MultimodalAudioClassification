@@ -24,6 +24,7 @@
   <ItemGroup>
     <Compile Include="dataset.py" />
     <Compile Include="main.py" />
+    <Compile Include="sessionInformation.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
