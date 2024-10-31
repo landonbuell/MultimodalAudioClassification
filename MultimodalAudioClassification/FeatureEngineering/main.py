@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
-    dataSet = dataset.Dataset(INPUT_PATH)
-
+    data = dataset.Dataset(INPUT_PATH)
+    X = data.draw(10)
 
     sys.exit(0)

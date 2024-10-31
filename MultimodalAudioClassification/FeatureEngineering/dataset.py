@@ -12,12 +12,31 @@
         #### IMPORTS ####
 
 import os
-import queue
+import threading
+
 import numpy as np
 
 import sessionInformation
 
         #### CLASS DEFINITIONS ####
+
+class LabelFeaturePair:
+    """ Stores a pair of features & corresponding labels """
+
+    def __init__(self,
+                 labels: np.ndarray):
+        """ Constructor """
+        self.labels     = labels
+        self.features   = [None] * labels.size
+
+    def __del__(self):
+        """ Destructor """
+        pass
+
+    def __len__(self):
+        """ Number of samples present """
+        self.labels.size
+
 
 class Dataset:
     """ 
@@ -32,10 +51,9 @@ class Dataset:
                  verbose=True):
         """ Constructor """
         self._rootPath      = rootPath
-        self._seed          = seed
         self._verbose       = verbose
         self.__validateRootPath()
-        
+
         # Dataset Members
         self._runInfo       = sessionInformation.RunInfo()
         self._classInfo     = sessionInformation.ClassInfoDatabase()
@@ -46,6 +64,7 @@ class Dataset:
         self.__loadClassInfo()
         self.__loadPipelines()
         self._sampleDatabase.populate()
+        self._sampleDatabase.shuffle()
 
     def __del__(self):
         """ Destructor """
@@ -57,24 +76,20 @@ class Dataset:
         """ Return the root of the dataset """
         return self._root
 
-    def getSeed(self) -> int:
-        """ Return the random seed for drawing samples """
-        return self._seed
-
-    def setSeed(self, newSeed: int) -> None:
-        """ Set the random seed for this dataset """
-        self._seed = newSeed
-        return None
-
     def getClassInfo(self, classIndex: int) -> object:
         """ Return info about a class """
         return self._classInfo[classIndex]
 
     # Public Interface
 
-    def draw(self,numSamples=1) -> object:
+    def draw(self,numSamples=1,fromPipelines=None) -> object:
         """ Draw a single random X,y pair from the dataset """
-        # TODO: THIS!
+        toDraw = self._sampleDatabase.getNext(numSamples)
+        result = LabelFeaturePair(labels=toDraw[0])
+        if (fromPipelines is None):
+            fromPipelines = list(range(len(self._pipelines)))
+        for 
+
         return None
 
     def resetDraws(self) -> None:
@@ -96,7 +111,8 @@ class Dataset:
             """ Constructor """
             self._rootPath      = rootPath
             self._parentDataset = parentDataset
-            self._classes       = list()
+            self._loader        = 
+            self._classes       = dict() # int -> str
             self._shapes        = list()
             self._names         = list()
 
@@ -111,6 +127,15 @@ class Dataset:
         def getClasses(self) -> list:
             """ Return a list of the classes processed by this pipeline """
             return self._classes
+
+        # Public Interface
+
+        def loadSamplesFromClass(self,
+                        sampleIdentifiers: np.ndarray,
+                        targetClasses: np.ndarray):
+            """ Load the sample corresponding to the identifiers """
+            
+            return None
 
 
 
@@ -130,9 +155,9 @@ class Dataset:
             self._rootPath      = rootPath
             self._parentDataset = parentDataset
             self._actualSize    = 0
-            self._database      = np.ones(shape=(1024,),dtype=int) * -1
-
-            
+            self._database      = np.ones(shape=(256,),dtype=int) * -1
+            self._shuffled      = np.zeros(shape=self._database.shape)
+            self._shuffledIter  = 0
 
         def __del__(self):
             """ Destructor """
@@ -155,19 +180,41 @@ class Dataset:
 
         # Public Interface
 
-        def populate(self):
+        def populate(self) -> None:
             """ Populate this database """
             sampleFiles = self.__findSampleFiles()
-            self.__countAllSamples(sampleFiles)
+            for item in sampleFiles:
+                self.__countSamplesInFile(os.path.join(self._rootPath,item))
+            self.shuffle()
             return None
-        
+
+        def shuffle(self) -> None:
+            """ Shuffles the order that samples will be drawn. Resets the internal iterator """
+            self._shuffled = np.arange(self._database.size)
+            np.random.shuffle(self._shuffled)
+            self._shuffledIter = 0
+            return None
+
         def resizeDatabase(self, newSize: int) -> None:
-            """ Resize the internal database """
+            """ Resize the internal database, reset random iterator """
             sizeDiff = newSize - self._database.size
             if (sizeDiff >= 1):
                 extension = np.ones(shape=(sizeDiff,),dtype=int) * -1
-                self._database.append(extension)
+                self._database = np.append(self._database,extension)
+                self._shuffled = np.zeros(shape=self._database.shape)
+                self._shuffledIter = 0
             return None
+
+        def getNext(self,count=1) -> list:
+            """ Draw the next 'count' number of samples """            
+            upperBound = np.min([self._shuffledIter + count,self._database.size])
+            actualCount = upperBound - self._shuffledIter
+            result = np.ones(shape=(2,actualCount),dtype=int) * -1
+            result[0] = self._shuffled[self._shuffledIter:upperBound] # samples to draw
+            result[1] = self._database[self._shuffledIter:upperBound] # corresponding classes
+            self._shuffledIter = (self._shuffledIter + actualCount) % self._database.size
+            return result
+
 
         # Private Interface
 
@@ -187,23 +234,6 @@ class Dataset:
                 sampleFiles.append(item)
             return sampleFiles
 
-        def __countAllSamples(self, sampleFiles: list) -> None:
-            """ Count all samples between all sample files """
-            rootContents = os.listdir(self._rootPath)
-            DOT_TXT = ".txt"
-            SAMPLES = "samples"
-            sampleFiles = list()
-            for item in rootContents:
-                fullPathToItem = os.path.join(self._rootPath,item)
-                if (os.path.isfile(fullPathToItem) == False):
-                    continue
-                if (item.endswith(DOT_TXT) == False):
-                    continue
-                if (item.startswith(SAMPLES) == False):
-                    continue
-                self.__countSamplesInFile(fullPathToItem)
-            return None
-
         def __countSamplesInFile(self,filePath) -> int:
             """ Read the provided file and count the number of samples in it """
             with open(filePath,"r") as inputStream:
@@ -214,6 +244,8 @@ class Dataset:
                     lineTokens = line.strip().split()
                     sampleIndex = int(lineTokens[0])
                     classIndex = int(lineTokens[1])
+                    if (sampleIndex >= self._database.size):
+                        self.resizeDatabase(np.max([sampleIndex,self._database.size * 2]))
                     if (self._database[sampleIndex] == -1):
                         self._actualSize += 1
                     self._database[sampleIndex] = classIndex

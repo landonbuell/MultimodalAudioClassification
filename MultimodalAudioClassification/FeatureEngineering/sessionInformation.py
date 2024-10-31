@@ -185,4 +185,3 @@ class ClassInfoDatabase:
                 self.incrementExportedCount(classIndex,int(lineTokens[4]))
             # Done reading file
         return None
-
