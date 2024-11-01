@@ -13,6 +13,7 @@
 
 import os
 import threading
+import datetime
 
 import numpy as np
 
@@ -53,10 +54,12 @@ class Dataset:
     def __init__(self,
                  rootPath: str,
                  seed=123456789,
-                 verbose=True):
+                 verbose=True,
+                 multiThread=False):
         """ Constructor """
         self._rootPath      = rootPath
         self._verbose       = verbose
+        self._multiThread   = multiThread
         self.__validateRootPath()
 
         # Dataset Members
@@ -97,28 +100,53 @@ class Dataset:
 
     def draw(self,numSamples=1,fromPipelines=None) -> object:
         """ Draw a single random X,y pair from the dataset """
+        timeStart = datetime.datetime.now()
         toDraw = self._sampleDatabase.getNext(numSamples)
-        xyPair = LabelFeaturePair(toDraw.size,len(self._pipelines))
-
+        
         # Determine which pipelines to load data from
         if (fromPipelines is None):
-            fromPipelines = list(range(len(self._pipelines)))       
+            fromPipelines = list(range(len(self._pipelines)))
+        xyPair = LabelFeaturePair(toDraw.size,len(fromPipelines))
         xyPair.labels = self._sampleDatabase.getTargets(toDraw)
 
         # Load from each selected pipeline
-        for ii in fromPipelines:
-            self._pipelines[ii].loadSamplesFromClass(
-                toDraw,
-                xyPair)
+        loaderThreads = [None] * len(fromPipelines)
+        for ii,pipelineIndex in enumerate(fromPipelines):
+            loaderThreads[ii] = threading.Thread(
+                target=self._pipelines[pipelineIndex].loadSamplesFromClass,
+                args=(toDraw,xyPair,ii))
+        
+        # Start the load process
+        if (self._multiThread == True):
+            for loader in loaderThreads:
+                loader.start()
+            for loader in loaderThreads:
+                loader.join()
+        else:
+            for loader in loaderThreads:
+                loader.run()
+
+        timeFinish = datetime.datetime.now()
+        timeElapsed = timeFinish - timeStart
+        msg = "Loaded {0} samples from {1} pipelines. Time elapsed: {2}".format(
+            toDraw.size,len(fromPipelines),timeElapsed)
+        self.__logMessage(msg)
         return xyPair
 
     def resetDraws(self) -> None:
         """ Reset & shuffle the list of drawn samples """
+        self._sampleDatabase.shuffle()
         return None
 
     def sourceOfSample(self, index: int) -> str:
         """ Return the source path for the provided sample """
         return ""
+
+    def logMessage(self, message: str) -> None:
+        """ Log a message to the console """
+        if (self._verbose == True):
+            print(message)
+        return None
 
     # Private Nested Classes
 
@@ -162,15 +190,21 @@ class Dataset:
 
         def loadSamplesFromClass(self,
                         sampleIdentifiers: np.ndarray,
-                        refLabelFeaturePair: LabelFeaturePair) -> None:
+                        refLabelFeaturePair: LabelFeaturePair,
+                        toLoadIndex: int) -> None:
             """ Load the sample corresponding to the identifiers """
-            refLabelFeaturePair.features[self._identifier] = \
+            refLabelFeaturePair.features[toLoadIndex] = \
                 np.empty(shape=(sampleIdentifiers.size,self._numFeatures),dtype=np.float32)
             for ii,(x,y) in enumerate(zip(sampleIdentifiers,refLabelFeaturePair.labels)):
-                refLabelFeaturePair.features[self._identifier][ii] = self.__loadSample(x,y)
+                refLabelFeaturePair.features[toLoadIndex][ii] = self.__loadSample(x,y)
             return None
 
         # Private Interface
+
+        def __logMessage(self, message: str) -> None:
+            """ Log message via the parent dataset """
+            self._parentDataset.logMessage(message)
+            return None
 
         def __loadSample(self,sampleID: int,targetID: int) -> np.ndarray:
             """ Load a single sample from a specified class """
@@ -268,6 +302,11 @@ class Dataset:
             return result
 
         # Private Interface
+
+        def __logMessage(self, message: str) -> None:
+            """ Log message via the parent dataset """
+            self._parentDataset.logMessage(message)
+            return None
 
         def __findSampleFiles(self) -> list:
             """ Load all of the sample files in this data set """

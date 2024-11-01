@@ -21,10 +21,9 @@ if __name__ == "__main__":
 
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
-    data = dataset.Dataset(INPUT_PATH)
+    data = dataset.Dataset(INPUT_PATH,multiThread=True)
     
-    xyPair = data.draw(10,fromPipelines=[1,2,3])
+    numSamples = 64
+    xyPair = data.draw(numSamples,fromPipelines=[1,2,3])
     
-
-
     sys.exit(0)
