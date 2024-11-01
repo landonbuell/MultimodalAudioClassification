@@ -22,6 +22,9 @@ if __name__ == "__main__":
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     data = dataset.Dataset(INPUT_PATH)
-    X = data.draw(10)
+    
+    xyPair = data.draw(10,fromPipelines=[1,2,3])
+    
+
 
     sys.exit(0)

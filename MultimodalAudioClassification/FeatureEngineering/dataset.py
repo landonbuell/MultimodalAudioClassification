@@ -24,10 +24,11 @@ class LabelFeaturePair:
     """ Stores a pair of features & corresponding labels """
 
     def __init__(self,
-                 labels: np.ndarray):
+                 numSamples : int,
+                 numPipelines: int):
         """ Constructor """
-        self.labels     = labels
-        self.features   = [None] * labels.size
+        self.labels     = np.ones(shape=(numSamples),dtype=int) * -1
+        self.features   = [None] * numPipelines
 
     def __del__(self):
         """ Destructor """
@@ -36,6 +37,10 @@ class LabelFeaturePair:
     def __len__(self):
         """ Number of samples present """
         self.labels.size
+
+    def __repr__(self) -> str:
+        """ Debug Representation """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
 
 class Dataset:
@@ -76,6 +81,14 @@ class Dataset:
         """ Return the root of the dataset """
         return self._root
 
+    def getNumPipelines(self) -> int:
+        """ Return the number of pipelines """
+        return len(self._pipelines)
+
+    def getNumFeatures(self,pipelineIndex: int) -> int:
+        """ Return the number of features in the chosen pipeline """
+        return self._pipelines[pipelineIndex].getNumFeatures()
+
     def getClassInfo(self, classIndex: int) -> object:
         """ Return info about a class """
         return self._classInfo[classIndex]
@@ -85,12 +98,19 @@ class Dataset:
     def draw(self,numSamples=1,fromPipelines=None) -> object:
         """ Draw a single random X,y pair from the dataset """
         toDraw = self._sampleDatabase.getNext(numSamples)
-        result = LabelFeaturePair(labels=toDraw[0])
-        if (fromPipelines is None):
-            fromPipelines = list(range(len(self._pipelines)))
-        for 
+        xyPair = LabelFeaturePair(toDraw.size,len(self._pipelines))
 
-        return None
+        # Determine which pipelines to load data from
+        if (fromPipelines is None):
+            fromPipelines = list(range(len(self._pipelines)))       
+        xyPair.labels = self._sampleDatabase.getTargets(toDraw)
+
+        # Load from each selected pipeline
+        for ii in fromPipelines:
+            self._pipelines[ii].loadSamplesFromClass(
+                toDraw,
+                xyPair)
+        return xyPair
 
     def resetDraws(self) -> None:
         """ Reset & shuffle the list of drawn samples """
@@ -100,21 +120,27 @@ class Dataset:
         """ Return the source path for the provided sample """
         return ""
 
-    # Public Nested Class
+    # Private Nested Classes
 
-    class Pipeline:
+    class __Pipeline:
         """ Stores all information related to a pipeline """
 
         def __init__(self,
                      rootPath: str,
-                     parentDataset: object):
+                     parentDataset: object,
+                     identifier: int):
             """ Constructor """
             self._rootPath      = rootPath
             self._parentDataset = parentDataset
-            self._loader        = 
+            self._identifier    = identifier
+            self._numFeatures   = 0
             self._classes       = dict() # int -> str
             self._shapes        = list()
             self._names         = list()
+            self._getPath       = lambda x,y : os.path.join(self._rootPath,"class{0}".format(x),"sample{0}.bin".format(y))
+            
+            self.__loadShapes()
+
 
         def __del__(self):
             """ Destructor """
@@ -124,6 +150,10 @@ class Dataset:
 
         # Accessors
 
+        def getNumFeatures(self) -> int:
+            """ Number of features in this pipeline """
+            return self._numFeatures
+
         def getClasses(self) -> list:
             """ Return a list of the classes processed by this pipeline """
             return self._classes
@@ -132,16 +162,35 @@ class Dataset:
 
         def loadSamplesFromClass(self,
                         sampleIdentifiers: np.ndarray,
-                        targetClasses: np.ndarray):
+                        refLabelFeaturePair: LabelFeaturePair) -> None:
             """ Load the sample corresponding to the identifiers """
-            
+            refLabelFeaturePair.features[self._identifier] = \
+                np.empty(shape=(sampleIdentifiers.size,self._numFeatures),dtype=np.float32)
+            for ii,(x,y) in enumerate(zip(sampleIdentifiers,refLabelFeaturePair.labels)):
+                refLabelFeaturePair.features[self._identifier][ii] = self.__loadSample(x,y)
             return None
-
-
 
         # Private Interface
 
-    # Private Nested Classes
+        def __loadSample(self,sampleID: int,targetID: int) -> np.ndarray:
+            """ Load a single sample from a specified class """
+            toLoad = self._getPath(targetID,sampleID)
+            X = np.fromfile(toLoad,dtype=np.float32)
+            return X
+
+        def __loadShapes(self) -> None:
+            """ Load in all of the shapes """
+            shapesFile = os.path.join(self._rootPath,"featureShapes.txt")
+            with open(shapesFile,"r") as inputStream:
+                for ii,line in enumerate(inputStream):
+                    if (ii == 0):
+                        # Skip header row
+                        continue
+                    lineTokens = line.strip().split()
+                    self._numFeatures += int(lineTokens[1])
+                    shapeTuple = tuple(lineTokens[2].split(","))
+                    self._shapes.append(shapeTuple)
+            return None
 
     class __SampleDatabase:
         """ Stores a database of all known samples """
@@ -168,6 +217,10 @@ class Dataset:
         def getSize(self) -> int:
             """ Return the actual number of samples """
             return self._actualSize
+
+        def getTargets(self, sampleIDs: np.ndarray) -> np.ndarray:
+            """ Return the targets corresponding to the provided samples """
+            return self._database[sampleIDs]
 
         def __getitem__(self,key: int):
             """ Index an item in the database """
@@ -205,16 +258,14 @@ class Dataset:
                 self._shuffledIter = 0
             return None
 
-        def getNext(self,count=1) -> list:
+        def getNext(self,count=1) -> np.ndarray:
             """ Draw the next 'count' number of samples """            
             upperBound = np.min([self._shuffledIter + count,self._database.size])
             actualCount = upperBound - self._shuffledIter
-            result = np.ones(shape=(2,actualCount),dtype=int) * -1
-            result[0] = self._shuffled[self._shuffledIter:upperBound] # samples to draw
-            result[1] = self._database[self._shuffledIter:upperBound] # corresponding classes
+            result = np.ones(shape=(actualCount,),dtype=int) * -1
+            result = np.copy(self._shuffled[self._shuffledIter:upperBound]) # samples to draw
             self._shuffledIter = (self._shuffledIter + actualCount) % self._database.size
             return result
-
 
         # Private Interface
 
@@ -279,6 +330,7 @@ class Dataset:
         """ Load in each pipeline dataset as a tf dataset """
         rootContents = os.listdir(self._rootPath)
         PIPELINE = "pipeline"
+        pipelineCounter = 0
         for item in rootContents:
             fullRoot = os.path.join(self._rootPath,item)
             if (os.path.isdir(fullRoot) == False):
@@ -286,7 +338,8 @@ class Dataset:
             if (item.startswith(PIPELINE) == False):
                 continue
             self.__logMessage("Adding {0} to list of pipelines".format(item))
-            pipeline = Dataset.Pipeline(fullRoot,self)
+            pipeline = Dataset.__Pipeline(fullRoot,self,pipelineCounter)
             self._pipelines.append(pipeline)
+            pipelineCounter += 1
         return None
 
