@@ -23,6 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="dataset.py" />
+    <Compile Include="datasetLoader.py" />
+    <Compile Include="datasetPipeline.py" />
+    <Compile Include="designMatrix.py" />
     <Compile Include="main.py" />
     <Compile Include="sessionInformation.py" />
     <Compile Include="__init__.py" />
