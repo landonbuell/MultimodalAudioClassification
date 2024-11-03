@@ -96,7 +96,7 @@ class DatasetLoader:
     def getIndexOfNextRandom(self,sampleCount: int) -> np.ndarray:
         """ Return the index of the next 'sampleCount' samples in the shuffled order"""          
         upperBound = np.min([self._shuffledIter + sampleCount,self._database.size])
-        indicesOfNext = np.copy(self._shuffled[self._shuffledIter:upperBound]) # samples to draw      
+        indicesOfNext = self._shuffled[self._shuffledIter:upperBound] # samples to draw      
         self._shuffledIter = (self._shuffledIter + indicesOfNext.size) % self._database.size
         return indicesOfNext
 
