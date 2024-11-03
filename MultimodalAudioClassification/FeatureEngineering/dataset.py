@@ -72,7 +72,7 @@ class Dataset:
         self.__loadClassInfo()
         self.__loadPipelines()
         self._sampleDatabase.populate()
-        self._sampleDatabase.shuffle()
+        self._sampleDatabase.shuffle(seed)
 
     def __del__(self):
         """ Destructor """
@@ -98,7 +98,7 @@ class Dataset:
 
     # Public Interface
 
-    def draw(self,numSamples=1,fromPipelines=None) -> object:
+    def draw(self,numSamples=1,fromPipelines=None) -> LabelFeaturePair:
         """ Draw a single random X,y pair from the dataset """
         timeStart = datetime.datetime.now()
         toDraw = self._sampleDatabase.getNext(numSamples)
@@ -113,7 +113,7 @@ class Dataset:
         loaderThreads = [None] * len(fromPipelines)
         for ii,pipelineIndex in enumerate(fromPipelines):
             loaderThreads[ii] = threading.Thread(
-                target=self._pipelines[pipelineIndex].loadSamplesFromClass,
+                target=self._pipelines[pipelineIndex].loadSamples,
                 args=(toDraw,xyPair,ii))
         
         # Start the load process
@@ -138,9 +138,23 @@ class Dataset:
         self._sampleDatabase.shuffle()
         return None
 
-    def sourceOfSample(self, index: int) -> str:
-        """ Return the source path for the provided sample """
-        return ""
+    def loadAllSamplesFromClass(self,classIndex: int, fromPipelines=None) -> LabelFeaturePair:
+        """ Load all samples from a provided class """
+        timeStart = datetime.datetime.now()
+        toDraw = self._sampleDatabase.
+
+        # Determine which pipelines to load data from
+        if (fromPipelines is None):
+            fromPipelines = list(range(len(self._pipelines)))
+        xyPair = LabelFeaturePair(toDraw.size,len(fromPipelines))
+        xyPair.labels = self._sampleDatabase.getTargets(toDraw)
+
+        timeFinish = datetime.datetime.now()
+        timeElapsed = timeFinish - timeStart
+        msg = "Loaded {0} samples from {1} pipelines. Time elapsed: {2}".format(
+            toDraw.size,len(fromPipelines),timeElapsed)
+        self.__logMessage(msg)
+        return xyPair
 
     def logMessage(self, message: str) -> None:
         """ Log a message to the console """
@@ -188,11 +202,24 @@ class Dataset:
 
         # Public Interface
 
-        def loadSamplesFromClass(self,
+        def loadSamples(self,
                         sampleIdentifiers: np.ndarray,
                         refLabelFeaturePair: LabelFeaturePair,
                         toLoadIndex: int) -> None:
             """ Load the sample corresponding to the identifiers """
+            refLabelFeaturePair.features[toLoadIndex] = \
+                np.empty(shape=(sampleIdentifiers.size,self._numFeatures),dtype=np.float32)
+            for ii,(x,y) in enumerate(zip(sampleIdentifiers,refLabelFeaturePair.labels)):
+                refLabelFeaturePair.features[toLoadIndex][ii] = self.__loadSample(x,y)
+            return None
+
+        def loadClass(self,
+                      classIdentifier: int,
+                      refLabelFeaturePair: LabelFeaturePair,
+                      toLoadIndex: int) -> None:
+            """ Load all samples corresponding to the provided class """
+
+            sampleIdentifiers = self.__findAllSamplesFromClass()
             refLabelFeaturePair.features[toLoadIndex] = \
                 np.empty(shape=(sampleIdentifiers.size,self._numFeatures),dtype=np.float32)
             for ii,(x,y) in enumerate(zip(sampleIdentifiers,refLabelFeaturePair.labels)):
@@ -211,6 +238,13 @@ class Dataset:
             toLoad = self._getPath(targetID,sampleID)
             X = np.fromfile(toLoad,dtype=np.float32)
             return X
+
+        def __findAllSamplesFromClass(self) -> np.ndarray:
+            """ Return all of the samples in the class """
+
+
+
+            return None
 
         def __loadShapes(self) -> None:
             """ Load in all of the shapes """
@@ -239,7 +273,7 @@ class Dataset:
             self._parentDataset = parentDataset
             self._actualSize    = 0
             self._database      = np.ones(shape=(256,),dtype=int) * -1
-            self._shuffled      = np.zeros(shape=self._database.shape)
+            self._shuffled      = np.arange(self._database.size,dtype=int)
             self._shuffledIter  = 0
 
         def __del__(self):
@@ -275,10 +309,12 @@ class Dataset:
             self.shuffle()
             return None
 
-        def shuffle(self) -> None:
+        def shuffle(self, randomSeed: int) -> None:
             """ Shuffles the order that samples will be drawn. Resets the internal iterator """
             self._shuffled = np.arange(self._database.size)
-            np.random.shuffle(self._shuffled)
+            if (randomSeed != 0):
+                np.random.seed(randomSeed)
+                np.random.shuffle(self._shuffled)
             self._shuffledIter = 0
             return None
 
