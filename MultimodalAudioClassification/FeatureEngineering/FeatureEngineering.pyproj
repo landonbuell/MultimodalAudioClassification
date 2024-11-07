@@ -22,9 +22,12 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dataset.py" />
+    <Compile Include="datasetLoader.py" />
+    <Compile Include="datasetPipeline.py" />
+    <Compile Include="designMatrix.py" />
     <Compile Include="main.py" />
-    <Compile Include="Preprocessors.py" />
-    <Compile Include="Visualizers.py" />
+    <Compile Include="sessionInformation.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
