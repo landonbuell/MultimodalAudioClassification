@@ -84,6 +84,7 @@ class PipelineManager(componentManager.ComponentManager):
         successFlags    = [None] * len(self._featurePipelines)
         for ii,pipeline in enumerate(self._featurePipelines):
             featureVectors[ii]  = pipeline.evaluate(signal)
+        self.getApp().getDataManager().registerProcessedSample(signal)
         self.__exportSampleFileData(signal)
         return featureVectors
             

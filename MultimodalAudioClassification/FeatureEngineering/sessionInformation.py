@@ -163,10 +163,10 @@ class ClassInfoDatabase:
                 col2="NUM_EXPECTED",
                 col3="NUM_PROCESSED",
                 col4="NUM_EXPORTED")
-            outputStream.write(header)
+            outputStream.write(header + "\n")
             # Write body
             for (key,val) in self._classMap.items():
-                outputStream.write(str(val))
+                outputStream.write(str(val) + "\n")
         return None
 
     def readFromFile(self,inputPath: str) -> None:

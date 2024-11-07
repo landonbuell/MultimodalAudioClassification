@@ -35,11 +35,11 @@ class ClassInfoDatabase:
                      classInt: int,
                      classStr: str):
             """ Constructor """
-            self.index      = classInt
-            self.name       = classStr
-            self.expectedCount = 0
+            self.index          = classInt
+            self.name           = classStr
+            self.expectedCount  = 0
             self.processedCount = 0
-            self.exportedCount = 0
+            self.exportedCount  = 0
 
         def __del__(self):
             """ Destructor """
@@ -113,6 +113,16 @@ class ClassInfoDatabase:
         index = self.getClassIndex(className)
         return (index != -1)
 
+    def getTotals(self) -> list:
+        """ Return a list of [totalNumExpected, totalNumProcessed, totalNumExported] """
+        result = [0,0,0]
+        for classIndex,classData in self._classMap.items():
+            result[0] += classData.expectedCount
+            result[1] += classData.processedCount
+            result[2] += classData.exportedCount
+        return result
+
+
     # Public Interface
 
     def registerClass(self, classIndex: int, className: str) -> None:
@@ -121,19 +131,25 @@ class ClassInfoDatabase:
             self._classMap[classIndex] = ClassInfoDatabase.ClassInfo(classIndex,className)
         return None
 
-    def incrementExpectedCount(self, classIndex: int) -> None:
+    def incrementExpectedCount(self, 
+                               classIndex: int, 
+                               count = 1) -> None:
         """ Increment the number of times we expect to process this class """
-        self._classMap[classIndex].expectedCount += 1
+        self._classMap[classIndex].expectedCount += count
         return None
 
-    def incrementProcessedCount(self, classIndex: int) -> None:
+    def incrementProcessedCount(self,
+                                classIndex: int,
+                                count = 1) -> None:
         """ Increment the number of times we've processed this class """
-        self._classMap[classIndex].processedCount += 1
+        self._classMap[classIndex].processedCount += count
         return None
 
-    def incrementExportedCount(self, classIndex: int) -> None:
+    def incrementExportedCount(self,
+                               classIndex: int,
+                               count = 1) -> None:
         """ Increment the number of times we've exported this class's features """
-        self._classMap[classIndex].exportedCount += 1
+        self._classMap[classIndex].exportedCount += count
         return None
 
     def exportToFile(self,
@@ -147,9 +163,25 @@ class ClassInfoDatabase:
                 col2="NUM_EXPECTED",
                 col3="NUM_PROCESSED",
                 col4="NUM_EXPORTED")
-            outputStream.write(header)
+            outputStream.write(header + "\n")
             # Write body
             for (key,val) in self._classMap.items():
-                outputStream.write(str(val))
+                outputStream.write(str(val) + "\n")
         return None
 
+    def readFromFile(self,inputPath: str) -> None:
+        """ Import this instance from the provided path """
+        with open(inputPath,"r") as inputStream:
+            for ii,line in enumerate(inputStream):
+                if (ii == 0):
+                    # skip the header
+                    continue
+                # Tokeninze the line
+                lineTokens = line.strip().split()
+                classIndex  = int(lineTokens[0])
+                self.registerClass(classIndex,lineTokens[1])
+                self.incrementExpectedCount(classIndex,int(lineTokens[2]))
+                self.incrementProcessedCount(classIndex,int(lineTokens[3]))
+                self.incrementExportedCount(classIndex,int(lineTokens[4]))
+            # Done reading file
+        return None

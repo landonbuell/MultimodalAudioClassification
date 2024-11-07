@@ -31,7 +31,7 @@ class AppSettings:
         self._findFilesRecurseDepth = 1
 
         self._developmentMode = True
-        self._sampleLimit     = int(2**16)
+        self._sampleLimit     = 10 #int(2**16)
         self._samplesPerFile  = 1000    # samples per output file
 
         self.__initInputPaths(inputPaths)
@@ -101,7 +101,7 @@ class AppSettings:
                         #os.path.join(inputFilesHome,"Y3.csv"),
                         os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV3"
         return AppSettings(inputFiles,outputPath)
 
     # Private Interface
