@@ -101,7 +101,7 @@ class AppSettings:
                         #os.path.join(inputFilesHome,"Y3.csv"),
                         os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV3"
+        outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2"
         return AppSettings(inputFiles,outputPath)
 
     # Private Interface
