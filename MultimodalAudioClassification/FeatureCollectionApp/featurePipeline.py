@@ -131,13 +131,13 @@ class FeaturePipeline:
     def exportFeatureShapes(self) -> None:
         """ Export feature names to pipeline output folder """
         outputPath = os.path.join(self.getOutputPath(),"featureShapes.txt")
-        formatString = lambda x,y,z : "{0:<32}{1:<16}{2}\n".format(x,y,z)
+        formatString = lambda x,y,z : "{0:<64}{1:<16}{2}\n".format(x,y,z)
         header = formatString("NAME","SIZE","SHAPE")
         with open(outputPath,"w") as outputStream:
             outputStream.write(header)
             for method in self._methods:
                 intendedShape = method.getShape()
-                shapeStr = ",".join([str(x) for x in intendedShape])
+                shapeStr = ".".join([str(x) for x in intendedShape])
                 rowText = formatString(
                     method.getName(),
                     method.getNumFeatures(),
