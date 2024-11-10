@@ -55,7 +55,21 @@ class DefaultFeaturePipeline:
     def getDefaultPipeline00() -> featurePipeline.FeaturePipeline:
         """ Get the default pipeline 00 """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
-        pipeline = featurePipeline.FeaturePipeline("pipeline00Misc")
+        pipeline = featurePipeline.FeaturePipeline("pipeline00All")
+        pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(16) )
+        pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
+        pipeline.appendCollectionMethod( zeroCrossingRate.FrameZeroCrossingRate() )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+            centerOfMass.collectionMethod.WeightingFunction.LINEAR ) )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+            centerOfMass.collectionMethod.WeightingFunction.LOG_NATURAL) )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+            centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
+        pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
+            centerOfMass.collectionMethod.WeightingFunction.LOG_NATURAL) )
+        pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16) )
+        pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans( params, 32 ) )
+        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMeans( params, 32 ) )
         return pipeline
 
     @staticmethod

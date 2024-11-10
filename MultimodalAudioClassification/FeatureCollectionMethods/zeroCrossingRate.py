@@ -38,11 +38,13 @@ class TotalZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector):
         """ OVERRIDE: Compute TDE's for signal """
         waveformSign = np.sign(signal.waveform)
         waveformDiff = np.abs(np.diff(waveformSign)) * 0.5
-        self._data[0] = np.sum(waveformDiff) / signal.numSamples
+        zeroCrossingRate = np.sum(waveformDiff) / signal.numSamples
+        features.appendItem(zeroCrossingRate)
         return True
 
 class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
@@ -78,18 +80,19 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector):
         """ OVERRIDE: Compute TDE's for signal """
         zxrs = np.empty(shape=(signal.cachedData.analysisFramesTime.maxNumFrames,),dtype=np.float32)
         for ii in range(signal.cachedData.analysisFramesTime.maxNumFrames):
             zxrs[ii] = self.__computeZeroCrossingRateOfFrame(signal,ii)
         # Store values
-        self._data[0]   = np.mean(zxrs)
-        self._data[1]   = np.var(zxrs)
-        self._data[2]   = np.median(zxrs)
-        self._data[3]   = np.min(zxrs)
-        self._data[4]   = np.max(zxrs)
-        self._data[5]   = self._data[4] - self._data[3]
+        features.appendItem( np.mean(zxrs) )
+        features.appendItem( np.var(zxrs) )
+        features.appendItem( np.median(zxrs) )
+        features.appendItem( np.min(zxrs) )
+        features.appendItem( np.max(zxrs) )
+        features.appendItem( np.max(zxrs) - np.min(zxrs) )
         return True
 
     # Private Interface

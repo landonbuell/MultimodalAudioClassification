@@ -54,9 +54,9 @@ class PipelineManager(componentManager.ComponentManager):
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
         self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
+        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
+        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
+        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
         self.__exportPipelineInfo()
         return None
 

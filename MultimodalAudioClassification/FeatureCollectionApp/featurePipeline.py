@@ -174,20 +174,18 @@ class FeaturePipeline:
         featuresCollected = 0
         for method in self._methods:
             # Invoke the collection method
+            vectorSize = len(vector)
             if (method is None):
                 continue
-            success = method.call(signal)
+            success = method.call(signal,vector)
             if (success == False):
-                vector.setIsTrustworthy(False)
                 msg = "Got unsuccessful return flag from collection method: {0} on signal {1}".format(
                     method,signal)            
                 self.__logMessage(msg)
-            # Retrive the internally stored features
-            features = method.getFeatures()
-            if (len(features) != method.getNumFeatures()):
-                vector.setIsTrustworthy(False)
-                msg = "Expected collection method {0} to return {1} features but got {2}".format(
-                    str(method),method.getNumFeatures(),len(features))
+            featuresCollected = len(vector) - vectorSize 
+            if (featuresCollected != method.getNumFeatures()):
+                msg = "Collection method {0} to return {1} features but got {2}".format(
+                    str(method),method.getNumFeatures(),featuresCollected)
                 self.__logMessage(msg)
             # Do a numpy copy
             vector.copyFromArray(features,featuresCollected)

@@ -38,19 +38,21 @@ class TimeDomainEnvelope(collectionMethod.AbstractCollectionMethod):
     @property
     def numPartitions(self) -> int:
         """ Return the number of partitions """
-        return self._data.size
+        return self._numFeatures
 
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute TDE's for signal """
         partitionSize = int(np.floor((signal.getNumSamples() / self.numPartitions)))
         startIndex = 0
         for ii in range(self.numPartitions):
             stopIndex    = np.min([startIndex + partitionSize,signal.getNumSamples()])
             partitionSlice  = signal.waveform[startIndex:stopIndex]
-            self._data[ii] = np.sum(partitionSlice * partitionSlice) / partitionSize
+            timeDomainEnv = np.sum(partitionSlice * partitionSlice) / partitionSize
+            features.appendItem( timeDomainEnv )
             startIndex += partitionSize
         self._data /= np.max(self._data) # Normalize s.t. the largest value is 1
         return True

@@ -49,14 +49,15 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
         if (self._weightKernel.size != signal.waveform.size):
             self.__initWeightsKernel(signal.waveform.size)
         # Compute Center of Mass
         numerator   = np.dot(np.abs(signal.waveform),self._weightKernel)
         denominator = np.sum(np.abs(signal.waveform)) + collectionMethod.AbstractCollectionMethod.DELTA
-        self._data[0] = numerator / denominator
+        features.appendItem( numerator / denominator )
         return True
 
     # Private Interface
@@ -67,7 +68,7 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
         if (self._weightType == collectionMethod.WeightingFunction.LINEAR):
             self._weightKernel = linearWeights
         elif (self._weightType == collectionMethod.WeightingFunction.QUADRATIC):
-            self._weightKernel = linearWeights**2
+            self._weightKernel = linearWeights * linearWeights
         elif (self._weightKernel == collectionMethod.WeightingFunction.LOG_NATURAL):
             self._weightKernel = np.log(linearWeights + collectionMethod.AbstractCollectionMethod.DELTA) 
         elif (self._weightKernel == collectionMethod.WeightingFunction.LOG_BASE10):
@@ -78,18 +79,18 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
             raise RuntimeWarning(msg)
         return None
 
-class FrequencyCenterOfMassInfo(collectionMethod.AbstractCollectionMethod):
+class FrequencyCenterOfMass(collectionMethod.AbstractCollectionMethod):
     """
-        Compute the frequency center-of-mass for eacg analysis frame
+        Compute the frequency center-of-mass for each analysis frame
     """
 
     __NAME = "FrequencyCenterOfMass"
-    __NUM_FEATURES = 3
+    __NUM_FEATURES = 6
 
     def __init__(self):
         """ Constructor """
-        super().__init__(FrequencyCenterOfMassInfo.__NAME,
-                         FrequencyCenterOfMassInfo.__NUM_FEATURES)
+        super().__init__(FrequencyCenterOfMass.__NAME,
+                         FrequencyCenterOfMass.__NUM_FEATURES)
         self._callbacks.append( collectionMethod.CollectionMethodCallbacks.makeDefaultFreqCenterOfMasses )
 
     def __del__(self):
@@ -102,18 +103,25 @@ class FrequencyCenterOfMassInfo(collectionMethod.AbstractCollectionMethod):
         """ OVERRIDE: Return a list of the feature names """
         result = [self.getName() + "Mean",
                   self.getName() + "Variance",
+                  self.getName() + "Median",
+                  self.getName() + "Min",
+                  self.getName() + "Max",
                   self.getName() + "DiffMinMax",]
         return result
 
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
-        self._data[0]   = np.mean(signal.cachedData.freqCenterOfMasses)
-        self._data[1]   = np.var(signal.cachedData.freqCenterOfMasses)
-        self._data[2]   = (np.max(signal.cachedData.freqCenterOfMasses) - \
-                           np.min(signal.cachedData.freqCenterOfMasses))
+        features.appendItem( np.mean(signal.cachedData.freqCenterOfMasses) )
+        features.appendItem( np.var(signal.cachedData.freqCenterOfMasses) )
+        features.appendItem( np.median(signal.cachedData.freqCenterOfMasses) )
+        features.appendItem( np.min(signal.cachedData.freqCenterOfMasses) )
+        features.appendItem( np.max(signal.cachedData.freqCenterOfMasses) )
+        features.appendItem( (np.max(signal.cachedData.freqCenterOfMasses) - \
+                           np.min(signal.cachedData.freqCenterOfMasses)) )
         return True
 
     # Private Interface

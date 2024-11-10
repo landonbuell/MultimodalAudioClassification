@@ -3,7 +3,7 @@
     Solution:   MultiModalAudioClassification
     Project:    FeautureCollectionMethods
     File:       cepstralCoefficients.py
-    Classes:    __MelFrequencyCepstrumCoefficients,
+    Classes:    MelFrequencyCepstrumCoefficients,
                 MelFrequencyCepstrumCoefficientMeans
                 MelFrequencyCepstrumCoefficientVariances
                 MelFrequencyCepstrumCoefficientMedians
@@ -70,14 +70,15 @@ class MelFrequencyCepstrumCoefficients(collectionMethod.AbstractCollectionMethod
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
         coeffs = signal.cachedData.melFreqCepstralCoeffs.getCoeffs()
         if (self.normalize == True):
             coeffs /= np.max(coeffs)
-        np.copyto(self._data,coeffs.ravel())
+        features.appendItems( coeffs.ravel() )
         return True
 
     def _makeMfccs(self,
@@ -132,9 +133,6 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientMeans.__NAME
         self._resizeData(numCoeffs)
 
-        intendedShape = [self._numCoeffs,]
-        self._setIntendedShape(intendedShape)
-
     def __del__(self):
         """ Destructor """
         pass
@@ -142,13 +140,14 @@ class MelFrequencyCepstrumCoefficientMeans(MelFrequencyCepstrumCoefficients):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute average MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
         meanCoeffs = signal.cachedData.melFreqCepstralCoeffs.getMeans(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,meanCoeffs)
+        features.appendItems( meanCoeffs )
         return True
 
 class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
@@ -173,9 +172,6 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientVaris.__NAME
         self._resizeData(numCoeffs)
 
-        intendedShape = [self._numCoeffs,]
-        self._setIntendedShape(intendedShape)
-     
     def __del__(self):
         """ Destructor """
         pass
@@ -183,13 +179,14 @@ class MelFrequencyCepstrumCoefficientVaris(MelFrequencyCepstrumCoefficients):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute median MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
         variCoeffs = signal.cachedData.melFreqCepstralCoeffs.getVariances(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,variCoeffs)
+        features.appendItems( variCoeffs )
         return True
 
 class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
@@ -214,9 +211,6 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientMedians.__NAME
         self._resizeData(numCoeffs)
 
-        intendedShape = [self._numCoeffs,]
-        self._setIntendedShape(intendedShape)
-
     def __del__(self):
         """ Destructor """
         pass
@@ -224,13 +218,14 @@ class MelFrequencyCepstrumCoefficientMedians(MelFrequencyCepstrumCoefficients):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute median MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
         mediCoeffs = signal.cachedData.melFreqCepstralCoeffs.getMedians(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,mediCoeffs)
+        features.appendItems(mediCoeffs)
         return True
 
 class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
@@ -255,9 +250,6 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
         self._name = MelFrequencyCepstrumCoefficientMinMax.__NAME
         self._resizeData(numCoeffs * 2)
 
-        intendedShape = [self._numCoeffs * 2,]
-        self._setIntendedShape(intendedShape)
-
     def __del__(self):
         """ Destructor """
         pass
@@ -265,17 +257,18 @@ class MelFrequencyCepstrumCoefficientMinMax(MelFrequencyCepstrumCoefficients):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute mins & maxs of MFCC's for signal """
         if (self._makeMfccs(signal) == False):
             return False
-        halfNumFeatures = int(self.getNumFeatures() // 2)
+        #halfNumFeatures = int(self.getNumFeatures() // 2)
 
         minCoeffs = signal.cachedData.melFreqCepstralCoeffs.getMins(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data[:halfNumFeatures], minCoeffs)
+        features.appendItems(minCoeffs)
             
         maxCoeffs = signal.cachedData.melFreqCepstralCoeffs.getMaxes(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data[:halfNumFeatures], maxCoeffs)
+        features.appendItems(maxCoeffs)
         return True

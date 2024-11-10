@@ -16,6 +16,7 @@ import numpy as np
 import enum
 
 import signalData
+import featureVector
 
         #### CLASS DEFINITIONS ####
 
@@ -38,7 +39,7 @@ class AbstractCollectionMethod:
         """ Constructor """
         numFeatures = self._validateNumFeatures(numFeatures)
         self._name  = methodName
-        self._data  = np.zeros(shape=(numFeatures,),dtype=np.float32)
+        self._numFeatures = numFeatures
         self._shape = [numFeatures,]
         self._ptrPipeline  = None
         self._callbacks = []    # called in __evaluateCallbacks() 
@@ -53,9 +54,9 @@ class AbstractCollectionMethod:
         """ Return the name of this feature method """
         return self._name
 
-    def getFeatures(self) -> np.ndarray:
-        """ Return the populated features """
-        return self._data
+    def getNumFeatures(self) -> int:
+        """ Return the number of features returned by this method """
+        return self._numFeatures
 
     def getShape(self) -> list:
         """ Return the intended shape of the output features """
@@ -67,19 +68,13 @@ class AbstractCollectionMethod:
         numFeaturesInShape = 1
         for axisSize in shape:
             numFeaturesInShape *= axisSize
-        numFeatures = self.getNumFeatures()
-        if (numFeaturesInShape != numFeatures):
+        if (numFeaturesInShape != self._numFeatures):
             msg = "Cannot set intended shape of {0} w/ {1} features to {2} due to size mis-match.".format(
-                self.getName(),numFeatures,str(shape))
+                self.getName(),self._numFeatures,str(shape))
             self._logMessage(msg)
             raise RuntimeError(msg)
         self._shape = shape
         return None
-
-
-    def getNumFeatures(self) -> int:
-        """ Return the number of features returned by this method """
-        return self._data.size
 
     def getPipeliene(self) -> object:
         """ Return the pipeline that owns this collection method """
@@ -88,25 +83,19 @@ class AbstractCollectionMethod:
     # Public Interface
 
     def call(self,
-             signal: signalData.SignalData) -> np.ndarray:
+             signal: signalData.SignalData,
+             features: featureVector.FeatureVector) -> np.ndarray:
         """ Evaluate this method on the provided signal """
         if (self.__evaluateCallbacks(signal) == False):
             return False
-        if (self._callBody(signal) == False):
-            return False
-        if (self.__dataHasNanAndInfs() == True):
+        if (self._callBody(signal,features) == False):
             return False
         return True
 
-    def clear(self) -> None:
-        """ Zero all features """
-        for ii in range(self._data.size):
-            self._data[ii] = 0.0
-        return None
-
     def featureNames(self) -> list:
         """ VIRTUAL: Return a list of the feature names """
-        result = ["{0}{1}".format(self._name,x) for x in range(self._data.size)]
+        numFeatures = self.getNumFeatures()
+        result = ["{0}{1}".format(self._name,x) for x in range(numFeatures)]
         return result
 
     def registerPipeline(self,ptrPipeline) -> None:
@@ -125,7 +114,8 @@ class AbstractCollectionMethod:
         return numFeatures
 
     def _callBody(self,
-                  signal: signalData.SignalData) -> bool:
+                  signal: signalData.SignalData,
+                  features: featureVector.FeatureVector) -> bool:
         """ VIRTUAL: main body of call function """
         return False
 
@@ -137,10 +127,10 @@ class AbstractCollectionMethod:
                 ptrPipelineMgr.logMessage(message)
         return None
 
-    def _resizeData(self, newDataSize: int) -> None:
+    def _resizeData(self, newNumFeatures: int) -> None:
         """ Resize the internal data and shape to match a new size """
-        self._data  = np.zeros(shape=(newDataSize,),dtype=np.float32)
-        self._shape = [newDataSize,]
+        self._numFeatures   = newNumFeatures
+        self._shape         = [newNumFeatures,]
         return self
 
     # Private Interface
@@ -154,13 +144,5 @@ class AbstractCollectionMethod:
         numPasses = sum(results)
         return (numPasses == len(self._callbacks))
 
-    def __dataHasNanAndInfs(self) -> bool:
-        """ Check for NaN or +/- Inf Values """
-        sumOfData = np.sum(self._data)
-        if (sumOfData == np.inf) or (sumOfData == -np.inf):
-            return True
-        if (sumOfData == np.nan):
-            return True
-        return False
 
 

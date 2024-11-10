@@ -31,27 +31,26 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
         super().__init__(AutoCorrelationCoefficients.__NAME,
                          numCoeffs)
         self._stepSize = coeffStepSize
-        self._sums = np.zeros(shape=(3,),dtype=np.float32)
 
     def __del__(self):
         """ Destructor """
         super().__del__()
-
 
     # Accessors
 
     @property
     def numCoeffs(self) -> int:
         """ Return the number of auto correlation coeffs to compute """
-        return self._data.size
+        return self._numFeatures
 
     # Protected Interface
 
     def _callBody(self, 
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
         for ii in range(self.numCoeffs):
-            self._data[ii] = self.__computeCoefficient(signal,ii)
+            features.appendItem( self.__computeCoefficient(signal,ii) )
         return True
 
     def __computeCoefficient(self,
@@ -62,14 +61,15 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
         sliceSize       = signal.getNumSamples() - coeffScaled
         waveformFirstK  = signal.waveform[0 : sliceSize]
         waveformLastK   = signal.waveform[coeffScaled : coeffScaled + sliceSize] 
+        cachedSums = np.empty(shape=(3,),dtype=np.float32)
 
         # Compute Sums
-        self._sums[0] = np.dot(waveformFirstK,waveformLastK)
-        self._sums[1] = np.dot(waveformFirstK,waveformFirstK)
-        self._sums[2] = np.dot(waveformLastK,waveformLastK)
+        cachedSums[0] = np.dot(waveformFirstK,waveformLastK)
+        cachedSums[1] = np.dot(waveformFirstK,waveformFirstK)
+        cachedSums[2] = np.dot(waveformLastK,waveformLastK)
 
         # Now Compute the result
-        self._sums[1] = np.sqrt(self._sums[1])
-        self._sums[2] = np.sqrt(self._sums[2])
-        coeff = self._sums[0] / (self._sums[1] * self._sums[2])
+        cachedSums[1] = np.sqrt(cachedSums[1])
+        cachedSums[2] = np.sqrt(cachedSums[2])
+        coeff = cachedSums[0] / (cachedSums[1] * cachedSums[2])
         return coeff
