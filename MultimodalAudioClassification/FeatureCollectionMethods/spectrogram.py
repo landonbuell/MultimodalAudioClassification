@@ -83,7 +83,7 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
 
     def _callBody(self, 
                   signal: collectionMethod.signalData.SignalData,
-                  features: CollectionMethod.featureVector.FeatureVector) -> bool:
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
         #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())

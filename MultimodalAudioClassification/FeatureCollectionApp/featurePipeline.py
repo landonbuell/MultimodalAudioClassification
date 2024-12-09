@@ -187,9 +187,6 @@ class FeaturePipeline:
                 msg = "Collection method {0} to return {1} features but got {2}".format(
                     str(method),method.getNumFeatures(),featuresCollected)
                 self.__logMessage(msg)
-            # Do a numpy copy
-            vector.copyFromArray(features,featuresCollected)
-            featuresCollected += features.size
             # Completed with current method
         return None
 

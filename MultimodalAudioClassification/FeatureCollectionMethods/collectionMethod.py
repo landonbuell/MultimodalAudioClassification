@@ -84,7 +84,7 @@ class AbstractCollectionMethod:
 
     def call(self,
              signal: signalData.SignalData,
-             features: featureVector.FeatureVector) -> np.ndarray:
+             features: featureVector.FeatureVector) -> bool:
         """ Evaluate this method on the provided signal """
         if (self.__evaluateCallbacks(signal) == False):
             return False

@@ -340,4 +340,19 @@ class SignalData:
         """ Debug representation """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
-    
+class SignalDataPreprocessCallbacks:
+    """ Static Class - Make No Instance """
+
+    @staticmethod
+    def makeAnalysisFramesTime(pipeline,signalData):
+        """ Use Frame Params to Make signalData Analysis Frames """
+        frameParams = pipeline.getAnalysisFrameParams()
+        signalData.makeAnalysisFramesTime(frameParams)
+        return None
+
+    @staticmethod
+    def makeAnalysisFramesFreq(pipeline,signalData):
+        """ Use Frame Params to Make signalData Analysis Frames """
+        frameParams = pipeline.getAnalysisFrameParams()
+        signalData.makeAnalysisFramesFreq(frameParams)
+        return None

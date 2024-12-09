@@ -49,8 +49,10 @@ class AutoCorrelationCoefficients(collectionMethod.AbstractCollectionMethod):
                   signal: collectionMethod.signalData.SignalData,
                   features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
+        coeffs = np.zeros(shape=(self.numCoeffs,),dtype=np.float32)
         for ii in range(self.numCoeffs):
-            features.appendItem( self.__computeCoefficient(signal,ii) )
+            coeffs[ii] = self.__computeCoefficient(signal,ii)
+        features.appendItems(coeffs)
         return True
 
     def __computeCoefficient(self,

@@ -59,7 +59,6 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
         """ Constructor """
         super().__init__(FrameZeroCrossingRate.__NAME,
                          FrameZeroCrossingRate.__NUM_FEATURES)
-        self._callbacks.append( collectionMethod.CollectionMethodCallbacks.signalHasAnalysisFramesTime )
 
     def __del__(self):
         """ Destructor """

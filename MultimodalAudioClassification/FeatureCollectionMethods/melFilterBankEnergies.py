@@ -154,13 +154,14 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute average MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         meanEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,meanEnergies)
+        features.appendItems(meanEnergies)
         return True
 
 class MelFilterBankEnergyVaris(MelFilterBankEnergies):

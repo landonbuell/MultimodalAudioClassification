@@ -69,7 +69,7 @@ class FeatureVector:
 
     def appendItems(self, items: np.ndarray) -> None:
         """ Append an array to the internal array """
-        self._data[self._size:self._size._size+items.size] = items
+        self._data[self._size:self._size + items.size] = items
         self._size += items.size
         return None
 
@@ -117,8 +117,7 @@ class FeatureVector:
         return None
 
     def __getitem__(self,index: int) -> np.float32:
-        """ Index operator """
-        
+        """ Index operator """       
         return self._data[index]
 
     def __setitem__(self,index: int, value: np.float32) -> None:
