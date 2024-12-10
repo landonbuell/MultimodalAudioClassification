@@ -37,7 +37,7 @@ class DefaultFeaturePipeline:
         pipeline = featurePipeline.FeaturePipeline("allFeatures")
         pipeline.appendCollectionMethod( timeDomainEnvelope.TimeDomainEnvelope(16) )
         pipeline.appendCollectionMethod( zeroCrossingRate.TotalZeroCrossingRate() )
-        pipeline.appendCollectionMethod( zeroCrossingRate.FrameZeroCrossingRate() )
+        pipeline.appendCollectionMethod( zeroCrossingRate.FrameZeroCrossingRate(params) )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
             centerOfMass.collectionMethod.WeightingFunction.LINEAR ) )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
@@ -56,6 +56,7 @@ class DefaultFeaturePipeline:
         """ Get the pipeline that returns Info on MFBE's """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
         pipeline = featurePipeline.FeaturePipeline("melFilterBankEnergyInfo")
+        #pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergies(params, 16) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMeans( params, 16 ) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyVaris( params, 16 ) )
         pipeline.appendCollectionMethod( melFilterBankEnergies.MelFilterBankEnergyMedians( params, 16 ) )
@@ -75,7 +76,7 @@ class DefaultFeaturePipeline:
         """ Get the pipeline that returns Info on MFCC's """
         params = analysisFrames.AnalysisFrameParameters.defaultFrameParams()
         pipeline = featurePipeline.FeaturePipeline("melFrequencyCepstralCoefficientsInfo")
-        pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients( params, 16 ) )
+        #pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficients( params, 16 ) )
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMeans( params, 16 ) )
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientVaris( params, 16 ) )
         pipeline.appendCollectionMethod( cepstralCoefficients.MelFrequencyCepstrumCoefficientMedians( params, 16 ) )
