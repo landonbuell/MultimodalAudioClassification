@@ -43,7 +43,7 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
 
     def featureNames(self) -> list:
         """ OVERRIDE: Return a list of the feature names """
-        result = ["{0}{1}".format(self._name,str(self._weightType)),]
+        result = ["{0}.{1}".format(self._name,str(self._weightType)),]
         return result
 
     # Protected Interface

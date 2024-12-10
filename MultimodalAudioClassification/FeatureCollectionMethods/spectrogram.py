@@ -12,7 +12,6 @@
 
         #### IMPORTS ####
 
-from typing import Collection
 import numpy as np
 
 import collectionMethod
@@ -87,7 +86,6 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
         #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())
-        features.append( )
         if (self._separateRealAndImaginary == True):
             features.appendItems( np.real(signal.cachedData.analysisFramesFreq.rawFrames().ravel()) )
             features.appendItems( np.imag(signal.cachedData.analysisFramesFreq.rawFrames().ravel()) )

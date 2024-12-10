@@ -64,6 +64,11 @@ class FeaturePipeline:
         """ Return the name of this pipeline """
         return self._indentifier
 
+    def setName(self, newName: str) -> None:
+        """ Update the name of this pipeline """
+        self._indentifier = newName
+        return None
+
     def getSize(self) -> int:
         """ Return the number of items in the pipeline """
         return len(self._methods)

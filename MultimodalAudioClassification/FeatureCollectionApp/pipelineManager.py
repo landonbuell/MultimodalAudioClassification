@@ -53,10 +53,13 @@ class PipelineManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
-        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline00() )
-        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline01() )        
-        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline02() )        
-        #self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getDefaultPipeline03() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getAllFeatures() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getMelFilterBankEnergyInfo() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getMelFilterBankEnergyMatrix() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getMelFrequencyCepstralCoefficientsInfo() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getMelFrequencyCepstralCoefficientsMatrix() )
+        self.registerPipeline( coreCallbacks.DefaultFeaturePipeline.getSpectrogram() )
+        
         self.__exportPipelineInfo()
         return None
 
@@ -72,7 +75,14 @@ class PipelineManager(componentManager.ComponentManager):
         msg = "Registerng pipeline: {0} w/ PipelineManager".format(
             pipeline.getName())
         self.logMessage(msg)
-        # Register
+        # Prepend the name of the pipeline with an numerical identifier
+        modalIndexInt = len(self._featurePipelines)
+        modalIndexStr = str(modalIndexInt)
+        if (modalIndexInt < 10):
+            modalIndexStr = "0" + modalIndexStr
+        newName = "mode{0}_{1}".format(modalIndexStr,pipeline.getName())
+        pipeline.setName(newName)
+        # Add to the list of pipelines
         self._featurePipelines.append(pipeline)
         pipeline.setManager(self)
         return None
