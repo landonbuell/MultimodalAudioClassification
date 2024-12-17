@@ -15,6 +15,8 @@
 import numpy as np
 
 import collectionMethod
+import analysisFrames
+import callbacks
 
         #### CLASS DEFINITIONS ####
 
@@ -38,11 +40,13 @@ class TotalZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector):
         """ OVERRIDE: Compute TDE's for signal """
         waveformSign = np.sign(signal.waveform)
         waveformDiff = np.abs(np.diff(waveformSign)) * 0.5
-        self._data[0] = np.sum(waveformDiff) / signal.numSamples
+        zeroCrossingRate = np.sum(waveformDiff) / signal.numSamples
+        features.appendItem(zeroCrossingRate)
         return True
 
 class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
@@ -53,11 +57,12 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     __NAME = "TotalZeroCrossingInfo"
     __NUM_FEATURES = 6
 
-    def __init__(self):
+    def __init__(self,
+                 frameParams: analysisFrames.AnalysisFrameParameters):
         """ Constructor """
         super().__init__(FrameZeroCrossingRate.__NAME,
                          FrameZeroCrossingRate.__NUM_FEATURES)
-        self._callbacks.append( collectionMethod.CollectionMethodCallbacks.signalHasAnalysisFramesTime )
+        self._params = frameParams
 
     def __del__(self):
         """ Destructor """
@@ -78,18 +83,26 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData):
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector):
         """ OVERRIDE: Compute TDE's for signal """
-        zxrs = np.empty(shape=(signal.cachedData.analysisFramesTime.maxNumFrames,),dtype=np.float32)
-        for ii in range(signal.cachedData.analysisFramesTime.maxNumFrames):
+        signal.makeFreqSeriesAnalysisFrames(self._params)
+        numFramesInUse = signal.cachedData.analysisFramesTime.getNumFramesInUse()
+        zxrs = np.zeros(shape=(numFramesInUse,),dtype=np.float32)
+        for ii in range(numFramesInUse):
             zxrs[ii] = self.__computeZeroCrossingRateOfFrame(signal,ii)
+        # 
         # Store values
-        self._data[0]   = np.mean(zxrs)
-        self._data[1]   = np.var(zxrs)
-        self._data[2]   = np.median(zxrs)
-        self._data[3]   = np.min(zxrs)
-        self._data[4]   = np.max(zxrs)
-        self._data[5]   = self._data[4] - self._data[3]
+        zxrInfo = np.empty(shape=(self.getNumFeatures(),),dtype=np.float32)
+        zxrInfo[0] = np.mean(zxrs)
+        zxrInfo[1] = np.var(zxrs)
+        zxrInfo[2] = np.median(zxrs)
+        zxrInfo[3] = np.min(zxrs)
+        zxrInfo[4] = np.max(zxrs)
+        zxrInfo[5] = np.max(zxrs) - np.min(zxrs)
+
+        # Add to feature vector
+        features.appendItems(zxrInfo)
         return True
 
     # Private Interface
@@ -98,6 +111,7 @@ class FrameZeroCrossingRate(collectionMethod.AbstractCollectionMethod):
                                          signal: collectionMethod.signalData.SignalData,
                                          frameIndex: int) -> None:
         """ Compute the zero crossing rate for a chosen frame """
-        frameSign = np.sign(signal.cachedData.analysisFramesTime[frameIndex])
+        frame = signal.cachedData.analysisFramesTime[frameIndex]
+        frameSign = np.sign(frame)
         frameDiff = np.diff(frameSign) * 0.5
-        return np.sum(frameDiff) / signal.frameSign.size
+        return np.sum(np.abs(frameDiff)) / len(frameDiff)

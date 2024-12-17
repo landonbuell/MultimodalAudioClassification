@@ -72,14 +72,15 @@ class MelFilterBankEnergies(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         energies = signal.cachedData.melFilterFrameEnergies.getEnergies()
         if (self.normalize == True):
             energies /= np.max(energies)
-        np.copyto(self._data,energies.ravel())
+        features.appendItems( energies.ravel() )
         return True
 
     def _makeMfbes(self,
@@ -153,13 +154,14 @@ class MelFilterBankEnergyMeans(MelFilterBankEnergies):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute average MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         meanEnergies = signal.cachedData.melFilterFrameEnergies.getMeans(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,meanEnergies)
+        features.appendItems(meanEnergies)
         return True
 
 class MelFilterBankEnergyVaris(MelFilterBankEnergies):
@@ -191,13 +193,14 @@ class MelFilterBankEnergyVaris(MelFilterBankEnergies):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         variEnergies = signal.cachedData.melFilterFrameEnergies.getVariances(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,variEnergies)       
+        features.appendItems(variEnergies)       
         return True
 
 class MelFilterBankEnergyMedians(MelFilterBankEnergies):
@@ -229,13 +232,14 @@ class MelFilterBankEnergyMedians(MelFilterBankEnergies):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
         mediEnergies = signal.cachedData.melFilterFrameEnergies.getMedians(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data,mediEnergies)    
+        features.appendItems( mediEnergies )    
         return True
 
 class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
@@ -267,17 +271,18 @@ class MelFilterBankEnergyMinMax(MelFilterBankEnergies):
     # Protected Interface
 
     def _callBody(self,
-                  signal: collectionMethod.signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: Compute MFBE's for signal """
         if (self._makeMfbes(signal) == False):
             return False
-        halfNumFeatures = int(self.getNumFeatures() // 2)
+        #halfNumFeatures = int(self.getNumFeatures() // 2)
 
         minEngergies = signal.cachedData.melFilterFrameEnergies.getMins(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data[:halfNumFeatures], minEngergies)
+        features.appendItems( minEngergies )
 
         maxEnergies = signal.cachedData.melFilterFrameEnergies.getMaxes(
             self.onlyIncludeFramesInUse,self.normalize)
-        np.copyto(self._data[halfNumFeatures:], maxEnergies)
+        features.appendItems( maxEnergies )
         return True

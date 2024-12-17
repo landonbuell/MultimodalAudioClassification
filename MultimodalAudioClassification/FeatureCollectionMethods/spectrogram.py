@@ -14,8 +14,6 @@
 
 import numpy as np
 
-import signalData
-
 import collectionMethod
 import analysisFrames
 
@@ -83,24 +81,15 @@ class Spectrogram(collectionMethod.AbstractCollectionMethod):
     # Protected Interface
 
     def _callBody(self, 
-                  signal: signalData.SignalData) -> bool:
+                  signal: collectionMethod.signalData.SignalData,
+                  features: collectionMethod.featureVector.FeatureVector) -> bool:
         """ OVERRIDE: main body of call function """
         signal.makeFreqSeriesAnalysisFrames(self._params)
         #signal.cachedData.analysisFramesFreq.plot(signal.getSourcePath())
         if (self._separateRealAndImaginary == True):
-            halfWay = int(self.getNumFeatures() / 2)
-            np.copyto(
-                self._data[:halfWay],
-                np.real(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
-                casting='no')
-            np.copyto(
-                self._data[halfWay:],
-                np.imag(signal.cachedData.analysisFramesFreq.rawFrames().ravel()),
-                casting='no')
+            features.appendItems( np.real(signal.cachedData.analysisFramesFreq.rawFrames().ravel()) )
+            features.appendItems( np.imag(signal.cachedData.analysisFramesFreq.rawFrames().ravel()) )
         else:
-             np.copyto(
-                 self._data,
-                 np.abs(signal.cachedData.analysisFramesFreq.rawFrames()),
-                 casting='no')
+            features.appendItems( np.abs(signal.cachedData.analysisFramesFreq.rawFrames()) )
         return True
     
