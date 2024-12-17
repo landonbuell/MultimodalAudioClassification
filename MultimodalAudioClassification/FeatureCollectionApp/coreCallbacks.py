@@ -41,9 +41,9 @@ class DefaultFeaturePipeline:
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
             centerOfMass.collectionMethod.WeightingFunction.LINEAR ) )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
-            centerOfMass.collectionMethod.WeightingFunction.LOG_NATURAL) )
+            centerOfMass.collectionMethod.WeightingFunction.QUADRATIC) )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
-            centerOfMass.collectionMethod.WeightingFunction.LINEAR) )
+            centerOfMass.collectionMethod.WeightingFunction.LOG_NATURAL) )
         pipeline.appendCollectionMethod( centerOfMass.TemporalCenterOfMass(
             centerOfMass.collectionMethod.WeightingFunction.LOG_BASE10) )
         pipeline.appendCollectionMethod( autoCorrelation.AutoCorrelationCoefficients(16) )

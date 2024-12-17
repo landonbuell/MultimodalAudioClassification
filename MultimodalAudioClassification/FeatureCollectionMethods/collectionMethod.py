@@ -144,5 +144,12 @@ class AbstractCollectionMethod:
         numPasses = sum(results)
         return (numPasses == len(self._callbacks))
 
+    # Magic Methods Interface
+
+    def __repr__(self) -> str:
+        """ Debugger Representation """
+        return "{0} @ {1}".format(self.__class__,hex(id(self)))
+
+
 
 

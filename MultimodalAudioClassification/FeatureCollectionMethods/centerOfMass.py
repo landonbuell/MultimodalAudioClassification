@@ -69,9 +69,9 @@ class TemporalCenterOfMass(collectionMethod.AbstractCollectionMethod):
             self._weightKernel = linearWeights
         elif (self._weightType == collectionMethod.WeightingFunction.QUADRATIC):
             self._weightKernel = linearWeights * linearWeights
-        elif (self._weightKernel == collectionMethod.WeightingFunction.LOG_NATURAL):
+        elif (self._weightType == collectionMethod.WeightingFunction.LOG_NATURAL):
             self._weightKernel = np.log(linearWeights + collectionMethod.AbstractCollectionMethod.DELTA) 
-        elif (self._weightKernel == collectionMethod.WeightingFunction.LOG_BASE10):
+        elif (self._weightType == collectionMethod.WeightingFunction.LOG_BASE10):
             self._weightKernel = np.log10(linearWeights + collectionMethod.AbstractCollectionMethod.DELTA) 
         else:
             msg = "Unrecognized weight type: {0}. Defaulting to linear"
