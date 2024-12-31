@@ -174,13 +174,13 @@ class Dataset:
     def __loadPipelines(self) -> None:
         """ Load in each pipeline dataset as a tf dataset """
         rootContents = os.listdir(self._rootPath)
-        PIPELINE = "pipeline"
+        MODE = "mode"
         pipelineCounter = 0
         for item in rootContents:
             fullRoot = os.path.join(self._rootPath,item)
             if (os.path.isdir(fullRoot) == False):
                 continue
-            if (item.startswith(PIPELINE) == False):
+            if (item.startswith(MODE) == False):
                 continue
             self.__logMessage("Adding {0} to list of pipelines".format(item))
             pipeline = datasetPipeline.DatasetPipeline(fullRoot,self,pipelineCounter)
