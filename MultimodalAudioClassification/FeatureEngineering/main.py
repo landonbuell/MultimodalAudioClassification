@@ -22,9 +22,11 @@ if __name__ == "__main__":
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     data = dataset.Dataset(INPUT_PATH)
-    
+
     numSamples      = 128
-    nextSamples     = data.drawNext(numSamples,[1,2,3])
-    nextShuffled    = data.drawNextRandom(numSamples,[1,2,3])
+    class22         = data.loadAllFromClass(22,pipelines=["spectrogram",])
+    spectrograms    = class22.getModeByName("spectrogram")
     
+
+
     sys.exit(0)

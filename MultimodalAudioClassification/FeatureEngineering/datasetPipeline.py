@@ -12,7 +12,6 @@
     #### IMPORTS ####
 
 import os
-from typing_extensions import runtime
 import numpy as np
 
 import designMatrix
@@ -23,18 +22,17 @@ class DatasetPipeline:
     """ Stores all information related to a pipeline from within a dataset """
 
     def __init__(self,
-                 pipelineName: str,
+                 rootPath: str,
                  parentDataset: object,
                  identifier: int):
         """ Constructor """
-        self._pipelineName  = pipelineName
+        self._rootPath      = rootPath
         self._parentDataset = parentDataset
         self._identifier    = identifier
         self._numFeatures   = 0
         self._classes       = dict() # int -> str
         self._shapes        = list()
         self._names         = list()
-        self._getPath       = lambda x,y : os.path.join(self._rootPath,"class{0}".format(x),"sample{0}.bin".format(y))
             
         self.__loadShapes()
 
@@ -49,7 +47,7 @@ class DatasetPipeline:
 
     def getRoot(self) -> str:
         """ Return the root path of the pipeline """
-        return os.path.join(self._parentDataset.getRoot(),self._pipelineName)
+        return os.path.join(self._parentDataset.getRoot(),self._rootPath)
 
     def getNumFeatures(self) -> int:
         """ Number of features in this pipeline """
@@ -57,7 +55,7 @@ class DatasetPipeline:
 
     def getClasses(self) -> list:
         """ Return a list of the classes processed by this pipeline """
-        return self._classes
+        return self._classes.keys()
 
     def getTargetPath(self, targetID: int) -> str:
         """ Return the path of the labels folder """
@@ -67,7 +65,27 @@ class DatasetPipeline:
         """ Return the path of the chosen sample given the target label """
         return os.path.join(self.getTargetPath(targetID),"sample{0}.bin".format(sampleID))
 
+    def getName(self) -> str:
+        """ Return the name of the pipeline (based on the root) """
+        rootName = self._rootPath.split(os.pathsep)[-1]
+        tokens = rootName.split("_")
+        return tokens[-1]
+
+    def getShapes(self) -> list:
+        """ Return a list of tuples describing the shape of each group of features """
+        return self._shapes[:]
+
     # Public Interface
+
+    def report(self) -> str:
+        """ Return a string that provides a detailed report on this instance """
+        fmt = lambda n,x,y : "\t" * n + "{0:<32}{1}".format(x,y)
+        txt = ""
+        txt += fmt(1,"Pipleine #{0}".format(self._identifier),self._rootPath)
+        txt += fmt(2,"Num Features",self._numFeatures)
+        txt += fmt(2,"Num Classes", len(self._classes))
+        return txt
+
     
     # Private Interface
 
@@ -75,6 +93,12 @@ class DatasetPipeline:
         """ Log message via the parent dataset """
         self._parentDataset.logMessage(message)
         return None
+
+    def __getSampleFileRoot(self,classIndex: int, sampleIndex: int):
+        """ Return the path to the unique sample """
+        return os.path.join(self._rootPath,
+                            "class{0}".format(classIndex),
+                            "sample{0}.bin".format(sampleIndex))
 
     def __loadShapes(self) -> None:
         """ Load in all of the shapes """
@@ -86,6 +110,21 @@ class DatasetPipeline:
                     continue
                 lineTokens = line.strip().split()
                 self._numFeatures += int(lineTokens[1])
-                shapeTuple = tuple(lineTokens[2].split(","))
+                shapeTokens = lineTokens[2].split(".")
+                shapeTuple = tuple([int(x) for x in shapeTokens])        
                 self._shapes.append(shapeTuple)
         return None
+
+    # Dunder Methods
+
+    def __eq__(self,other) -> bool:
+        """ Equality operator """
+        if (isinstance(other,type(self) == False)):
+            return False
+        return ((self._rootPath == other._pipelineName) and
+                (self._parentDataset == other._parentDataset) and
+                (self._identifier == other._identifier))
+
+    def __neq__(self,other) -> bool:
+        """ In-Equality operator """
+        return not (self == other)
