@@ -46,6 +46,10 @@ class DatasetLoader:
         """ Return the targets corresponding to the provided samples """
         return self._database[sampleIDs]
 
+    def getSize(self) -> int:
+        """ Size of the database """
+        return self._database.size
+
     # Public Interface
 
     def populate(self,shuffleSeed=0) -> None:

@@ -69,6 +69,10 @@ class Dataset:
         """ Return the number of pipelines """
         return len(self._pipelines)
 
+    def getNumSamples(self) -> int:
+        """ Return the number of samples """
+        return self._loader.getSize()
+
     def getPipelineNames(self) -> list:
         """ Get a list of all names for each pipeline line """
         return [x.getName() for x in self._pipelines]
@@ -85,7 +89,16 @@ class Dataset:
         """ Return info about a class """
         return self._classInfo[classIndex]
 
-    # Public Interface
+    def getIndexFromName(self, name: str) -> int:
+        """ Get the pipeline index from a provided name. -1 if not found """
+        index = -1
+        for ii,pipeline in enumerate(self._pipelines):
+            if (pipeline.getName() == name):
+                index = ii
+                break
+        return index
+
+    # Public Interface - Load Multiple
 
     def loadSamples(self,
              sampleIDs: np.ndarray,
@@ -109,7 +122,17 @@ class Dataset:
             fromPipelines=pipelines)
         return designMatrix
 
+    def loadAllFromPipeline(self,
+            pipeline: int) -> designMatrix.UnimodalDesignMatrix:
+        """ Draw All samples from a chosen mode """
+        toLoad = np.arange(self._loader.getSize())
+        multiMatrix = self.__loadDesignMatrixFromPipelines(
+            sampleIDs=toLoad,
+            fromPipelines=[pipeline,])
+        singleMatrix = multiMatrix.getModeByIndex(pipeline)
+        return singleMatrix
 
+    # Public Interface - Draw Samples
 
     def drawNext(self,
              sampleCount: np.ndarray,
@@ -132,6 +155,8 @@ class Dataset:
             sampleIDs=toLoad,
             fromPipelines=pipelines)
         return designMatrix
+
+    # Public Interface - Operations
 
     def modeReport(self,toConsole=True) -> str:
         """ Return a report on the modes/pipelines in this dataset """

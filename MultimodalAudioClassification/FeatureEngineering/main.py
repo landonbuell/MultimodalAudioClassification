@@ -22,10 +22,7 @@ if __name__ == "__main__":
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     data = dataset.Dataset(INPUT_PATH)
-
-    numSamples      = 128
-    class22         = data.loadAllFromClass(22,pipelines=["spectrogram",])
-    spectrograms    = class22.getModeByName("spectrogram")
+    spectrograms    = data.loadAllFromPipeline(5)
     
 
 
