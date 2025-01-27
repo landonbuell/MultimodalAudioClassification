@@ -28,6 +28,7 @@
     <Compile Include="designMatrix.py" />
     <Compile Include="main.py" />
     <Compile Include="sessionInformation.py" />
+    <Compile Include="visuals.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>

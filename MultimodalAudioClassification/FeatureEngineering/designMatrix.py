@@ -93,6 +93,14 @@ class UnimodalDesignMatrix:
         frame = pd.DataFrame(data={"targets":self._labels},)
         return frame
 
+    def getSample(self, sampleIndex: int) -> np.ndarray:
+        """ Return a sample at the provided index """
+        return self._features[sampleIndex]
+
+    def getLabel(self, labelIndex: int) -> int:
+        """ Return a sample at the provided index """
+        return self._labels[labelIndex]
+
     # MAGIC METHODS
 
     def __len__(self) -> int:
