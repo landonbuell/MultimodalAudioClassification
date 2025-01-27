@@ -14,6 +14,7 @@ import sys
 import os
 
 import dataset
+import visuals
 
     #### MAIN EXECUTABLE ####
 
@@ -22,8 +23,13 @@ if __name__ == "__main__":
     # Set some constants + Load Run Info
     INPUT_PATH  = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV1"
     data = dataset.Dataset(INPUT_PATH)
-    spectrograms    = data.loadAllFromPipeline(5)
+    spectrograms    = data.loadAllFromPipeline(2)
     
+    sample  = spectrograms.getSample(200)
+    label   = spectrograms.getLabel(200)
+    print(label)
+
+    visuals.FeaturesOfAxes2D.plotVarianceOfRows(sample)
 
 
     sys.exit(0)
