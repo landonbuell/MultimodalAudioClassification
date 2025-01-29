@@ -175,11 +175,12 @@ class SampleDatabase(componentManager.ComponentManager):
                 success = self.__enqueueSample(newSample)
         return None
     
-    def __enqueueSample(self,sample) -> int:
+    def __enqueueSample(self,sample: sampleFile.SampleFileIO) -> int:
         """ Enqueue a sample to the database """
         if (self.isFull() == True):
             return False
-        self._app.getDataManager().registerExpectedSample(sample)
+        self._app.getDataManager().registerExpectedSample(
+            sample.getTarget())
         self._database.put(sample)
         self._size += 1
         self._queued += 1

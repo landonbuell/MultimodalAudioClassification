@@ -16,7 +16,7 @@ import datetime
 import numpy as np
 import threading
 
-import componentManager
+import featureCollectionApp
 import sampleFile
 
         #### CLASS DEFINITIONS ####
@@ -57,53 +57,6 @@ class FeatureCollector(threading.Thread):
         """ Return T/F is the stop flag has been raised """
         return self._stopEvent.is_set()
 
-    # Static Interface
-
-    @staticmethod
-    def registerManagerDatabase(featureCollectionApp) -> None:
-        """ Register the component manager """
-        FeatureCollector.__managerDatabase = componentManager.ManagerDatabase(featureCollectionApp)
-        return None
-
-    @staticmethod
-    def appSettings() -> object:
-        """ Return a pointer to the sample database """
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "ManagerDatabase is not registered with FeatureCollector"
-            raise RuntimeError(msg)
-        return FeatureCollector.__managerDatabase.getAppSettings()
-
-    @staticmethod
-    def collectionManager() -> object:
-        """ Return a pointer to the sample database """
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "ManagerDatabase is not registered with FeatureCollector"
-            raise RuntimeError(msg)
-        return FeatureCollector.__managerDatabase.getCollectionManager()
-
-    @staticmethod
-    def sampleDatabase() -> object:
-        """ Return a pointer to the sample database """
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "ManagerDatabase is not registered with FeatureCollector"
-            raise RuntimeError(msg)
-        return FeatureCollector.__managerDatabase.getSampleDatabase()
-
-    @staticmethod
-    def pipelineManager() -> object:
-        """ Return a pointer to the sample database """
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "ManagerDatabase is not registered with FeatureCollector"
-            raise RuntimeError(msg)
-        return FeatureCollector.__managerDatabase.getPipelineManager()
-
-    @staticmethod
-    def dataManager() -> object:
-        """ Return a point to the rundata manager """
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "ManagerDatabase is not registered with FeatureCollector"
-            raise RuntimeError(msg)
-        return FeatureCollector.__managerDatabase.getDataManager()
 
     # Public Interface
 
@@ -117,10 +70,7 @@ class FeatureCollector(threading.Thread):
     def logMessage(self,message: str) -> None:
         """ Log a Message to the collection manager """
         message = self.getName() + ": " + message
-        if (FeatureCollector.__managerDatabase is None):
-            msg = "Cannot log message: '{0}' because no ManagerDatabase is registered with FeatureCollector".format(message)
-            raise RuntimeError(msg)
-        FeatureCollector.collectionManager().logMessage(message)
+        featureCollectionApp.FeatureCollectionApplication.getInstance().logMessage(message)
         return None
 
     def raiseStopFlag(self,reason=None) -> None:
@@ -162,22 +112,23 @@ class FeatureCollector(threading.Thread):
            nextSample = self._callbackGetNext.__call__(self)
            if (nextSample is None):
                return None
-           if (nextSample.isReal() == True):
+           if (nextSample.isValid() == True):
                return nextSample
         return None
 
     def __logNextSample(self, nextSample: sampleFile.SampleFileIO) -> None:
         """ Log the next sample """
-        timeDelta = datetime.datetime.now() - FeatureCollector.collectionManager().getCollectionStartTime()
+        collectionManager = featureCollectionApp.FeatureCollectionApplication.getInstance().getCollectionManager()
+        timeDelta = datetime.datetime.now() - collectionManager.getCollectionStartTime()
         msg = "Pulled sample: {0}. Time: {1}".format(
             str(nextSample),str(timeDelta))
-        FeatureCollector.collectionManager().logMessage(msg)
+        collectionManager.logMessage(msg)
         return None
 
     def __decodeSample(self, sampleFile) -> list:
         """ Decode the sample and return a list of signals """
         try:
-            listOfSignals = sampleFile.decode()
+            listOfSignals = sampleFile.getSignals()
             msg = "Read {0} into {1} signals".format(sampleFile,len(listOfSignals))
             self.logMessage(msg)
             return listOfSignals
@@ -189,7 +140,7 @@ class FeatureCollector(threading.Thread):
 
     def __processListOfSignals(self, listOfSignals: list) -> None:
         """ Process list of signals and export feature vectors """
-        pipelineMgr = FeatureCollector.pipelineManager()
+        pipelineMgr = featureCollectionApp.FeatureCollectionApplication.getInstance().getPipelineManager()
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
             signal = self.__preprocessSignal(signal)
@@ -210,6 +161,8 @@ class FeatureCollector(threading.Thread):
                                      signal: object,
                                      listOfFeatureVectors: list) -> None:
         """ Export a list of feature Vectors to binaries """
+        dataManager = featureCollectionApp.FeatureCollectionApplication.getInstance().getDataManager()
+        failureCount = 0
         for ii,vector in enumerate(listOfFeatureVectors):
             # Export
             if ((vector is None) or (len(vector) == 0)):
@@ -218,19 +171,21 @@ class FeatureCollector(threading.Thread):
                 self.logMessage(msg)
                 continue
             # Get output Path
-            outputLocation = FeatureCollector.dataManager().getExportLocation(ii,signal.getTarget())
+            outputLocation = dataManager.getExportLocation(ii,signal.getTarget())
             fullOutputPath = os.path.join(outputLocation,signal.exportNameBinary())
             # Export
             try:
                 vector.toBinaryFile(fullOutputPath)
                 msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
-                FeatureCollector.dataManager().registerExportedSample(vector)
             except RuntimeError as err:
                 msg = str(err)
+                failureCount += 1
             except Exception as err:
                  msg = "Failed to export sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
+                 failureCount += 1
             self.logMessage(msg)
         # All done!
+        dataManager.registerExportedSample(signal.getTarget())
         return None
 
 class GetNextSampleStrategies:
@@ -239,16 +194,20 @@ class GetNextSampleStrategies:
     @staticmethod
     def getNextSampleSingleThread(collector: FeatureCollector) -> object:
         """ Pull the next sample from the sample database while on only main thread """
-        if (FeatureCollector.sampleDatabase().isEmpty() == True):
+        sampleDatabase = featureCollectionApp.FeatureCollectionApplication.getInstance().getSampleDatabase()
+        if (sampleDatabase.isEmpty() == True):
+            # Database is empty
             collector.raiseStopFlag(reason="Sample database is empty")
             return None
-        return FeatureCollector.sampleDatabase().getNext()
+        return sampleDatabase.getNext()
 
     @staticmethod
     def getNextSampleMultiThread(collector: FeatureCollector) -> object:
         """ Pull the next sample from the sample database in a multithreaded environment """
-        if (FeatureCollector.sampleDatabase().isEmpty() == True):
+        sampleDatabase = featureCollectionApp.FeatureCollectionApplication.getInstance().getSampleDatabase()
+        if (sampleDatabase.isEmpty() == True):
+            # Database is empty
             collector.raiseStopFlag(reason="Sample database is empty")
             return None
         # TODO: Fix this for multiple threads
-        return FeatureCollector.sampleDatabase().getNext()
+        return sampleDatabase.getNext()
