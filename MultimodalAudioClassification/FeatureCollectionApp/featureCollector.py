@@ -24,8 +24,6 @@ import sampleFile
 class FeatureCollector(threading.Thread):
     """ Represents an object that processes a sample """
 
-    # Static members point to app managers
-    __managerDatabase = None
 
     def __init__(self,
                  name: str):
