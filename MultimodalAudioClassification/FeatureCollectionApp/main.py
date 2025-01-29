@@ -26,7 +26,7 @@ def sessionSettings() -> appSettings.AppSettings:
                     #os.path.join(inputFilesHome,"Y3.csv"),
                     os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
-    outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV2"
+    outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV3"
     settings = appSettings.AppSettings(inputFiles,outputPath,
                                        sampleLimit=32)
     return settings

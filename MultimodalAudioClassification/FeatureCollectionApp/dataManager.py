@@ -69,10 +69,11 @@ class RundataManager(componentManager.ComponentManager):
         self.__exportClassInfo()
         return None
 
-    def registerExpectedSample(self, sampleTargetIndex: int) -> None:
+    def registerExpectedSample(self, 
+                               sampleTargetIndex: int,
+                               sampleTargetName: str) -> None:
         """ Register this sample w/ the data manager """  
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
-            sampleTargetName    = "UNKNOWN_CLASS_NAME"
             self._classInfo.registerClass(sampleTargetIndex,sampleTargetName)
             msg = "Adding class#{0} to expected samples".format(sampleTargetIndex)
             self.logMessage(msg)
