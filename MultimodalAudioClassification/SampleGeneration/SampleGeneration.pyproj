@@ -25,7 +25,6 @@
     <Compile Include="main.py" />
     <Compile Include="plotting.py" />
     <Compile Include="simpleWaveforms.py" />
-    <Compile Include="WaveformGenerators.py" />
     <Compile Include="__init__.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

@@ -21,6 +21,7 @@ class AppSettings:
     
     def __init__(self,
                  inputPaths: list,
+                 generators: list,
                  outputPath: str,
                  findFileRecurseDepth=1,
                  numCollectionThreads=1,
@@ -28,6 +29,7 @@ class AppSettings:
                  samplesPerFile=1024):
         """ Constructor """
         self._pathsInput        = set()     # __initInputPaths
+        self._generators        = set()     # __initDataGenerators
         self._pathOutput        = "NULL"    # __initOutputPath
         self._loggerName        = "textLog"
         self._developmentMode   = True
@@ -49,6 +51,10 @@ class AppSettings:
     def getInputPaths(self) -> list:
         """ Return a list of sample input paths """
         return list(self._pathsInput)
+
+    def getDataGenerators(self) -> list:
+        """ Return a list of data generator instances """
+        return list(self._generators)
 
     def getOutputPath(self) -> str:
         """ Return output Path """
