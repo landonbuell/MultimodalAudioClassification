@@ -16,6 +16,7 @@ import enum
 import queue
 
 import componentManager
+import dataManager
 import sampleFile
 
         #### CLASS DEFINITIONS ####
@@ -166,20 +167,25 @@ class SampleDatabase(componentManager.ComponentManager):
                 try:
                     lineTokens = line.split(",")
                     newSample = sampleFile.SampleFileIO(int(lineTokens[1]),lineTokens[0])
+                    targetClassName = lineTokens[2]
                 except Exception as err:
                     msg = "Could note sample SampleFileIO from {0}, line#{1} for reason: {2}".format(
                         filePath,lineCounter,str(err))
                     self.logMessage(msg)
                     continue
                 # If the instance worked, add it to the queue
-                success = self.__enqueueSample(newSample)
+                success = self.__enqueueSample(newSample,targetClassName)
         return None
     
-    def __enqueueSample(self,sample) -> int:
+    def __enqueueSample(self,
+                        sample: sampleFile.SampleFileIO,
+                        targetName: str) -> int:
         """ Enqueue a sample to the database """
         if (self.isFull() == True):
             return False
-        self._app.getDataManager().registerExpectedSample(sample)
+        dataManager = self.getApp().getDataManager()
+        dataManager.registerExpectedSample(
+            sample.getTarget(), targetName)
         self._database.put(sample)
         self._size += 1
         self._queued += 1

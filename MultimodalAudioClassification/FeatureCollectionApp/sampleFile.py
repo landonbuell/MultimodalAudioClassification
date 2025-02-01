@@ -52,14 +52,14 @@ class SampleFileIO:
         """ Return the sample ID """
         return self._id
 
-    def isReal(self) -> bool:
-        """ Return T/F if source file exists """
+    def isValid(self) -> bool:
+        """ VIRTUAL: Return T/F if source file exists """
         return os.path.isfile(self._source)
 
     # Public Interface
 
-    def decode(self) -> list:
-        """ decode the source file into a list of signalData instances """
+    def getSignals(self) -> list:
+        """ VIRTUAL: Decode the source file into a list of signalData instances """
         listOfSignalDatas = []
         if (self._source.endswith(".txt") == True):
             # Is Text File
@@ -114,7 +114,6 @@ class SampleFileIO:
 
         return signals
 
-
     # Magic Methods
 
     def __str__(self) -> str:
@@ -125,4 +124,52 @@ class SampleFileIO:
         """ Representation for debugging """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
 
+class SampleFileGenerated(SampleFileIO):
+    """ Represents a sample file that is NOT on disk, but stashed in a variable """
+
+    __GENERATED_SAMPLE = "GENERATED_SAMPLE"
+
+    def __init__(self,
+                 targetClass: int,
+                 sampleRate: int,
+                 sourceData: np.ndarray):
+        """ Constructor """
+        super().__init__(targetClass,SampleFileGenerated.__GENERATED_SAMPLE)
+        self._rate  = sampleRate
+        self._data  = sourceData
+
+    def __del__(self):
+        """ Destructor """
+        super().__del__()
+
+    # ACCESSORS 
+
+    def isValid(self) -> bool:
+        """ OVERRIDE: Return T/F if the source data is usable """
+        return ((self._data.shape[-1] > 1024) and (self._data.ndim < 3))
     
+    # PUBLIC 
+
+    def getSignals(self) -> list:
+        """ VIRTUAL: Decode the source file into a list of signalData instances """
+        listOfSignalDatas = []
+        if (self._data.ndim == 1):
+            newSignal = signalData.SignalData(sampleRate=self._rate,
+                                      targetClass=self.getTarget(),
+                                      waveform=self._data,
+                                      sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                      channelIndex=0)
+            listOfSignalDatas.append(newSignal)
+        elif (self._data.ndim == 2):
+            # Each row is a new waveform
+            for ii in range(self._data.shape[0]):
+                newSignal = signalData.SignalData(sampleRate=self._rate,
+                                          targetClass=self.getTarget(),
+                                          waveform=self._data[ii],
+                                          sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                          channelIndex=ii)
+                listOfSignalDatas.append(newSignal)
+        else:
+            msg = "Cannot handle generated sample data with more than two axes"
+            raise RuntimeError(msg)
+        return listOfSignalDatas

@@ -69,11 +69,11 @@ class RundataManager(componentManager.ComponentManager):
         self.__exportClassInfo()
         return None
 
-    def registerExpectedSample(self, sampleData: object) -> None:
-        """ Register this sample w/ the data manager """
-        sampleTargetIndex   = sampleData.getTarget()    
+    def registerExpectedSample(self, 
+                               sampleTargetIndex: int,
+                               sampleTargetName: str) -> None:
+        """ Register this sample w/ the data manager """  
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
-            sampleTargetName    = "UNKNOWN_CLASS_NAME"
             self._classInfo.registerClass(sampleTargetIndex,sampleTargetName)
             msg = "Adding class#{0} to expected samples".format(sampleTargetIndex)
             self.logMessage(msg)
@@ -81,9 +81,8 @@ class RundataManager(componentManager.ComponentManager):
         self.__initClassOutputPaths(sampleTargetIndex)
         return None
 
-    def registerProcessedSample(self, signalData: object) -> None:
-        """ Register a processed sample w/ the data manager """  
-        sampleTargetIndex   = signalData.getTarget()    
+    def registerProcessedSample(self, sampleTargetIndex: int) -> None:
+        """ Register a processed sample w/ the data manager """      
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
             msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
                 sampleTargetIndex)
@@ -92,9 +91,8 @@ class RundataManager(componentManager.ComponentManager):
         self._classInfo.incrementProcessedCount(sampleTargetIndex)
         return None
 
-    def registerExportedSample(self, featureVector: object) -> None:
+    def registerExportedSample(self, sampleTargetIndex: int) -> None:
         """ Register a processed sample w/ the data manager """  
-        sampleTargetIndex   = featureVector.getTarget()    
         if (self._classInfo.hasClassIndex(sampleTargetIndex) == False):
             msg = "Got class Index of {0} which does NOT exist in the ClassInfoDatabase".format(
                 sampleTargetIndex)

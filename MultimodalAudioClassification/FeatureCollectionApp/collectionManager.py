@@ -53,7 +53,6 @@ class CollectionManager(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the collection manager """
         super().initialize()     
-        featureCollector.FeatureCollector.registerManagerDatabase(self.getApp())
         return None
 
     def teardown(self) -> None:
