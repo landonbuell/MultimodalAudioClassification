@@ -135,7 +135,8 @@ class GeneratedSampleFileIO(SampleFileIO):
                  sourceData: np.ndarray,
                  ):
         """ Constructor """
-        super().__init__(targetClass,GeneratedSampleFileIO.__GENERATED_SAMPLE)
+        super().__init__(targetClass,
+                         GeneratedSampleFileIO.__GENERATED_SAMPLE)
         self._rate  = sampleRate
         self._data  = sourceData
 
@@ -151,7 +152,7 @@ class GeneratedSampleFileIO(SampleFileIO):
 
     def isValid(self) -> bool:
         """ OVERRIDE: Return T/F if the source data is usable """
-        return ((self._data.shape[-1] > 1024) and (self._data.ndim < 3))
+        return ((self._data.shape[-1] > 1024) and (self._data.ndim <= 2))
     
     # PUBLIC 
 

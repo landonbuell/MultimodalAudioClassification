@@ -18,6 +18,8 @@ import queue
 import componentManager
 import sampleFile
 
+import sampleGenerator
+
         #### CLASS DEFINITIONS ####
 
 class SampleDatabase(componentManager.ComponentManager):
@@ -138,10 +140,8 @@ class SampleDatabase(componentManager.ComponentManager):
         listOfDataGenerators = self.getSettings().getDataGenerators()
         if (len(listOfDataGenerators) == 0):
             return None
-        for item in listOfDataGenerators:
-            if (self.isFull() == True):
-                break
-            # TODO: Pull samples from generators
+        for generator in listOfDataGenerators:
+            self.__handleSampleGenerator(generator)
         return None
 
     def __handleInputDirectory(self,dirpath: str, currentDepth: int) -> None:
@@ -194,6 +194,15 @@ class SampleDatabase(componentManager.ComponentManager):
                 success = self.__enqueueSample(newSample,targetClassName)
         return None
     
+    def __handleSampleGenerator(self,
+                                generator: sampleGenerator.SampleGenerator) -> None:
+        """ Read and store all samples from the provided generator """
+        while((generator.isEmpty() == False) and (self.isFull() == False)):
+            sampleInfo = generator.drawNext()
+
+        return None
+
+
     def __enqueueSample(self,
                         sample: sampleFile.SampleFileIO,
                         targetName: str) -> int:
