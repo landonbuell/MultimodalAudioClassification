@@ -123,8 +123,8 @@ class SampleFileIO:
     def __repr__(self) -> str:
         """ Representation for debugging """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
-
-class SampleFileGenerated(SampleFileIO):
+    
+class GeneratedSampleFileIO(SampleFileIO):
     """ Represents a sample file that is NOT on disk, but stashed in a variable """
 
     __GENERATED_SAMPLE = "GENERATED_SAMPLE"
@@ -132,15 +132,20 @@ class SampleFileGenerated(SampleFileIO):
     def __init__(self,
                  targetClass: int,
                  sampleRate: int,
-                 sourceData: np.ndarray):
+                 sourceData: np.ndarray,
+                 ):
         """ Constructor """
-        super().__init__(targetClass,SampleFileGenerated.__GENERATED_SAMPLE)
+        super().__init__(targetClass,GeneratedSampleFileIO.__GENERATED_SAMPLE)
         self._rate  = sampleRate
         self._data  = sourceData
 
     def __del__(self):
         """ Destructor """
         super().__del__()
+
+    class GeneratedSampleParams:
+        """ Stores parameters used to generate the attatched waveform """
+
 
     # ACCESSORS 
 
@@ -157,7 +162,7 @@ class SampleFileGenerated(SampleFileIO):
             newSignal = signalData.SignalData(sampleRate=self._rate,
                                       targetClass=self.getTarget(),
                                       waveform=self._data,
-                                      sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                      sourcePath=GeneratedSampleFileIO.__GENERATED_SAMPLE,
                                       channelIndex=0)
             listOfSignalDatas.append(newSignal)
         elif (self._data.ndim == 2):
@@ -166,7 +171,7 @@ class SampleFileGenerated(SampleFileIO):
                 newSignal = signalData.SignalData(sampleRate=self._rate,
                                           targetClass=self.getTarget(),
                                           waveform=self._data[ii],
-                                          sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                          sourcePath=GeneratedSampleFileIO.__GENERATED_SAMPLE,
                                           channelIndex=ii)
                 listOfSignalDatas.append(newSignal)
         else:
