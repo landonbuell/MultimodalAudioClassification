@@ -67,13 +67,13 @@ class SampleGenerator:
 
     # Public Interface
 
-    def drawNext(self) -> np.ndarray:
+    def drawNext(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Draw a sample """
         if (self.isEmpty() == True):
             msg = "Draw limit reached on {0}".format(self)
             raise RuntimeError(msg)
-        sample = self.__generateSample()
-        return sample
+        generatedSample = self.__generateSample()  
+        return generatedSample
 
     def resetDrawCount(self) -> None:
         """ Reset the internal draw counter """
@@ -82,9 +82,11 @@ class SampleGenerator:
 
     # Private
 
-    def __generateSample(self) -> np.ndarray:
+    def __generateSample(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Invoke the callback to generate a sample """
-        return self._generatorCallback.__call__(self._waveformParams)
+        sample = self._generatorCallback.__call__(self._waveformParams)
+        sample.classInt = self.getClassIndex()
+        return sample
 
     # Dunder
 

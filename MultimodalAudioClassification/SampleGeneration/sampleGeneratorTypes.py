@@ -17,7 +17,7 @@ import scipy.signal as scisig
         #### CLASS DEFINITIONS ####
 
 class SampleGenerationParameters:
-    """ Structure to store params for a simple waveform generator """
+    """ Structure to store parameters used to generate a waveform """
 
     def __init__(self):
         """ Constructor """
@@ -33,7 +33,7 @@ class SampleGenerationParameters:
         self.waveCountLow   = 1
         self.waveCountHigh  = 64
 
-class GeneratedSampleInfo:
+class GeneratedSample:
     """ Stores info about a generated sample """
 
     class Parameters:
@@ -48,8 +48,8 @@ class GeneratedSampleInfo:
             self.func   = None
 
     def __init__(self,
-                 classIndex: int,
                  waveform: np.ndarray,
+                 classIndex = -1,
                  params=None):
         """ Constructor """
         self.classInt       = classIndex
@@ -63,21 +63,31 @@ class GeneratedSampleInfo:
         """ Get the number of simple waves """
         return len(self.params)
 
+    def __str__(self) -> str:
+        """ Cast to string """
+        s = "{0} @ {1} w/ {2} waves foe class #{3}".format(
+            self.__class__,
+            hex(id(self)),
+            self.waveCount,
+            self.classInt)
+        return s
+
 class SampleGeneratorCallbacks:
     """ 
         Static class of callbacks to generate samples 
         All signatures must obey:
 
         def callbackName(
-            params: SampleGenerationParameters) -> sampleFile.GeneratedSampleFileIO
+            params: SampleGenerationParameters) -> GeneratedSample
        
     """
 
     @staticmethod
-    def cosineUniform(params: SampleGenerationParameters) -> np.ndarray:
+    def cosineUniform(params: SampleGenerationParameters) -> GeneratedSample:
         """ Cosine Wave(s) - Params from Uniform Distrobution """
         x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
         waveCount = np.random.uniform(low=params.waveCountLow,low=params.waveCountHigh,size=1)
+        params = [GeneratedSample.Params() for x in range(waveCount)]
         # Generate Parameters
         a = np.random.Generator.uniform(params.amplitudeLow,params.amplitudeHigh,size=waveCount)
         f = np.random.Generator.uniform(params.frequencyLow,params.frequencyHigh,size=waveCount)
@@ -89,7 +99,7 @@ class SampleGeneratorCallbacks:
         return x    
 
     @staticmethod
-    def squareUniform(params: SampleGenerationParameters) -> np.ndarray:
+    def squareUniform(params: SampleGenerationParameters) -> GeneratedSample:
         """ Single Cosine Wave - Params from Uniform Distrobution """
         x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
         waveCount = np.random.uniform(low=params.waveCountLow,low=params.waveCountHigh,size=1)
@@ -102,7 +112,7 @@ class SampleGeneratorCallbacks:
         return x
 
     @staticmethod
-    def sawtoothUniform(params: SampleGenerationParameters) -> np.ndarray:
+    def sawtoothUniform(params: SampleGenerationParameters) -> GeneratedSample:
         """ Single Cosine Wave - Params from Uniform Distrobution """
         x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
         waveCount = np.random.uniform(low=params.waveCountLow,low=params.waveCountHigh,size=1)
@@ -115,7 +125,7 @@ class SampleGeneratorCallbacks:
         return x
 
     @staticmethod
-    def squareUniform(params: SampleGenerationParameters) -> np.ndarray:
+    def squareUniform(params: SampleGenerationParameters) -> GeneratedSample:
         """ Single Cosine Wave - Params from Uniform Distrobution """
         x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
         waveCount = np.random.uniform(low=params.waveCountLow,low=params.waveCountHigh,size=1)
