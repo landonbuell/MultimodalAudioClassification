@@ -25,14 +25,13 @@ if __name__ == "__main__":
 
     # Set Some Params
     np.random.seed( 123456789 )
+    generationConfig = sampleGeneratorTypes.SampleGeneratorConfig("COSINE",1)
+    generationConfig.callback = sampleGeneratorTypes.SampleGeneratorCallbacks.cosineUniform
     generationParams = sampleGeneratorTypes.SampleGenerationParameters()
 
     cosineGenerator = sampleGenerator.SampleGenerator(
-        className="COSINE",
-        classIndex=1,
-        drawLimit=1024,
-        sampleGeneratorCallback=sampleGeneratorTypes.SampleGeneratorCallbacks.cosineUniform,
-        waveformParams=generationParams)
+        config=generationConfig,
+        params=generationParams)
 
     while (cosineGenerator.isEmpty() == False):
         generatedSample = cosineGenerator.drawNext()

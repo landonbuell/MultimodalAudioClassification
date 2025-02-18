@@ -15,25 +15,19 @@ import sampleGeneratorTypes
 
         #### CLASS DEFINITIONS ####
 
+
 class SampleGenerator:
     """ 
         Base Class for All Sample Generators
     """
 
     def __init__(self,
-                 className: str,
-                 classIndex: int,
-                 drawLimit: int,
-                 sampleGeneratorCallback: function,
-                 waveformParams: sampleGeneratorTypes.SampleGenerationParameters,):
+                 config: sampleGeneratorTypes.SampleGeneratorConfig,
+                 params: sampleGeneratorTypes.SampleGenerationParameters,):
         """ Constructor """
-        self._name      = className
-        self._index     = classIndex
+        self._config = config
+        self._params = params
         self._drawCount = 0
-        self._capacity  = drawLimit
-
-        self._generatorCallback  = sampleGeneratorCallback
-        self._waveformParams     = waveformParams
 
     def __del__(self):
         """ Destructor """
@@ -43,11 +37,11 @@ class SampleGenerator:
 
     def getClassName(self) -> str:
         """ Return the name of the class that this generator creates """
-        return self._name
+        return self._config.className
 
     def getClassIndex(self) -> int:
         """ Return the index of the class that this generator creates """
-        return self._index
+        return self._config.classIndex
 
     def drawCount(self) -> int:
         """ Return the number of  draws """
@@ -55,15 +49,15 @@ class SampleGenerator:
 
     def drawLimit(self) -> int:
         """ Return the limit on the number of draws """
-        return self._capacity
+        return self._config.drawLimit
 
     def isEmpty(self) -> bool:
         """ Return if the drawLimit has been reached """
-        return (self._drawCount >= self._capacity)
+        return (self._drawCount >= self.drawLimit())
 
     def params(self) -> sampleGeneratorTypes.SampleGenerationParameters:
         """ Return sample generation parameters """
-        return self._waveformParams
+        return self._params
 
     # Public Interface
 
@@ -84,7 +78,7 @@ class SampleGenerator:
 
     def __generateSample(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Invoke the callback to generate a sample """
-        sample = self._generatorCallback.__call__(self._waveformParams)
+        sample = self._config.callback.__call__(self._params)
         sample.classInt = self.getClassIndex()
         return sample
 
