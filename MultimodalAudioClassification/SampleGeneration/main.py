@@ -16,6 +16,7 @@ import numpy as np
 
 import sampleGenerator
 import sampleGeneratorTypes
+import generatorCallbacks
 
 
 
@@ -25,8 +26,8 @@ if __name__ == "__main__":
 
     # Set Some Params
     np.random.seed( 123456789 )
-    generationConfig = sampleGeneratorTypes.SampleGeneratorConfig("COSINE",1)
-    generationConfig.callback = sampleGeneratorTypes.SampleGeneratorCallbacks.cosineUniform
+    generationConfig    = sampleGeneratorTypes.SampleGeneratorConfig(
+        "COSINE",1,1024,generatorCallbacks.cosineUniform)
     generationParams = sampleGeneratorTypes.SampleGenerationParameters()
 
     cosineGenerator = sampleGenerator.SampleGenerator(

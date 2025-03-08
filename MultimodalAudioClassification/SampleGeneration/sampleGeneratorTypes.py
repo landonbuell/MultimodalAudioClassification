@@ -21,7 +21,9 @@ class SampleGeneratorConfig:
 
     def __init__(self,
                  className: str,
-                 classIndex: int):
+                 classIndex: int,
+                 drawLimit: int = 1024,
+                 callback):
         """ Constructor """
         self.className: str     = className
         self.classIndex: int    = classIndex
@@ -143,73 +145,6 @@ class GeneratedSample:
             self.classInt)
         return s
 
-class SampleGeneratorCallbacks:
-    """ 
-        Static class of callbacks to generate samples 
-        All signatures must obey:
+        
+        
 
-        def callbackName(
-            params: SampleGenerationParameters) -> GeneratedSample
-       
-    """
-
-    @staticmethod
-    def cosineUniform(params: SampleGenerationParameters) -> GeneratedSample:
-        """ Cosine Wave(s) - Params from Uniform Distrobution """
-        x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
-        waveCount = int(np.random.uniform(low=params.waveCount.low,high=params.waveCount.high,size=1)[0])
-        usedParams = [GeneratedSample.Parameters() for x in range(waveCount)]
-        # Generate Parameters
-        a = np.random.Generator.uniform(params.amp.low,params.amp.high,size=waveCount)
-        f = np.random.Generator.uniform(params.freq.low,params.freq.high,size=waveCount)
-        p = np.random.Generator.uniform(params.phase.low,params.phase.high,size=waveCount)
-        o = np.random.Generator.uniform(params.off.low,params.off.high,size=waveCount)
-        # Create the waveform:      
-        for ii in range(waveCount):
-            x += a[ii] * np.cos((2 * np.pi * params.inputAxis * f[ii]) + p[ii]) + o[ii]
-        return x    
-
-    @staticmethod
-    def squareUniform(params: SampleGenerationParameters) -> GeneratedSample:
-        """ Single Cosine Wave - Params from Uniform Distrobution """
-        x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
-        waveCount = int(np.random.uniform(low=params.waveCount.low,high=params.waveCount.high,size=1)[0])
-        usedParams = [GeneratedSample.Parameters() for x in range(waveCount)]
-        # Generate Parameters
-        a = np.random.Generator.uniform(params.amp.low,params.amp.high,size=waveCount)
-        f = np.random.Generator.uniform(params.freq.low,params.freq.high,size=waveCount)
-        p = np.random.Generator.uniform(params.phase.low,params.phase.high,size=waveCount)
-        o = np.random.Generator.uniform(params.off.low,params.off.high,size=waveCount)
-        for ii in range(waveCount):
-            x += a[ii] * scisig.square(t=(2 * np.pi * params.inputAxis * f[ii]) + p[ii],duty=0.5) + o[ii] 
-        return x
-
-    @staticmethod
-    def sawtoothUniform(params: SampleGenerationParameters) -> GeneratedSample:
-        """ Single Cosine Wave - Params from Uniform Distrobution """
-        x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
-        waveCount = int(np.random.uniform(low=params.waveCount.low,high=params.waveCount.high,size=1)[0])
-        usedParams = [GeneratedSample.Parameters() for x in range(waveCount)]
-        # Generate Parameters
-        a = np.random.Generator.uniform(params.amp.low,params.amp.high,size=waveCount)
-        f = np.random.Generator.uniform(params.freq.low,params.freq.high,size=waveCount)
-        p = np.random.Generator.uniform(params.phase.low,params.phase.high,size=waveCount)
-        o = np.random.Generator.uniform(params.off.low,params.off.high,size=waveCount)
-        for ii in range(waveCount):
-            x += a[ii] * scisig.sawtooth(t=(2 * np.pi * params.inputAxis * f[ii]) + p[ii],width=1) + o[ii] 
-        return x
-
-    @staticmethod
-    def squareUniform(params: SampleGenerationParameters) -> GeneratedSample:
-        """ Single Cosine Wave - Params from Uniform Distrobution """
-        x = np.zeros(shape=(params.inputAxis.size,),dtype=np.float32)
-        waveCount = int(np.random.uniform(low=params.waveCount.low,high=params.waveCount.high,size=1)[0])
-        usedParams = [GeneratedSample.Parameters() for x in range(waveCount)]
-        # Generate Parameters
-        a = np.random.Generator.uniform(params.amp.low,params.amp.high,size=waveCount)
-        f = np.random.Generator.uniform(params.freq.low,params.freq.high,size=waveCount)
-        p = np.random.Generator.uniform(params.phase.low,params.phase.high,size=waveCount)
-        o = np.random.Generator.uniform(params.off.low,params.off.high,size=waveCount)
-        for ii in range(waveCount):
-             x += a[ii] * scisig.sawtooth(t=(2 * np.pi * params.inputAxis * f[ii]) + p[ii],width=0.5) + o[ii] 
-        return x
