@@ -23,7 +23,7 @@ class SampleGeneratorConfig:
                  className: str,
                  classIndex: int,
                  drawLimit: int = 1024,
-                 callback):
+                 callback: callable = None):
         """ Constructor """
         self.className: str     = className
         self.classIndex: int    = classIndex
@@ -104,12 +104,16 @@ class SampleGenerationParameters:
         self.phase      = SampleGenerationParameters.LowHighMeanVari(0.0,2.0*np.pi)
         self.off        = SampleGenerationParameters.LowHighMeanVari(-1.0,+1.0)
         self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,64)
-        self.inputAxis      = np.arange(0,2,1) / 44100.0
+        self.inputAxis  = np.arange(0,2,1) / 44100.0
+
+    def unpack(self) -> tuple:
+        """ Unpack values """
+        return (self.amp,self.freq,self.phase,self.off)
 
 class GeneratedSample:
     """ Stores info about a generated sample """
 
-    class Parameters:
+    class ComponentWave:
         """ Stores Parameters for a single wave in a composite wave """
         
         def __init__(self):
@@ -123,7 +127,7 @@ class GeneratedSample:
     def __init__(self,
                  waveform: np.ndarray,
                  classIndex = -1,
-                 params=None):
+                 params: list = None):
         """ Constructor """
         self.classInt       = classIndex
         self.waveform       = waveform
