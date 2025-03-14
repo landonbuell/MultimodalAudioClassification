@@ -113,7 +113,7 @@ class SampleGenerationParameters:
 class GeneratedSample:
     """ Stores info about a generated sample """
 
-    class ComponentWave:
+    class ComponentWaveConfig:
         """ Stores Parameters for a single wave in a composite wave """
         
         def __init__(self):
@@ -123,6 +123,10 @@ class GeneratedSample:
             self.phase  = 0
             self.off    = 0
             self.func   = None
+
+        def unpack(self) -> tuple:
+            """ Unpack values """
+            return (self.amp,self.freq,self.phase,self.off)
 
     def __init__(self,
                  waveform: np.ndarray,
