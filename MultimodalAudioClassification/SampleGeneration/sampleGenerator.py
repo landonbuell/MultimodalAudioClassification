@@ -12,9 +12,9 @@
         #### IMPORTS ####
 
 import sampleGeneratorTypes
+import sampleGeneratorCallbacks
 
         #### CLASS DEFINITIONS ####
-
 
 class SampleGenerator:
     """ 
@@ -22,11 +22,12 @@ class SampleGenerator:
     """
 
     def __init__(self,
-                 config: sampleGeneratorTypes.SampleGeneratorConfig,
-                 params: sampleGeneratorTypes.SampleGenerationParameters,):
+                 params: sampleGeneratorTypes.SampleGenerationParameters,
+                 callback: sampleGeneratorCallbacks.SampleGenerationCallback,
+                 drawLimit: int = 1024):
         """ Constructor """
-        self._config = config
         self._params = params
+        self._callback = callback
         self._drawCount = 0
 
     def __del__(self):
@@ -34,14 +35,6 @@ class SampleGenerator:
         pass
 
     # Accessors
-
-    def getClassName(self) -> str:
-        """ Return the name of the class that this generator creates """
-        return self._config.className
-
-    def getClassIndex(self) -> int:
-        """ Return the index of the class that this generator creates """
-        return self._config.classIndex
 
     def drawCount(self) -> int:
         """ Return the number of  draws """
@@ -54,10 +47,6 @@ class SampleGenerator:
     def isEmpty(self) -> bool:
         """ Return if the drawLimit has been reached """
         return (self._drawCount >= self.drawLimit())
-
-    def params(self) -> sampleGeneratorTypes.SampleGenerationParameters:
-        """ Return sample generation parameters """
-        return self._params
 
     # Public Interface
 
@@ -78,8 +67,7 @@ class SampleGenerator:
 
     def __generateSample(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Invoke the callback to generate a sample """
-        sample = self._config.callback.__call__(self._params)
-        sample.classInt = self.getClassIndex()
+
         return sample
 
     # Dunder

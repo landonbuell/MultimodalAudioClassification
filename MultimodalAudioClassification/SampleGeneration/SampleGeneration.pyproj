@@ -22,7 +22,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="dummyWaveforms.py" />
-    <Compile Include="generatorCallbacks.py" />
+    <Compile Include="sampleGeneratorCallbacks.py" />
     <Compile Include="main.py" />
     <Compile Include="plotting.py" />
     <Compile Include="sampleGenerator.py" />

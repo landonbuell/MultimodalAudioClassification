@@ -16,20 +16,6 @@ import scipy.signal as scisig
 
         #### CLASS DEFINITIONS ####
 
-class SampleGeneratorConfig:
-    """ Structure to store configuration parameters for a sample generator """
-
-    def __init__(self,
-                 className: str,
-                 classIndex: int,
-                 drawLimit: int = 1024,
-                 callback: callable = None):
-        """ Constructor """
-        self.className: str     = className
-        self.classIndex: int    = classIndex
-        self.drawLimit: int     = 1024
-        self.callback: function = None
-
 class SampleGenerationParameters:
     """ Structure to store parameters used to generate a waveform """
 
