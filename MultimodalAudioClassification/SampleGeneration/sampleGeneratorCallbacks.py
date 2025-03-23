@@ -18,14 +18,14 @@ import sampleGeneratorTypes
         #### FUNCTION DEFINITIONS ####
 
 class SampleGenerationCallback:
-    """ Base callback for Sample Generator """
+    """ Base callback for Sample Generator. Abstract - Make no Instance """
 
     def __init__(self,
-                 callback: function,
-                 params: sampleGeneratorTypes.SampleGenerationParameters):
+                 callback,
+                 seed=123456789):
         """ Constructor """
         self._callable  = None
-        self._params    = params
+        self._generator = np.random.default_rng(seed=seed)
 
     def __del__(self):
         """ Destructor """
@@ -33,40 +33,47 @@ class SampleGenerationCallback:
 
     # Public Interface
 
-    def __call__(self):
-        """ Override call operator """
-        return None
+    def __call__(self,
+                 params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
+        """ Virtual:  call operator """
 
-    # Protected Methods
+        waveform = self.__assembleWaveformFromComponents(listOfComponentWaveParams,
+                                                         params.inputAxis)
+        sample = sampleGeneratorTypes.GeneratedSample(waveform,-1,listOfComponentWaveParams)
+        return sample
 
-    def __generateUniformComponentWaves() -> list:
+    # Private Methods
+
+    def __generateUniformComponentWaves(self,
+                                       params: sampleGeneratorTypes.SampleGenerationParameters ) -> list:
         """ Generate uniform parameters, return as a list """
         numWaves = np.random.randint(low=self._params.waveCount.low,high=self._params.waveCount.high)
         components = [sampleGeneratorTypes.GeneratedSample.ComponentWaveConfig() for x in range(numWaves)]
-        generator = np.random.default_rng()
-        # Populate the list of component waves
-        for ii in range(len(components)):
-            components[ii].amp      = generator.uniform(low=self._params.amp.low,high=self._params.amp.high)
-            components[ii].freq     = generator.uniform(low=self._params.freq.low,high=self._params.freq.high)
-            components[ii].phase    = generator.uniform(low=self._params.phase.low,high=self._params.phase.high)
-            components[ii].off      = generator.uniform(low=self._params.off.low,high=self._params.off.high)
+        amps    = self._generator.uniform(low=self._params.amp.low,high=self._params.amp.high,size=numWaves)
+        freqs   = self._generator.uniform(low=self._params.freq.low,high=self._params.freq.high,size=numWaves)
+        phases  = self._generator.uniform(low=self._params.phase.low,high=self._params.phase.high,size=numWaves)
+        offsets = self._generator.uniform(low=self._params.off.low,high=self._params.off.high,size=numWaves)
+        # Attach to structures
+        for ii in range(numWaves):
+            components[ii].amp      = amps[ii]
+            components[ii].freq     = freqs[ii]
+            components[ii].phase    = phases[ii]
+            components[ii].off      = offsets[ii]
         return components
 
-    def __assembleWaveformFromComponents(
+    def __assembleWaveformFromComponents(self,
             listOfComponentWaveConfigs: list,
             inputAxis: np.ndarray) -> np.ndarray:
         """ Use provided wave configs to assemble a waveform """
         waveform = np.zeros(inputAxis.size)
         for ii,config in enumerate(listOfComponentWaveConfigs):
             a,f,p,o = config.unpack()
-            waveform += a * config.func(2*np.pi*f*inputAxis - p) + o
-        sample = sampleGeneratorTypes.GeneratedSample(
-            waveform, params=listOfComponentWaveConfigs)
-        return sample
+            waveform += a * self._callable(2*np.pi*f*inputAxis - p) + o
+        return waveform
 
-class CosineUniform(SampleGenerationCallback):
+class Uniform(SampleGenerationCallback):
     """
-        Generate Composite Cosone Waves w/ Uniformly distributed parameters
+        Generate Composite Waves w/ Uniformly distributed parameters
     """
 
     def __init__(self,
@@ -78,26 +85,5 @@ class CosineUniform(SampleGenerationCallback):
         """ Destructor """
         super().__del__()
 
-    def 
+
         
-
-def cosineUniform(params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
-    """ Cosine Wave(s) - Params from Uniform Distrobution """
-    componentWaveParams = __generateUniformComponentWaves(params)
-    for ii in range(len(componentWaveParams)):
-        componentWaveParams[ii].func = np.cos
-    sample = __assembleWaveformFromComponents(componentWaveParams,params.inputAxis)
-    return sample
-
-def squareUniform(params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
-    """ Single Cosine Wave - Params from Uniform Distrobution """
-    return None
-
-def sawtoothUniform(params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
-    """ Single Cosine Wave - Params from Uniform Distrobution """
-    return None
-
-def squareUniform(params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
-    """ Single Cosine Wave - Params from Uniform Distrobution """
-    return None
-

@@ -55,7 +55,7 @@ class SampleGenerator:
         if (self.isEmpty() == True):
             msg = "Draw limit reached on {0}".format(self)
             raise RuntimeError(msg)
-        generatedSample = self.__generateSample()  
+        generatedSample = self.__generateNextSample()  
         return generatedSample
 
     def resetDrawCount(self) -> None:
@@ -65,10 +65,10 @@ class SampleGenerator:
 
     # Private
 
-    def __generateSample(self) -> sampleGeneratorTypes.GeneratedSample:
+    def __generateNextSample(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Invoke the callback to generate a sample """
-
-        return sample
+        generatedSample = self._callback(self._params) 
+        return generatedSample
 
     # Dunder
 

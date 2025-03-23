@@ -23,74 +23,25 @@ class SampleGenerationParameters:
         """ Stores Low, High, Mean, Variance for any parameter """
         
         def __init__(self,
-                     low=0.0,
-                     high=1.0,
-                     mean=0.0,
-                     vari=1.0):
+                     low: float=0.0,
+                     high: float =1.0,
+                     mean: float =0.0,
+                     vari: float =1.0):
             """ Constructor """
-            self._data = np.array([low,high,mean,vari],dtype=np.float32)
+            self.low    = low
+            self.high   = high
+            self.mean   = mean
+            self.vari   = vari
 
-        @property
-        def low(self) -> np.float32:
-            """ Return the low """
-            return self._data[0]
-
-        @low.setter
-        def low(self,low:np.float32) -> None:
-            """ Set the low """
-            self._data[0] = low
-            return None
-
-        @property
-        def high(self) -> np.float32:
-            """ Return the high """
-            return self._data[1]
-
-        @high.setter
-        def high(self,high:np.float32) -> None:
-            """ Set the high """
-            self._data[1] = high
-            return None
-
-        @property
-        def mean(self) -> np.float32:
-            """ Return the low """
-            return self._data[2]
-
-        @mean.setter
-        def mean(self,mean:np.float32) -> None:
-            """ Set the low """
-            self._data[2] = mean
-            return None
-
-        @property
-        def vari(self) -> np.float32:
-            """ Return the high """
-            return self.variance[3]
-
-        @vari.setter
-        def vari(self,vari:np.float32) -> None:
-            """ Set the variance """
-            self._data[3] = vari
-            return None
-
-        def __getitem__(self,key: int) -> np.float32:
-            """ Get the item at the underlying data """
-            return self._data[key]
-
-        def __setitem__(self,key: int, val: np.float32) -> None:
-            """ Set the item at the underlying data """
-            self._data[key] = val
-            return None
-
-    def __init__(self):
+    def __init__(self,
+                 sampleRate: float = 44100.0):
         """ Constructor """
         self.amp        = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.freq       = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.phase      = SampleGenerationParameters.LowHighMeanVari(0.0,2.0*np.pi)
         self.off        = SampleGenerationParameters.LowHighMeanVari(-1.0,+1.0)
         self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,64)
-        self.inputAxis  = np.arange(0,2,1) / 44100.0
+        self.inputAxis  = np.arange(0,2,1) / sampleRate
 
     def unpack(self) -> tuple:
         """ Unpack values """
