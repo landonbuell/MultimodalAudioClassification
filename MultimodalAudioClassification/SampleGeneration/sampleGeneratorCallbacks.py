@@ -24,7 +24,7 @@ class SampleGenerationCallback:
                  callback,
                  seed=123456789):
         """ Constructor """
-        self._callable  = None
+        self._callable  = callback
         self._generator = np.random.default_rng(seed=seed)
 
     def __del__(self):
@@ -36,7 +36,7 @@ class SampleGenerationCallback:
     def __call__(self,
                  params: sampleGeneratorTypes.SampleGenerationParameters) -> sampleGeneratorTypes.GeneratedSample:
         """ Virtual:  call operator """
-
+        listOfComponentWaveParams = self._generateComponentWaves(params)
         waveform = self.__assembleWaveformFromComponents(listOfComponentWaveParams,
                                                          params.inputAxis)
         sample = sampleGeneratorTypes.GeneratedSample(waveform,-1,listOfComponentWaveParams)
@@ -44,21 +44,11 @@ class SampleGenerationCallback:
 
     # Private Methods
 
-    def __generateUniformComponentWaves(self,
-                                       params: sampleGeneratorTypes.SampleGenerationParameters ) -> list:
-        """ Generate uniform parameters, return as a list """
-        numWaves = np.random.randint(low=self._params.waveCount.low,high=self._params.waveCount.high)
+    def _generateComponentWaves(self,
+                                params: sampleGeneratorTypes.SampleGenerationParameters ) -> list:
+        """ VIRTUAL: Generate uniform parameters, return as a list """
+        numWaves = np.random.randint(low=params.waveCount.low,high=params.waveCount.high)
         components = [sampleGeneratorTypes.GeneratedSample.ComponentWaveConfig() for x in range(numWaves)]
-        amps    = self._generator.uniform(low=self._params.amp.low,high=self._params.amp.high,size=numWaves)
-        freqs   = self._generator.uniform(low=self._params.freq.low,high=self._params.freq.high,size=numWaves)
-        phases  = self._generator.uniform(low=self._params.phase.low,high=self._params.phase.high,size=numWaves)
-        offsets = self._generator.uniform(low=self._params.off.low,high=self._params.off.high,size=numWaves)
-        # Attach to structures
-        for ii in range(numWaves):
-            components[ii].amp      = amps[ii]
-            components[ii].freq     = freqs[ii]
-            components[ii].phase    = phases[ii]
-            components[ii].off      = offsets[ii]
         return components
 
     def __assembleWaveformFromComponents(self,
@@ -77,13 +67,32 @@ class Uniform(SampleGenerationCallback):
     """
 
     def __init__(self,
-                 params: sampleGeneratorTypes.SampleGenerationParameters):
+                 callback,
+                 seed=123456789):
         """ Constructor """
-        super().__init__(np.cos,params)
+        super().__init__(callback,seed)
 
     def __del__(self):
         """ Destructor """
         super().__del__()
 
+    # Protected Methods
 
+    def _generateComponentWaves(self,
+                                params: sampleGeneratorTypes.SampleGenerationParameters ) -> list:
+        """ OVERRIDE: Generate uniform parameters, return as a list """
+        components = super()._generateComponentWaves(params)
+        numWaves = len(components)
+        # Generate Uniform parameters
+        amps    = self._generator.uniform(low=params.amp.low,high=params.amp.high,size=numWaves)
+        freqs   = self._generator.uniform(low=params.freq.low,high=params.freq.high,size=numWaves)
+        phases  = self._generator.uniform(low=params.phase.low,high=params.phase.high,size=numWaves)
+        offsets = self._generator.uniform(low=params.off.low,high=params.off.high,size=numWaves)
+        # Attach to structures
+        for ii in range(numWaves):
+            components[ii].amp      = amps[ii]
+            components[ii].freq     = freqs[ii]
+            components[ii].phase    = phases[ii]
+            components[ii].off      = offsets[ii]
+        return components
         

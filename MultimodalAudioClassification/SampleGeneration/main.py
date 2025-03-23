@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # Set Some Params
     np.random.seed( 123456789 )
     generationParams = sampleGeneratorTypes.SampleGenerationParameters()
-    cosineUniform = sampleGeneratorCallbacks.Uniform()
+    cosineUniform = sampleGeneratorCallbacks.Uniform(np.cos)
 
     cosineUniformGenerator = sampleGenerator.SampleGenerator(
         params=generationParams,

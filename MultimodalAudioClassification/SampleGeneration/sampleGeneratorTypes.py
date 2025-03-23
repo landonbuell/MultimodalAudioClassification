@@ -39,7 +39,7 @@ class SampleGenerationParameters:
         self.amp        = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.freq       = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.phase      = SampleGenerationParameters.LowHighMeanVari(0.0,2.0*np.pi)
-        self.off        = SampleGenerationParameters.LowHighMeanVari(-1.0,+1.0)
+        self.off        = SampleGenerationParameters.LowHighMeanVari(-0.1,+0.1)
         self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,64)
         self.inputAxis  = np.arange(0,2,1) / sampleRate
 

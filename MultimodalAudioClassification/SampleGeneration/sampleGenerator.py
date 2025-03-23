@@ -28,6 +28,7 @@ class SampleGenerator:
         """ Constructor """
         self._params = params
         self._callback = callback
+        self._drawLimit = drawLimit
         self._drawCount = 0
 
     def __del__(self):
@@ -42,11 +43,11 @@ class SampleGenerator:
 
     def drawLimit(self) -> int:
         """ Return the limit on the number of draws """
-        return self._config.drawLimit
+        return self._drawLimit
 
     def isEmpty(self) -> bool:
         """ Return if the drawLimit has been reached """
-        return (self._drawCount >= self.drawLimit())
+        return (self._drawCount >= self._drawLimit)
 
     # Public Interface
 
