@@ -24,12 +24,14 @@ class SampleGenerator:
     def __init__(self,
                  params: sampleGeneratorTypes.SampleGenerationParameters,
                  callback: sampleGeneratorCallbacks.SampleGenerationCallback,
-                 drawLimit: int = 1024):
+                 drawLimit: int = 1024,
+                 classIndex: int = -1):
         """ Constructor """
         self._params = params
         self._callback = callback
         self._drawLimit = drawLimit
         self._drawCount = 0
+        self._classIndex = classIndex
 
     def __del__(self):
         """ Destructor """
@@ -57,6 +59,7 @@ class SampleGenerator:
             msg = "Draw limit reached on {0}".format(self)
             raise RuntimeError(msg)
         generatedSample = self.__generateNextSample()  
+        self._drawCount += 1
         return generatedSample
 
     def resetDrawCount(self) -> None:
@@ -69,6 +72,7 @@ class SampleGenerator:
     def __generateNextSample(self) -> sampleGeneratorTypes.GeneratedSample:
         """ Invoke the callback to generate a sample """
         generatedSample = self._callback(self._params) 
+        generatedSample.classInt = self._classIndex
         return generatedSample
 
     # Dunder

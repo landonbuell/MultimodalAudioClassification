@@ -42,7 +42,7 @@ class SampleGenerationCallback:
         sample = sampleGeneratorTypes.GeneratedSample(waveform,-1,listOfComponentWaveParams)
         return sample
 
-    # Private Methods
+    # Protected Methods
 
     def _generateComponentWaves(self,
                                 params: sampleGeneratorTypes.SampleGenerationParameters ) -> list:

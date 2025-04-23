@@ -12,7 +12,7 @@
         #### IMPORTS ####
 
 import numpy as np
-import scipy.signal as scisig
+import matplotlib.pyplot as plt
 
         #### CLASS DEFINITIONS ####
 
@@ -23,7 +23,7 @@ class SampleGenerationParameters:
         """ Stores Low, High, Mean, Variance for any parameter """
         
         def __init__(self,
-                     low: float=0.0,
+                     low: float = 0.0,
                      high: float =1.0,
                      mean: float =0.0,
                      vari: float =1.0):
@@ -41,7 +41,7 @@ class SampleGenerationParameters:
         self.phase      = SampleGenerationParameters.LowHighMeanVari(0.0,2.0*np.pi)
         self.off        = SampleGenerationParameters.LowHighMeanVari(-0.1,+0.1)
         self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,64)
-        self.inputAxis  = np.arange(0,2,1) / sampleRate
+        self.inputAxis  = np.arange(0,2,1/sampleRate)
 
     def unpack(self) -> tuple:
         """ Unpack values """
@@ -62,12 +62,12 @@ class GeneratedSample:
             self.func   = None
 
         def unpack(self) -> tuple:
-            """ Unpack values """
+            """ Unpack values into a tuple """
             return (self.amp,self.freq,self.phase,self.off)
 
     def __init__(self,
                  waveform: np.ndarray,
-                 classIndex = -1,
+                 classIndex: int = -1,
                  params: list = None):
         """ Constructor """
         self.classInt       = classIndex
@@ -89,6 +89,26 @@ class GeneratedSample:
             self.waveCount,
             self.classInt)
         return s
+
+    def showWaveform(self) -> None:
+        """ Plot the time-series representation of this waveform """
+        titleText = "Generated Sample Class #{0}".format(self.classInt)
+        
+        plt.figure(figsize=(16,12))
+        plt.title(titleText,size=24,weight='bold')
+        plt.xlabel("Time [Sample Index]",size=16,weight='bold')
+        plt.ylabel("Amplitude",size=16,weight='bold')
+
+        plt.plot(self.waveform,color='blue')
+
+        plt.vlines(0,ymin=np.min(self.waveform),ymax=np.max(self.waveform),color='black')
+        plt.hlines(0,0,len(self.waveform),color='black')
+
+        plt.grid()
+        plt.tight_layout()
+
+        plt.show()
+        return None
 
         
         
