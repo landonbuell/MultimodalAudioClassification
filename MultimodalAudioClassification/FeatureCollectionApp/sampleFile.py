@@ -56,17 +56,24 @@ class SampleFileIO:
         """ VIRTUAL: Return T/F if source file exists """
         return os.path.isfile(self._source)
 
+    def getExtension(self) -> str:
+        """ Return the extension at the end of the file path """
+        return self._source.split(".")[-1]
+
     # Public Interface
 
     def getSignals(self) -> list:
         """ VIRTUAL: Decode the source file into a list of signalData instances """
         listOfSignalDatas = []
-        if (self._source.endswith(".txt") == True):
+        extension = self.getExtension()
+        if (extension == "txt"):
             # Is Text File
             listOfSignalDatas = self.__decodeTxtFile()
-        elif (self._source.endswith(".wav") == True):
+        elif (extension == "wav"):
             # Is a WAV file
             listOfSignalDatas = self.__decodeWavFile()
+        elif (extension == "bin"):
+            listOfSignalDatas = self._
         else:
             # Cannot handle this type
             listOfSignalDatas = [signalData.SignalData(targetClass=self._target),]
@@ -114,6 +121,10 @@ class SampleFileIO:
 
         return signals
 
+    def __decodeBinFile(self) -> list:
+        """ Decode a .bin file into a signal data instance """
+
+
     # Magic Methods
 
     def __str__(self) -> str:
@@ -123,8 +134,8 @@ class SampleFileIO:
     def __repr__(self) -> str:
         """ Representation for debugging """
         return "{0} @ {1}".format(self.__class__,hex(id(self)))
-
-class SampleFileGenerated(SampleFileIO):
+    
+class GeneratedSampleFileIO(SampleFileIO):
     """ Represents a sample file that is NOT on disk, but stashed in a variable """
 
     __GENERATED_SAMPLE = "GENERATED_SAMPLE"
@@ -132,9 +143,11 @@ class SampleFileGenerated(SampleFileIO):
     def __init__(self,
                  targetClass: int,
                  sampleRate: int,
-                 sourceData: np.ndarray):
+                 sourceData: np.ndarray,
+                 ):
         """ Constructor """
-        super().__init__(targetClass,SampleFileGenerated.__GENERATED_SAMPLE)
+        super().__init__(targetClass,
+                         GeneratedSampleFileIO.__GENERATED_SAMPLE)
         self._rate  = sampleRate
         self._data  = sourceData
 
@@ -142,11 +155,15 @@ class SampleFileGenerated(SampleFileIO):
         """ Destructor """
         super().__del__()
 
+    class GeneratedSampleParams:
+        """ Stores parameters used to generate the attatched waveform """
+
+
     # ACCESSORS 
 
     def isValid(self) -> bool:
         """ OVERRIDE: Return T/F if the source data is usable """
-        return ((self._data.shape[-1] > 1024) and (self._data.ndim < 3))
+        return ((self._data.shape[-1] > 1024) and (self._data.ndim <= 2))
     
     # PUBLIC 
 
@@ -157,7 +174,7 @@ class SampleFileGenerated(SampleFileIO):
             newSignal = signalData.SignalData(sampleRate=self._rate,
                                       targetClass=self.getTarget(),
                                       waveform=self._data,
-                                      sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                      sourcePath=GeneratedSampleFileIO.__GENERATED_SAMPLE,
                                       channelIndex=0)
             listOfSignalDatas.append(newSignal)
         elif (self._data.ndim == 2):
@@ -166,7 +183,7 @@ class SampleFileGenerated(SampleFileIO):
                 newSignal = signalData.SignalData(sampleRate=self._rate,
                                           targetClass=self.getTarget(),
                                           waveform=self._data[ii],
-                                          sourcePath=SampleFileGenerated.__GENERATED_SAMPLE,
+                                          sourcePath=GeneratedSampleFileIO.__GENERATED_SAMPLE,
                                           channelIndex=ii)
                 listOfSignalDatas.append(newSignal)
         else:

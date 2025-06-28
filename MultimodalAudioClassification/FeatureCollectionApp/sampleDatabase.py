@@ -16,8 +16,9 @@ import enum
 import queue
 
 import componentManager
-import dataManager
 import sampleFile
+
+import sampleGenerator
 
         #### CLASS DEFINITIONS ####
 
@@ -80,8 +81,13 @@ class SampleDatabase(componentManager.ComponentManager):
     def initialize(self) -> None:
         """ OVERRIDE: Initialize the Sample Database """
         super().initialize()
-        self.__buildSampleDatabase()
+        self.__buildSampleDatabaseFromInputFiles()
+        self.__buildSampleDatabaseFromGenerators()
         self.logState()
+        if (len(self) == 0):
+            # No Samples Added
+            msg = "No saamples added to database"
+            self.logMessage(msg)       
         return None
 
     def teardown(self) -> None:
@@ -109,9 +115,11 @@ class SampleDatabase(componentManager.ComponentManager):
 
     # Private Interface
 
-    def __buildSampleDatabase(self) -> None:
+    def __buildSampleDatabaseFromInputFiles(self) -> None:
         """ Build a queue of input files to read for sample files """
         listOfInputFiles = self.getSettings().getInputPaths()
+        if (len(listOfInputFiles) == 0):
+            return None
         for item in listOfInputFiles:
             if (self.isFull() == True):
                 break
@@ -125,6 +133,15 @@ class SampleDatabase(componentManager.ComponentManager):
             else:
                 # Item is an unknown type
                 pass
+        return None
+
+    def __buildSampleDatabaseFromGenerators(self) -> None:
+        """ Build a queue of input files to read for sample files """
+        listOfDataGenerators = self.getSettings().getDataGenerators()
+        if (len(listOfDataGenerators) == 0):
+            return None
+        for generator in listOfDataGenerators:
+            self.__handleSampleGenerator(generator)
         return None
 
     def __handleInputDirectory(self,dirpath: str, currentDepth: int) -> None:
@@ -177,6 +194,15 @@ class SampleDatabase(componentManager.ComponentManager):
                 success = self.__enqueueSample(newSample,targetClassName)
         return None
     
+    def __handleSampleGenerator(self,
+                                generator: sampleGenerator.SampleGenerator) -> None:
+        """ Read and store all samples from the provided generator """
+        while((generator.isEmpty() == False) and (self.isFull() == False)):
+            sampleInfo = generator.drawNext()
+
+        return None
+
+
     def __enqueueSample(self,
                         sample: sampleFile.SampleFileIO,
                         targetName: str) -> int:
@@ -191,6 +217,11 @@ class SampleDatabase(componentManager.ComponentManager):
         self._queued += 1
         return True
 
+    # DUNDER METHODS
+
+    def __len__(self) -> int:
+        """ Return the number of samples """
+        return self._size
     
 
 

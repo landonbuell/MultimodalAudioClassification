@@ -2,7 +2,7 @@
 Repo:       MultimodalAudioClassification
 Solution:   MultimodalAudioClassification
 Project:    SampleGeneration
-File:       WaveformGenerators.py
+File:       main.py
 
 Author:     Landon Buell
 Date:       January 2023
@@ -11,11 +11,15 @@ Date:       January 2023
 
         #### IMPORTS ####
 
-import os
 import sys
 
 import numpy as np
-import WaveformGenerators
+import scipy as sp
+
+import sampleGenerator
+import sampleGeneratorCallbacks
+import sampleGeneratorTypes
+
 
         #### MAIN EXECUTABLE ####
 
@@ -23,20 +27,31 @@ if __name__ == "__main__":
 
     # Set Some Params
     np.random.seed( 123456789 )
-    OUTPUT_PATH = "C:\\Users\\lando\\Documents\\audioSyntheicBinaries"
-    NUM_AUDIO_SAMPLES = 1000
-    SAMPLE_RATE = 44100
-    TIME = 4
-    timeAxis = np.arange(0,2,1/SAMPLE_RATE,dtype=np.float32)
+    generationParams = sampleGeneratorTypes.SampleGenerationParameters()
     
-    # Generate Sine Waves
-    sineWaveGenerator = WaveformGenerators.DatasetGenerator(
-        WaveformGenerators.SimpleWavesforms.getSineWave,
-        WaveformGenerators.SimpleNoise.getUniformNoise,
-        timeAxis,
-        name="sineWave")
-    sineWaveGenerator.createSamples(NUM_AUDIO_SAMPLES,OUTPUT_PATH)
+    """
+    # Cosine sample generator
+    cosineUniform = sampleGeneratorCallbacks.Uniform(np.cos)
+    cosineUniformGenerator = sampleGenerator.SampleGenerator(
+        params=generationParams,
+        callback=cosineUniform)
 
+    while (cosineUniformGenerator.isEmpty() == False):
+        generatedSample = cosineUniformGenerator.drawNext()
+        3print(str(generatedSample))
+        generatedSample.showWaveform()
+    """
+
+    # Square wave sample generator
+    squareUniform = sampleGeneratorCallbacks.Uniform(sp.signal.square)
+    squareUniformGenerator = sampleGenerator.SampleGenerator(
+        params=generationParams,
+        callback=squareUniform)
+
+    while (squareUniformGenerator.isEmpty() == False):
+        generatedSample = squareUniformGenerator.drawNext()
+        print(str(generatedSample))
+    sys.exit(0)
 
 
 
