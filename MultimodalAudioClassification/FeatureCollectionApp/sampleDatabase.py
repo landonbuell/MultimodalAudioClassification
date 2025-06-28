@@ -40,6 +40,7 @@ class SampleDatabase(componentManager.ComponentManager):
         """ Constructor """
         super().__init__(SampleDatabase.__NAME,app)
         self._inputFiles    = queue.Queue()
+        self._generators    = queue.Queue()
         self._database      = queue.Queue(app.getSettings().getSampleLimit())      
         self._size          = 0     # also tracks size
         self._queued        = 0     # total number of samples queued
@@ -201,7 +202,6 @@ class SampleDatabase(componentManager.ComponentManager):
             sampleInfo = generator.drawNext()
 
         return None
-
 
     def __enqueueSample(self,
                         sample: sampleFile.SampleFileIO,
