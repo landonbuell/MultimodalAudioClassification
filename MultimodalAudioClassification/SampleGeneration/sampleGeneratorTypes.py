@@ -76,6 +76,8 @@ class GeneratedSample:
         if (params is not None):
             self.params = params[:]
 
+    # ACCESSORS
+
     @property
     def waveCount(self) -> int:
         """ Get the number of simple waves """
@@ -89,6 +91,8 @@ class GeneratedSample:
             self.waveCount,
             self.classInt)
         return s
+
+    # PUBLIC INTERFACE
 
     def showWaveform(self) -> None:
         """ Plot the time-series representation of this waveform """
@@ -109,6 +113,19 @@ class GeneratedSample:
 
         plt.show()
         return None
+
+    def exportBinaryToDisk(self,
+                            outputFilePath: str,
+                            sampleRate: float) -> bool:
+        """ Export this sample to the provided output path in BINARY format """
+        outputFileSize = len(self.waveform) + 1 # +1 for sample rate
+        rawBytes = np.empty(shape=(outputFileSize,),dtype=self.waveform.dtype)
+        rawBytes[0]     = sampleRate
+        rawBytes[1:]    = self.waveform[:]
+        rawBytes.tofile(outputFilePath)
+        return True
+
+    # PRIVATE METHODS
 
         
         

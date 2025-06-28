@@ -2,7 +2,7 @@
 Repo:       MultimodalAudioClassification
 Solution:   MultimodalAudioClassification
 Project:    SampleGeneration
-File:       WaveformGenerators.py
+File:       main.py
 
 Author:     Landon Buell
 Date:       January 2023
@@ -51,8 +51,6 @@ if __name__ == "__main__":
     while (squareUniformGenerator.isEmpty() == False):
         generatedSample = squareUniformGenerator.drawNext()
         print(str(generatedSample))
-        generatedSample.showWaveform()
-
     sys.exit(0)
 
 

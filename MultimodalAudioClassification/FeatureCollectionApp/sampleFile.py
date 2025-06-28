@@ -56,17 +56,24 @@ class SampleFileIO:
         """ VIRTUAL: Return T/F if source file exists """
         return os.path.isfile(self._source)
 
+    def getExtension(self) -> str:
+        """ Return the extension at the end of the file path """
+        return self._source.split(".")[-1]
+
     # Public Interface
 
     def getSignals(self) -> list:
         """ VIRTUAL: Decode the source file into a list of signalData instances """
         listOfSignalDatas = []
-        if (self._source.endswith(".txt") == True):
+        extension = self.getExtension()
+        if (extension == "txt"):
             # Is Text File
             listOfSignalDatas = self.__decodeTxtFile()
-        elif (self._source.endswith(".wav") == True):
+        elif (extension == "wav"):
             # Is a WAV file
             listOfSignalDatas = self.__decodeWavFile()
+        elif (extension == "bin"):
+            listOfSignalDatas = self._
         else:
             # Cannot handle this type
             listOfSignalDatas = [signalData.SignalData(targetClass=self._target),]
@@ -113,6 +120,10 @@ class SampleFileIO:
             raise RuntimeError(msg)
 
         return signals
+
+    def __decodeBinFile(self) -> list:
+        """ Decode a .bin file into a signal data instance """
+
 
     # Magic Methods
 
