@@ -49,6 +49,7 @@ class SampleDatabase(componentManager.ComponentManager):
     def __del__(self):
         """ Destructor """
         self._inputFiles    = None
+        self._generators    = None
         self._database      = None
 
     # Accessors
@@ -198,8 +199,23 @@ class SampleDatabase(componentManager.ComponentManager):
     def __handleSampleGenerator(self,
                                 generator: sampleGenerator.SampleGenerator) -> None:
         """ Read and store all samples from the provided generator """
-        while((generator.isEmpty() == False) and (self.isFull() == False)):
-            sampleInfo = generator.drawNext()
+        classIndex  = generator.getClassIndex()
+        className   = generator.getClassName()
+
+        while(generator.isEmpty() == False):
+
+            if (self.isFull() == True):
+                msg = "Sample Database is full. {0} samples remain in {1}".format(
+                    generator.drawsRemaining(), str(generator))
+                self.logMessage(msg)
+                break
+
+            generatedSample = generator.drawNext()
+            generatedSampleFile = sampleFile.GeneratedSampleFileIO(
+                classIndex,
+                generatedSample.sampleRate,
+                generatedSample.waveform)
+            self.__enqueueSample(generatedSampleFile,className)
 
         return None
 

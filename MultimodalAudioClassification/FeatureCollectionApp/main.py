@@ -28,7 +28,7 @@ def sessionSettings() -> appSettings.AppSettings:
     inputFiles = [  #os.path.join(inputFilesHome,"Y1.csv"),
                     #os.path.join(inputFilesHome,"Y2.csv"),
                     #os.path.join(inputFilesHome,"Y3.csv"),
-                    os.path.join(inputFilesHome,"Y4.csv"), 
+                    #os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
     dataGenerators = [
             sampleGeneratorPresets.getUniformSquare(4096,0),

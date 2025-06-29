@@ -157,7 +157,7 @@ class GeneratedSampleFileIO(SampleFileIO):
 
     class GeneratedSampleParams:
         """ Stores parameters used to generate the attatched waveform """
-
+        pass
 
     # ACCESSORS 
 

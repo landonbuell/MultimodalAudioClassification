@@ -28,7 +28,8 @@ def getUniformSquare(sampleLimit: int, classIndex: int):
         params=generationParams,
         callback=squareUniform,
         drawLimit=sampleLimit,
-        classIndex=classIndex)
+        classIndex=classIndex,
+        className="UniformSquare")
     return squareUniformGenerator
 
 def getUniformSawtooth(sampleLimit: int, classIndex: int):
@@ -39,7 +40,8 @@ def getUniformSawtooth(sampleLimit: int, classIndex: int):
         params=generationParams,
         callback=squareUniform,
         drawLimit=sampleLimit,
-        classIndex=classIndex)
+        classIndex=classIndex,
+        className="UniformSawtooth")
     return squareUniformGenerator
 
 def getUniformSine(sampleLimit: int, classIndex: int):
@@ -50,7 +52,8 @@ def getUniformSine(sampleLimit: int, classIndex: int):
         params=generationParams,
         callback=squareUniform,
         drawLimit=sampleLimit,
-        classIndex=classIndex)
+        classIndex=classIndex,
+        className="UniformSine")
     return squareUniformGenerator
 
 def getUniformCosine(sampleLimit: int, classIndex: int):
@@ -61,5 +64,6 @@ def getUniformCosine(sampleLimit: int, classIndex: int):
         params=generationParams,
         callback=squareUniform,
         drawLimit=sampleLimit,
-        classIndex=classIndex)
+        classIndex=classIndex,
+        className="UniformCosine")
     return squareUniformGenerator
