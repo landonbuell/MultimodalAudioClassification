@@ -55,6 +55,9 @@ class FeatureCollector(threading.Thread):
         """ Return T/F is the stop flag has been raised """
         return self._stopEvent.is_set()
 
+    def getApp(self) -> object:
+        """ Get a ref to the feature collection App """
+        return featureCollectionApp.FeatureCollectionApplication.getInstance()
 
     # Public Interface
 
@@ -68,7 +71,7 @@ class FeatureCollector(threading.Thread):
     def logMessage(self,message: str) -> None:
         """ Log a Message to the collection manager """
         message = self.getName() + ": " + message
-        featureCollectionApp.FeatureCollectionApplication.getInstance().logMessage(message)
+        self.getApp().logMessage(message)
         return None
 
     def raiseStopFlag(self,reason=None) -> None:
@@ -116,7 +119,7 @@ class FeatureCollector(threading.Thread):
 
     def __logNextSample(self, nextSample: sampleFile.SampleFileIO) -> None:
         """ Log the next sample """
-        collectionManager = featureCollectionApp.FeatureCollectionApplication.getInstance().getCollectionManager()
+        collectionManager = self.getApp().getCollectionManager()
         timeDelta = datetime.datetime.now() - collectionManager.getCollectionStartTime()
         msg = "Pulled sample: {0}. Time: {1}".format(
             str(nextSample),str(timeDelta))
@@ -134,18 +137,19 @@ class FeatureCollector(threading.Thread):
             msg = "Failed to read signals from {0} due to error: {1}".format(
                 str(sampleFile),str(err))
             self.logMessage(msg)
-        return []
+        return list()
 
     def __processListOfSignals(self, listOfSignals: list) -> None:
         """ Process list of signals and export feature vectors """
-        pipelineMgr = featureCollectionApp.FeatureCollectionApplication.getInstance().getPipelineManager()
+        pipelineMgr = self.getApp().getPipelineManager()
+        rundataMgr = self.getApp().getDataManager()
         for signal in listOfSignals:
             # Process signals and get list of Features for each pipeline
             signal = self.__preprocessSignal(signal)
             msg = "Sending {0} to be processed by pipeline manager".format(signal)
             self.logMessage(msg)
             listOfFeatureVectors = pipelineMgr.processSignal(signal)
-            self.__exportListOfFeatureVectors(signal,listOfFeatureVectors)
+            rundataMgr.exportListOfFeatureVectors(signal,listOfFeatureVectors)
         return None
 
     def __preprocessSignal(self, signal) -> object:
@@ -155,44 +159,13 @@ class FeatureCollector(threading.Thread):
         #signal.showWaveform()
         return signal
 
-    def __exportListOfFeatureVectors(self, 
-                                     signal: object,
-                                     listOfFeatureVectors: list) -> None:
-        """ Export a list of feature Vectors to binaries """
-        dataManager = featureCollectionApp.FeatureCollectionApplication.getInstance().getDataManager()
-        failureCount = 0
-        for ii,vector in enumerate(listOfFeatureVectors):
-            # Export
-            if ((vector is None) or (len(vector) == 0)):
-                msg = "Got None for feature vector on signal {0}, pipeline {1}".format(
-                    signal.uniqueID(),ii)
-                self.logMessage(msg)
-                continue
-            # Get output Path
-            outputLocation = dataManager.getExportLocation(ii,signal.getTarget())
-            fullOutputPath = os.path.join(outputLocation,signal.exportNameBinary())
-            # Export
-            try:
-                vector.toBinaryFile(fullOutputPath)
-                msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
-            except RuntimeError as err:
-                msg = str(err)
-                failureCount += 1
-            except Exception as err:
-                 msg = "Failed to export sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
-                 failureCount += 1
-            self.logMessage(msg)
-        # All done!
-        dataManager.registerExportedSample(signal.getTarget())
-        return None
-
 class GetNextSampleStrategies:
     """ Static class of callbacks for getting the next from sample database """
 
     @staticmethod
     def getNextSampleSingleThread(collector: FeatureCollector) -> object:
         """ Pull the next sample from the sample database while on only main thread """
-        sampleDatabase = featureCollectionApp.FeatureCollectionApplication.getInstance().getSampleDatabase()
+        sampleDatabase = collector.getApp().getSampleDatabase()
         if (sampleDatabase.isEmpty() == True):
             # Database is empty
             collector.raiseStopFlag(reason="Sample database is empty")
@@ -202,7 +175,7 @@ class GetNextSampleStrategies:
     @staticmethod
     def getNextSampleMultiThread(collector: FeatureCollector) -> object:
         """ Pull the next sample from the sample database in a multithreaded environment """
-        sampleDatabase = featureCollectionApp.FeatureCollectionApplication.getInstance().getSampleDatabase()
+        sampleDatabase = scollectorelf.getApp().getSampleDatabase()
         if (sampleDatabase.isEmpty() == True):
             # Database is empty
             collector.raiseStopFlag(reason="Sample database is empty")

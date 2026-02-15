@@ -36,11 +36,12 @@ class SampleGenerationParameters:
     def __init__(self,
                  sampleRate: float = 44100.0):
         """ Constructor """
+        self.sampleRate = sampleRate
         self.amp        = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.freq       = SampleGenerationParameters.LowHighMeanVari(1.0,10.0)
         self.phase      = SampleGenerationParameters.LowHighMeanVari(0.0,2.0*np.pi)
         self.off        = SampleGenerationParameters.LowHighMeanVari(-0.1,+0.1)
-        self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,64)
+        self.waveCount  = SampleGenerationParameters.LowHighMeanVari(1,16)
         self.inputAxis  = np.arange(0,2,1/sampleRate)
 
     def unpack(self) -> tuple:
@@ -67,11 +68,13 @@ class GeneratedSample:
 
     def __init__(self,
                  waveform: np.ndarray,
+                 sampleRate: float,
                  classIndex: int = -1,
                  params: list = None):
         """ Constructor """
         self.classInt       = classIndex
         self.waveform       = waveform
+        self.sampleRate     = sampleRate
         self.params         = list()
         if (params is not None):
             self.params = params[:]

@@ -40,6 +40,7 @@ class AppSettings:
         self._samplesPerFile        = samplesPerFile    # samples per output file
 
         self.__initInputPaths(inputPaths)
+        self.__initDataGenerators(generators)
         self.__initOutputPath(outputPath)
 
     def __del__(self):
@@ -114,6 +115,14 @@ class AppSettings:
                 # No folder or file
                 pass
         listOfInputPaths.clear()
+        return None
+
+    def __initDataGenerators(self,
+                             listOfGenerators: list) -> None:
+        """ Initialize provided data generators """
+        for generator in listOfGenerators:
+            generator.resetDrawCount()
+            self._generators.add(generator)
         return None
      
     def __initOutputPath(self,

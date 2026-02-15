@@ -101,6 +101,36 @@ class RundataManager(componentManager.ComponentManager):
         self._classInfo.incrementExportedCount(sampleTargetIndex)
         return None
 
+    def exportListOfFeatureVectors(self, 
+                                   signal: object,
+                                   listOfFeatureVectors: list) -> None:
+        """ Export a list of feature Vectors to binaries """
+        failureCount = 0
+        for ii,vector in enumerate(listOfFeatureVectors):
+            # Export
+            if ((vector is None) or (len(vector) == 0)):
+                msg = "Got None for feature vector on signal {0}, pipeline {1}".format(
+                    signal.uniqueID(),ii)
+                self.logMessage(msg)
+                continue
+            # Get output Path
+            outputLocation = self.getExportLocation(ii,signal.getTarget())
+            fullOutputPath = os.path.join(outputLocation,signal.exportNameBinary())
+            # Export
+            try:
+                vector.toBinaryFile(fullOutputPath)
+                msg = "Exported sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
+            except RuntimeError as err:
+                msg = str(err)
+                failureCount += 1
+            except Exception as err:
+                 msg = "Failed to export sample #{0} to {1}".format(signal.uniqueID(),fullOutputPath)
+                 failureCount += 1
+            self.logMessage(msg)
+        # All done!
+        self.registerExportedSample(signal.getTarget())
+        return None
+
     # Private Interface
 
     def __initRunInfo(self) -> None:

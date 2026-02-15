@@ -38,8 +38,9 @@ class SampleDatabase(componentManager.ComponentManager):
     def __init__(self,
                  app):
         """ Constructor """
-        super().__init__(SampleDatabase.__NAME,app)
+        super().__init__(SampleDatabase.__NAME ,app)
         self._inputFiles    = queue.Queue()
+        self._generators    = queue.Queue()
         self._database      = queue.Queue(app.getSettings().getSampleLimit())      
         self._size          = 0     # also tracks size
         self._queued        = 0     # total number of samples queued
@@ -48,6 +49,7 @@ class SampleDatabase(componentManager.ComponentManager):
     def __del__(self):
         """ Destructor """
         self._inputFiles    = None
+        self._generators    = None
         self._database      = None
 
     # Accessors
@@ -197,11 +199,25 @@ class SampleDatabase(componentManager.ComponentManager):
     def __handleSampleGenerator(self,
                                 generator: sampleGenerator.SampleGenerator) -> None:
         """ Read and store all samples from the provided generator """
-        while((generator.isEmpty() == False) and (self.isFull() == False)):
-            sampleInfo = generator.drawNext()
+        classIndex  = generator.getClassIndex()
+        className   = generator.getClassName()
+
+        while(generator.isEmpty() == False):
+
+            if (self.isFull() == True):
+                msg = "Sample Database is full. {0} samples remain in {1}".format(
+                    generator.drawsRemaining(), str(generator))
+                self.logMessage(msg)
+                break
+
+            generatedSample = generator.drawNext()
+            generatedSampleFile = sampleFile.GeneratedSampleFileIO(
+                classIndex,
+                generatedSample.sampleRate,
+                generatedSample.waveform)
+            self.__enqueueSample(generatedSampleFile,className)
 
         return None
-
 
     def __enqueueSample(self,
                         sample: sampleFile.SampleFileIO,

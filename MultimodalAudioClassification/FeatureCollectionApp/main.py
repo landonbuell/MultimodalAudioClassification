@@ -13,21 +13,29 @@ Date:       June 2022
 import os
 import sys
 
+import scipy as sp
+
 import appSettings
 import featureCollectionApp
+
+import sampleGeneratorPresets
 
     #### MAIN EXECUTABLE ####
 
 def sessionSettings() -> appSettings.AppSettings:
     """ Return a settings instance """
-    inputFilesHome = "C:\\Users\\lando\\Documents\\GitHub\\MultimodalAudioClassification\\InputFiles"
+    #iputFilesHome = "C:\\Users\\lando\\Documents\\GitHub\\MultimodalAudioClassification\\InputFiles"
     inputFiles = [  #os.path.join(inputFilesHome,"Y1.csv"),
                     #os.path.join(inputFilesHome,"Y2.csv"),
                     #os.path.join(inputFilesHome,"Y3.csv"),
-                    os.path.join(inputFilesHome,"Y4.csv"), 
+                    #os.path.join(inputFilesHome,"Y4.csv"), 
                     ]
+    dataGenerators = [
+            sampleGeneratorPresets.getUniformSquare(256,0),
+            sampleGeneratorPresets.getUniformCosine(256,1),
+        ]
     outputPath = "C:\\Users\\lando\\Documents\\audioFeatures\\simpleSignalsV4"
-    settings = appSettings.AppSettings(inputFiles,outputPath)
+    settings = appSettings.AppSettings(inputFiles,dataGenerators,outputPath)
     return settings
 
 if __name__ == "__main__":
