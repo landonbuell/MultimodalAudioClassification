@@ -28,7 +28,7 @@ class CollectionManager(componentManager.ComponentManager):
                  app):
         """ Constructor """
         super().__init__(CollectionManager.__NAME,app)
-        self._collectors = [None] * app.getSettings().getNumCollectionThreads()
+        self._collectors    = [None] * app.getSettings().getNumCollectionThreads()
         self._timeStart     = datetime.datetime.min
         self._timeFinish    = datetime.datetime.max
         self.__initCollectors()

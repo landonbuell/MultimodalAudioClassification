@@ -38,7 +38,7 @@ class SampleDatabase(componentManager.ComponentManager):
     def __init__(self,
                  app):
         """ Constructor """
-        super().__init__(SampleDatabase.__NAME,app)
+        super().__init__(SampleDatabase.__NAME ,app)
         self._inputFiles    = queue.Queue()
         self._generators    = queue.Queue()
         self._database      = queue.Queue(app.getSettings().getSampleLimit())      
